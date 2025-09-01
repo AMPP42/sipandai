@@ -13,7 +13,8 @@ export interface AuthContextType {
   user: User | null;
   session: any;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
-  signUp: (email: string, password: string, name: string, role: string, unit?: string) => Promise<{ error?: string }>;
+  signUp: (email: string, password: password, name: string, role: string, unit?: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
+  updateProfile: (updates: Partial<Pick<User, 'name' | 'unit'>>) => Promise<{ error?: string }>;
   loading: boolean;
 }

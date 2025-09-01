@@ -26,15 +26,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         
         if (session?.user) {
-          // For now, create a mock user profile based on session data
-          // TODO: Replace with actual profile fetch once profiles table is created
-          setUser({
-            id: session.user.id,
-            email: session.user.email!,
-            name: session.user.user_metadata?.name || session.user.email!,
-            role: session.user.user_metadata?.role || 'admin_unit',
-            unit: session.user.user_metadata?.unit,
-          });
+          // Fetch user profile from profiles table
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profile && !error) {
+            setUser({
+              id: profile.id,
+              email: session.user.email!,
+              name: profile.name,
+              role: profile.role as 'admin_pusat' | 'admin_unit',
+              unit: profile.unit,
+              created_at: profile.created_at,
+              updated_at: profile.updated_at,
+            });
+          } else {
+            console.error('Error fetching user profile:', error);
+            setUser(null);
+          }
         } else {
           setUser(null);
         }
@@ -62,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, name: string, role: string, unit?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${window.location.origin}/auth`;
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -83,12 +95,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const updateProfile = async (updates: Partial<Pick<User, 'name' | 'unit'>>) => {
+    if (!user) return { error: 'No user logged in' };
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+
+    if (!error) {
+      setUser(prev => prev ? { ...prev, ...updates } : null);
+    }
+
+    return { error: error?.message };
+  };
+
   const value = {
     user,
     session,
     signIn,
     signUp,
     signOut,
+    updateProfile,
     loading,
   };
 
