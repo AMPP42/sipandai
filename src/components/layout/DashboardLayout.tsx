@@ -9,7 +9,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <SidebarProvider collapsedWidth={64}>
+    <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
         <AppSidebar />
         <main className="flex-1 flex flex-col">

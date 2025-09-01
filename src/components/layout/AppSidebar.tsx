@@ -32,19 +32,27 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 
+interface MenuItem {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+}
+
 export function AppSidebar() {
-  const { collapsed } = useSidebar();
+  const { state } = useSidebar();
   const location = useLocation();
   const { user } = useAuth();
   const currentPath = location.pathname;
+  const collapsed = state === "collapsed";
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     `sidebar-nav-item ${isActive ? 'sidebar-nav-active' : ''}`;
 
   // Define menu items based on user role
-  const getMenuItems = () => {
-    const commonItems = [
+  const getMenuItems = (): MenuItem[] => {
+    const commonItems: MenuItem[] = [
       { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
     ];
 
@@ -78,7 +86,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       className={`transition-all duration-300 ${collapsed ? "w-16" : "w-64"}`}
-      collapsible
+      collapsible="icon"
     >
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">

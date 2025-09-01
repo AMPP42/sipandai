@@ -26,22 +26,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         
         if (session?.user) {
-          // Fetch user profile from profiles table
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (profile) {
-            setUser({
-              id: session.user.id,
-              email: session.user.email!,
-              name: profile.name,
-              role: profile.role,
-              unit: profile.unit,
-            });
-          }
+          // For now, create a mock user profile based on session data
+          // TODO: Replace with actual profile fetch once profiles table is created
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            name: session.user.user_metadata?.name || session.user.email!,
+            role: session.user.user_metadata?.role || 'admin_unit',
+            unit: session.user.user_metadata?.unit,
+          });
         } else {
           setUser(null);
         }
