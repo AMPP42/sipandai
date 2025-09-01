@@ -194,10 +194,6 @@
     @apply status-badge bg-orange-100 text-orange-800;
   }
 
-  .app-card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer hover:border-brand-300 group;
-  }
-
   .sidebar-nav-item {
     @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors duration-200;
   }
