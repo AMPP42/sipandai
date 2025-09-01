@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,34 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// SIPANDAI Design System Colors
+				brand: {
+					50: 'hsl(var(--brand-50))',
+					100: 'hsl(var(--brand-100))',
+					200: 'hsl(var(--brand-200))',
+					300: 'hsl(var(--brand-300))',
+					400: 'hsl(var(--brand-400))',
+					500: 'hsl(var(--brand-500))',
+					600: 'hsl(var(--brand-600))',
+					700: 'hsl(var(--brand-700))',
+					800: 'hsl(var(--brand-800))',
+					900: 'hsl(var(--brand-900))',
+				},
+				success: {
+					50: 'hsl(var(--success-50))',
+					500: 'hsl(var(--success-500))',
+					700: 'hsl(var(--success-700))',
+				},
+				warning: {
+					50: 'hsl(var(--warning-50))',
+					500: 'hsl(var(--warning-500))',
+					700: 'hsl(var(--warning-700))',
+				},
+				danger: {
+					50: 'hsl(var(--danger-50))',
+					500: 'hsl(var(--danger-500))',
+					700: 'hsl(var(--danger-700))',
 				}
 			},
 			borderRadius: {
@@ -84,11 +113,31 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'slide-up': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(20px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0'
+					},
+					'100%': {
+						opacity: '1'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'slide-up': 'slide-up 0.5s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out'
 			}
 		}
 	},
