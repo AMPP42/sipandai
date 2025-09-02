@@ -43,7 +43,7 @@ export default function AdminPegawai() {
   const [pangkatFilter, setPangkatFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   
-  // Reference data - using static data for now until reference tables are available
+  // Reference data - using static data for now
   const [unitOptions] = useState([
     { id: '1', nama_unit: 'BKPSDM' },
     { id: '2', nama_unit: 'Dinas Pendidikan' },
@@ -76,12 +76,12 @@ export default function AdminPegawai() {
       
       const { data, error } = await supabase
         .from('employees')
-        .select('*')
+        .select('id, nama, nip, jabatan, status, unit, pangkat, created_at, updated_at')
         .order('nama');
 
       if (error) throw error;
 
-      // Map the data to match our Employee interface based on actual database schema
+      // Map the data to match our Employee interface
       const mappedEmployees: Employee[] = (data || []).map(emp => ({
         id: emp.id,
         nama: emp.nama,

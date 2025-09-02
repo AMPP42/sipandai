@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, Check, X, Info, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Bell, Check, Info, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
 
@@ -56,6 +56,8 @@ export default function NotificationCenter() {
       return () => {
         subscription.unsubscribe();
       };
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
@@ -65,19 +67,18 @@ export default function NotificationCenter() {
     try {
       const { data, error } = await supabase
         .from('notifications')
-        .select('*')
+        .select('id, title, body, read_at, created_at')
         .eq('recipient_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (error) throw error;
 
-      // Map the data to match our Notification interface
       const notificationsWithType: Notification[] = (data || []).map(notification => ({
         id: notification.id,
         title: notification.title,
         body: notification.body,
-        type: 'info', // Default type since it's not in the database
+        type: 'info' as const,
         read_at: notification.read_at,
         created_at: notification.created_at
       }));
@@ -134,7 +135,7 @@ export default function NotificationCenter() {
     }
   };
 
-  const getNotificationIcon = (type: string) => {
+  const getNotificationIcon = (type: string = 'info') => {
     switch (type) {
       case 'success':
         return <CheckCircle className="w-5 h-5 text-green-600" />;
@@ -185,7 +186,7 @@ export default function NotificationCenter() {
                 } hover:bg-gray-50 transition-colors`}
               >
                 <div className="flex items-start gap-3">
-                  {getNotificationIcon(notification.type || 'info')}
+                  {getNotificationIcon(notification.type)}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <h4 className="text-sm font-medium text-gray-900 truncate">

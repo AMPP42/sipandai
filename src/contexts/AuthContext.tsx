@@ -20,97 +20,133 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return;
+
+        console.log('Auth state change:', event, session?.user?.id);
         setSession(session);
         
         if (session?.user) {
-          // Fetch user profile from profiles table
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+          // Use setTimeout to prevent blocking the auth state change callback
+          setTimeout(async () => {
+            if (!isMounted) return;
+            
+            try {
+              const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
 
-          if (profile && !error) {
-            setUser({
-              id: profile.id,
-              email: session.user.email!,
-              name: profile.name,
-              role: profile.role as 'admin_pusat' | 'admin_unit',
-              unit: profile.unit,
-              created_at: profile.created_at,
-              updated_at: profile.updated_at,
-            });
-          } else {
-            console.error('Error fetching user profile:', error);
-            setUser(null);
-          }
+              if (isMounted && profile && !error) {
+                setUser({
+                  id: profile.id,
+                  email: session.user.email!,
+                  name: profile.name,
+                  role: profile.role as 'admin_pusat' | 'admin_unit',
+                  unit: profile.unit,
+                  created_at: profile.created_at,
+                  updated_at: profile.updated_at,
+                });
+              } else if (isMounted && error) {
+                console.error('Error fetching user profile:', error);
+                setUser(null);
+              }
+            } catch (err) {
+              console.error('Profile fetch error:', err);
+              if (isMounted) setUser(null);
+            }
+          }, 0);
         } else {
           setUser(null);
         }
-        setLoading(false);
+        
+        if (isMounted) setLoading(false);
       }
     );
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (!session) {
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error: error?.message };
-  };
-
-  const signUp = async (email: string, password: string, name: string, role: string, unit?: string) => {
-    const redirectUrl = `${window.location.origin}/auth`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          name,
-          role,
-          unit
+      if (isMounted) {
+        setSession(session);
+        if (!session) {
+          setLoading(false);
         }
       }
     });
-    return { error: error?.message };
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      return { error: error?.message };
+    } catch (err: any) {
+      return { error: err.message || 'Terjadi kesalahan saat login' };
+    }
+  };
+
+  const signUp = async (email: string, password: string, name: string, role: string, unit?: string) => {
+    try {
+      const redirectUrl = `${window.location.origin}/auth`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            name,
+            role,
+            unit
+          }
+        }
+      });
+      return { error: error?.message };
+    } catch (err: any) {
+      return { error: err.message || 'Terjadi kesalahan saat registrasi' };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Sign out error:', err);
+    }
   };
 
   const updateProfile = async (updates: Partial<Pick<User, 'name' | 'unit'>>) => {
     if (!user) return { error: 'No user logged in' };
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
 
-    if (!error) {
-      setUser(prev => prev ? { ...prev, ...updates } : null);
+      if (!error) {
+        setUser(prev => prev ? { ...prev, ...updates } : null);
+      }
+
+      return { error: error?.message };
+    } catch (err: any) {
+      return { error: err.message || 'Terjadi kesalahan saat update profil' };
     }
-
-    return { error: error?.message };
   };
 
   const value = {
