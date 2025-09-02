@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,9 +40,9 @@ export default function NotificationCenter() {
             filter: `recipient_id=eq.${user.id}`
           }, 
           (payload) => {
-            const newNotification = {
+            const newNotification: Notification = {
               ...payload.new as any,
-              type: payload.new.type || 'info'
+              type: (payload.new as any).type || 'info'
             };
             setNotifications(prev => [newNotification, ...prev]);
             setUnreadCount(prev => prev + 1);
@@ -70,11 +69,17 @@ export default function NotificationCenter() {
 
       if (error) throw error;
 
-      // Ensure type field exists with default value
-      const notificationsWithType = (data || []).map(notification => ({
-        ...notification,
-        type: notification.type || 'info'
-      })) as Notification[];
+      // Map the data and ensure type field exists with default value
+      const notificationsWithType: Notification[] = (data || []).map(notification => ({
+        id: notification.id,
+        title: notification.title,
+        body: notification.body,
+        type: (notification as any).type || 'info',
+        read_at: notification.read_at,
+        entity_type: notification.entity_type,
+        entity_id: notification.entity_id,
+        created_at: notification.created_at
+      }));
 
       setNotifications(notificationsWithType);
       setUnreadCount(notificationsWithType.filter(n => !n.read_at).length);

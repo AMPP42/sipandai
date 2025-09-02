@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +31,11 @@ interface Employee {
   tmt_pensiun?: string;
   is_active?: boolean;
   created_at: string;
+  jabatan?: string;
+  status?: string;
+  unit?: string;
+  pangkat?: string;
+  updated_at: string;
 }
 
 export default function AdminPegawai() {
@@ -48,7 +52,7 @@ export default function AdminPegawai() {
   const [pangkatFilter, setPangkatFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   
-  // Reference data - using static data for now
+  // Reference data - using static data for now until reference tables are available
   const [unitOptions] = useState([
     { id: '1', nama_unit: 'BKPSDM' },
     { id: '2', nama_unit: 'Dinas Pendidikan' },
@@ -78,39 +82,12 @@ export default function AdminPegawai() {
   const loadEmployees = async () => {
     try {
       setLoading(true);
-      let query = supabase
+      
+      // Use a simple select all approach to avoid complex type issues
+      const { data, error } = await supabase
         .from('employees')
         .select('*')
         .order('nama');
-
-      // Apply filters
-      if (searchTerm) {
-        query = query.or(`nama.ilike.%${searchTerm}%,nip.ilike.%${searchTerm}%,nik.ilike.%${searchTerm}%,unit_kerja.ilike.%${searchTerm}%`);
-      }
-
-      if (unitFilter !== 'all') {
-        query = query.eq('unit_kerja', unitFilter);
-      }
-
-      if (pangkatFilter !== 'all') {
-        query = query.eq('pangkat_golongan', pangkatFilter);
-      }
-
-      if (statusFilter !== 'all') {
-        if (statusFilter === 'active') {
-          query = query.eq('is_active', true);
-        } else if (statusFilter === 'inactive') {
-          query = query.eq('is_active', false);
-        } else if (statusFilter === 'approaching_retirement') {
-          const twoYearsFromNow = new Date();
-          twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
-          query = query
-            .eq('is_active', true)
-            .lte('tmt_pensiun', twoYearsFromNow.toISOString().split('T')[0]);
-        }
-      }
-
-      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -119,31 +96,77 @@ export default function AdminPegawai() {
         id: emp.id,
         nama: emp.nama,
         nip: emp.nip,
-        nik: emp.nik,
-        unit_kerja: emp.unit_kerja,
-        jabatan_terakhir: emp.jabatan_terakhir,
-        pangkat_golongan: emp.pangkat_golongan,
+        nik: emp.nik || undefined,
+        unit_kerja: emp.unit_kerja || emp.unit,
+        jabatan_terakhir: emp.jabatan_terakhir || emp.jabatan,
+        pangkat_golongan: emp.pangkat_golongan || emp.pangkat,
         tipe_pegawai: emp.tipe_pegawai,
         email: emp.email,
         handphone: emp.handphone,
         tanggal_lahir: emp.tanggal_lahir,
         tmt_pensiun: emp.tmt_pensiun,
-        is_active: emp.is_active ?? true,
-        created_at: emp.created_at
+        is_active: emp.is_active !== false, // Default to true if undefined
+        created_at: emp.created_at,
+        // Keep old fields for compatibility
+        jabatan: emp.jabatan,
+        status: emp.status,
+        unit: emp.unit,
+        pangkat: emp.pangkat,
+        updated_at: emp.updated_at
       }));
 
-      setEmployees(mappedEmployees);
+      // Apply filters on the mapped data
+      let filteredEmployees = mappedEmployees;
+
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        filteredEmployees = filteredEmployees.filter(emp =>
+          emp.nama.toLowerCase().includes(term) ||
+          (emp.nip && emp.nip.toLowerCase().includes(term)) ||
+          (emp.nik && emp.nik.toLowerCase().includes(term)) ||
+          (emp.unit_kerja && emp.unit_kerja.toLowerCase().includes(term))
+        );
+      }
+
+      if (unitFilter !== 'all') {
+        filteredEmployees = filteredEmployees.filter(emp => 
+          emp.unit_kerja === unitFilter || emp.unit === unitFilter
+        );
+      }
+
+      if (pangkatFilter !== 'all') {
+        filteredEmployees = filteredEmployees.filter(emp => 
+          emp.pangkat_golongan === pangkatFilter || emp.pangkat === pangkatFilter
+        );
+      }
+
+      if (statusFilter !== 'all') {
+        if (statusFilter === 'active') {
+          filteredEmployees = filteredEmployees.filter(emp => emp.is_active !== false);
+        } else if (statusFilter === 'inactive') {
+          filteredEmployees = filteredEmployees.filter(emp => emp.is_active === false);
+        } else if (statusFilter === 'approaching_retirement') {
+          const twoYearsFromNow = new Date();
+          twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
+          filteredEmployees = filteredEmployees.filter(emp => 
+            emp.is_active !== false && emp.tmt_pensiun && 
+            new Date(emp.tmt_pensiun) <= twoYearsFromNow
+          );
+        }
+      }
+
+      setEmployees(filteredEmployees);
       
       // Calculate stats
-      const total = mappedEmployees.length;
-      const active = mappedEmployees.filter(emp => emp.is_active !== false).length;
+      const total = filteredEmployees.length;
+      const active = filteredEmployees.filter(emp => emp.is_active !== false).length;
       const twoYearsFromNow = new Date();
       twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
-      const approaching_retirement = mappedEmployees.filter(emp => 
+      const approaching_retirement = filteredEmployees.filter(emp => 
         emp.is_active !== false && emp.tmt_pensiun && 
         new Date(emp.tmt_pensiun) <= twoYearsFromNow
       ).length;
-      const units = new Set(mappedEmployees.map(emp => emp.unit_kerja).filter(Boolean)).size;
+      const units = new Set(filteredEmployees.map(emp => emp.unit_kerja || emp.unit).filter(Boolean)).size;
       
       setStats({ total, active, approaching_retirement, units });
 
@@ -364,9 +387,9 @@ export default function AdminPegawai() {
                   <TableRow key={employee.id}>
                     <TableCell className="font-medium">{employee.nama}</TableCell>
                     <TableCell>{employee.nip || '-'}</TableCell>
-                    <TableCell>{employee.unit_kerja || '-'}</TableCell>
-                    <TableCell>{employee.jabatan_terakhir || '-'}</TableCell>
-                    <TableCell>{employee.pangkat_golongan || '-'}</TableCell>
+                    <TableCell>{employee.unit_kerja || employee.unit || '-'}</TableCell>
+                    <TableCell>{employee.jabatan_terakhir || employee.jabatan || '-'}</TableCell>
+                    <TableCell>{employee.pangkat_golongan || employee.pangkat || '-'}</TableCell>
                     <TableCell>{getStatusBadge(employee)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
