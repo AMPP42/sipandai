@@ -1,62 +1,227 @@
 
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Users, 
   UserPlus, 
-  Search, 
-  Filter,
-  Download,
-  Upload,
   Edit,
-  Trash2
+  Trash2,
+  Eye,
+  AlertTriangle
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import EmployeeForm from '@/components/pegawai/EmployeeForm';
+import EmployeeSearchFilters from '@/components/pegawai/EmployeeSearchFilters';
+
+interface Employee {
+  id: string;
+  nama: string;
+  nip?: string;
+  nik?: string;
+  unit_kerja?: string;
+  jabatan_terakhir?: string;
+  pangkat_golongan?: string;
+  tipe_pegawai?: string;
+  email?: string;
+  handphone?: string;
+  tanggal_lahir?: string;
+  tmt_pensiun?: string;
+  is_active: boolean;
+  created_at: string;
+}
 
 export default function AdminPegawai() {
-  const pegawaiData = [
-    {
-      id: 'PEG001',
-      nama: 'Ahmad Susanto',
-      nip: '197508121998031005',
-      unit: 'Dinas Pendidikan',
-      jabatan: 'Kepala Seksi',
-      pangkat: 'III/c',
-      status: 'aktif'
-    },
-    {
-      id: 'PEG002',
-      nama: 'Siti Rahayu',
-      nip: '198203152006042010',
-      unit: 'BKPSDM',
-      jabatan: 'Analis SDM',
-      pangkat: 'III/b',
-      status: 'aktif'
-    },
-    {
-      id: 'PEG003',
-      nama: 'Budi Santoso',
-      nip: '196412101990031008',
-      unit: 'Dinas Kesehatan',
-      jabatan: 'Dokter',
-      pangkat: 'IV/a',
-      status: 'pensiun'
-    }
-  ];
+  const { user } = useAuth();
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [unitFilter, setUnitFilter] = useState('all');
+  const [pangkatFilter, setPangkatFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  
+  // Reference data
+  const [unitOptions, setUnitOptions] = useState<any[]>([]);
+  const [pangkatOptions, setPangkatOptions] = useState<any[]>([]);
+  
+  // Stats
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    approaching_retirement: 0,
+    units: 0
+  });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'aktif':
-        return <Badge className="bg-green-100 text-green-700">Aktif</Badge>;
-      case 'cuti':
-        return <Badge className="bg-yellow-100 text-yellow-700">Cuti</Badge>;
-      case 'pensiun':
-        return <Badge className="bg-gray-100 text-gray-700">Pensiun</Badge>;
-      default:
-        return <Badge>Unknown</Badge>;
+  useEffect(() => {
+    loadEmployees();
+    loadReferenceData();
+  }, [searchTerm, unitFilter, pangkatFilter, statusFilter]);
+
+  const loadReferenceData = async () => {
+    try {
+      const [pangkatResult, unitResult] = await Promise.all([
+        supabase.from('ref_pangkat_golongan').select('*').eq('is_active', true).order('urutan'),
+        supabase.from('ref_unit_kerja').select('*').eq('is_active', true).order('nama_unit')
+      ]);
+
+      if (pangkatResult.data) setPangkatOptions(pangkatResult.data);
+      if (unitResult.data) setUnitOptions(unitResult.data);
+    } catch (error) {
+      console.error('Error loading reference data:', error);
     }
   };
+
+  const loadEmployees = async () => {
+    try {
+      setLoading(true);
+      let query = supabase
+        .from('employees')
+        .select('*')
+        .order('nama');
+
+      // Apply filters
+      if (searchTerm) {
+        query = query.or(`nama.ilike.%${searchTerm}%,nip.ilike.%${searchTerm}%,nik.ilike.%${searchTerm}%,unit_kerja.ilike.%${searchTerm}%`);
+      }
+
+      if (unitFilter !== 'all') {
+        query = query.eq('unit_kerja', unitFilter);
+      }
+
+      if (pangkatFilter !== 'all') {
+        query = query.eq('pangkat_golongan', pangkatFilter);
+      }
+
+      if (statusFilter !== 'all') {
+        if (statusFilter === 'active') {
+          query = query.eq('is_active', true);
+        } else if (statusFilter === 'inactive') {
+          query = query.eq('is_active', false);
+        } else if (statusFilter === 'approaching_retirement') {
+          const twoYearsFromNow = new Date();
+          twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
+          query = query
+            .eq('is_active', true)
+            .lte('tmt_pensiun', twoYearsFromNow.toISOString().split('T')[0]);
+        }
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      setEmployees(data || []);
+      
+      // Calculate stats
+      const total = data?.length || 0;
+      const active = data?.filter(emp => emp.is_active).length || 0;
+      const twoYearsFromNow = new Date();
+      twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
+      const approaching_retirement = data?.filter(emp => 
+        emp.is_active && emp.tmt_pensiun && 
+        new Date(emp.tmt_pensiun) <= twoYearsFromNow
+      ).length || 0;
+      const units = new Set(data?.map(emp => emp.unit_kerja).filter(Boolean)).size;
+      
+      setStats({ total, active, approaching_retirement, units });
+
+    } catch (error: any) {
+      setError(error.message || 'Terjadi kesalahan saat memuat data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (employee: Employee) => {
+    setEditingEmployee(employee);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (employee: Employee) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus data pegawai ${employee.nama}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('employees')
+        .delete()
+        .eq('id', employee.id);
+
+      if (error) throw error;
+
+      loadEmployees();
+    } catch (error: any) {
+      setError(error.message || 'Terjadi kesalahan saat menghapus data');
+    }
+  };
+
+  const handleFormSave = () => {
+    setShowForm(false);
+    setEditingEmployee(null);
+    loadEmployees();
+  };
+
+  const handleFormCancel = () => {
+    setShowForm(false);
+    setEditingEmployee(null);
+  };
+
+  const handleExport = () => {
+    // TODO: Implement export functionality
+    alert('Fitur export akan segera tersedia');
+  };
+
+  const handleImport = () => {
+    // TODO: Implement import functionality
+    alert('Fitur import akan segera tersedia');
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setUnitFilter('all');
+    setPangkatFilter('all');
+    setStatusFilter('all');
+  };
+
+  const getStatusBadge = (employee: Employee) => {
+    if (!employee.is_active) {
+      return <Badge className="bg-gray-100 text-gray-700">Tidak Aktif</Badge>;
+    }
+    
+    if (employee.tmt_pensiun) {
+      const pensiunDate = new Date(employee.tmt_pensiun);
+      const twoYearsFromNow = new Date();
+      twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
+      
+      if (pensiunDate <= twoYearsFromNow) {
+        return <Badge className="bg-orange-100 text-orange-700">Mendekati Pensiun</Badge>;
+      }
+    }
+    
+    return <Badge className="bg-green-100 text-green-700">Aktif</Badge>;
+  };
+
+  if (showForm) {
+    return (
+      <div className="p-6 animate-fade-in">
+        <EmployeeForm
+          employee={editingEmployee}
+          onSave={handleFormSave}
+          onCancel={handleFormCancel}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
@@ -74,18 +239,19 @@ export default function AdminPegawai() {
               Kelola data master pegawai dan informasi kepegawaian
             </p>
           </div>
-          <div className="flex gap-3">
-            <Button className="btn-secondary">
-              <Upload className="w-4 h-4 mr-2" />
-              Import Data
-            </Button>
-            <Button className="btn-primary">
-              <UserPlus className="w-4 h-4 mr-2" />
-              Tambah Pegawai
-            </Button>
-          </div>
+          <Button onClick={() => setShowForm(true)} className="btn-primary">
+            <UserPlus className="w-4 h-4 mr-2" />
+            Tambah Pegawai
+          </Button>
         </div>
       </div>
+
+      {error && (
+        <Alert className="border-red-200 bg-red-50">
+          <AlertTriangle className="w-4 h-4" />
+          <AlertDescription className="text-red-800">{error}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -94,7 +260,7 @@ export default function AdminPegawai() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Pegawai</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">2,847</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total.toLocaleString()}</p>
               </div>
               <Users className="w-8 h-8 text-blue-600" />
             </div>
@@ -105,7 +271,7 @@ export default function AdminPegawai() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pegawai Aktif</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">2,654</p>
+                <p className="text-3xl font-bold text-green-600 mt-2">{stats.active.toLocaleString()}</p>
               </div>
               <Users className="w-8 h-8 text-green-600" />
             </div>
@@ -115,8 +281,8 @@ export default function AdminPegawai() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Akan Pensiun</p>
-                <p className="text-3xl font-bold text-orange-600 mt-2">47</p>
+                <p className="text-sm font-medium text-gray-600">Mendekati Pensiun</p>
+                <p className="text-3xl font-bold text-orange-600 mt-2">{stats.approaching_retirement}</p>
               </div>
               <Users className="w-8 h-8 text-orange-600" />
             </div>
@@ -127,7 +293,7 @@ export default function AdminPegawai() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Unit Kerja</p>
-                <p className="text-3xl font-bold text-purple-600 mt-2">23</p>
+                <p className="text-3xl font-bold text-purple-600 mt-2">{stats.units}</p>
               </div>
               <Users className="w-8 h-8 text-purple-600" />
             </div>
@@ -135,31 +301,24 @@ export default function AdminPegawai() {
         </Card>
       </div>
 
-      {/* Search and Filter */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex gap-4 items-center">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Cari pegawai berdasarkan nama, NIP, atau unit..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-              />
-            </div>
-            <Button variant="outline">
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
-            </Button>
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Search and Filters */}
+      <EmployeeSearchFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        unitFilter={unitFilter}
+        onUnitFilterChange={setUnitFilter}
+        pangkatFilter={pangkatFilter}
+        onPangkatFilterChange={setPangkatFilter}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        onExport={handleExport}
+        onImport={handleImport}
+        onClearFilters={clearFilters}
+        unitOptions={unitOptions}
+        pangkatOptions={pangkatOptions}
+      />
 
-      {/* Pegawai Table */}
+      {/* Employee Table */}
       <Card>
         <CardHeader>
           <CardTitle>Daftar Pegawai</CardTitle>
@@ -168,41 +327,59 @@ export default function AdminPegawai() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nama</TableHead>
-                <TableHead>NIP</TableHead>
-                <TableHead>Unit Kerja</TableHead>
-                <TableHead>Jabatan</TableHead>
-                <TableHead>Pangkat</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pegawaiData.map((pegawai) => (
-                <TableRow key={pegawai.id}>
-                  <TableCell className="font-medium">{pegawai.nama}</TableCell>
-                  <TableCell>{pegawai.nip}</TableCell>
-                  <TableCell>{pegawai.unit}</TableCell>
-                  <TableCell>{pegawai.jabatan}</TableCell>
-                  <TableCell>{pegawai.pangkat}</TableCell>
-                  <TableCell>{getStatusBadge(pegawai.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+            </div>
+          ) : employees.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              Tidak ada data pegawai yang ditemukan
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nama</TableHead>
+                  <TableHead>NIP</TableHead>
+                  <TableHead>Unit Kerja</TableHead>
+                  <TableHead>Jabatan</TableHead>
+                  <TableHead>Pangkat</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Aksi</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {employees.map((employee) => (
+                  <TableRow key={employee.id}>
+                    <TableCell className="font-medium">{employee.nama}</TableCell>
+                    <TableCell>{employee.nip || '-'}</TableCell>
+                    <TableCell>{employee.unit_kerja || '-'}</TableCell>
+                    <TableCell>{employee.jabatan_terakhir || '-'}</TableCell>
+                    <TableCell>{employee.pangkat_golongan || '-'}</TableCell>
+                    <TableCell>{getStatusBadge(employee)}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleEdit(employee)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleDelete(employee)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
