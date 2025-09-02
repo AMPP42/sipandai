@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,21 +21,11 @@ interface Employee {
   id: string;
   nama: string;
   nip?: string;
-  nik?: string;
-  unit_kerja?: string;
-  jabatan_terakhir?: string;
-  pangkat_golongan?: string;
-  tipe_pegawai?: string;
-  email?: string;
-  handphone?: string;
-  tanggal_lahir?: string;
-  tmt_pensiun?: string;
-  is_active?: boolean;
-  created_at: string;
   jabatan?: string;
   status?: string;
   unit?: string;
   pangkat?: string;
+  created_at: string;
   updated_at: string;
 }
 
@@ -83,7 +74,6 @@ export default function AdminPegawai() {
     try {
       setLoading(true);
       
-      // Use a simple select all approach to avoid complex type issues
       const { data, error } = await supabase
         .from('employees')
         .select('*')
@@ -91,27 +81,16 @@ export default function AdminPegawai() {
 
       if (error) throw error;
 
-      // Map the data to ensure it matches our Employee interface
+      // Map the data to match our Employee interface based on actual database schema
       const mappedEmployees: Employee[] = (data || []).map(emp => ({
         id: emp.id,
         nama: emp.nama,
-        nip: emp.nip,
-        nik: emp.nik || undefined,
-        unit_kerja: emp.unit_kerja || emp.unit,
-        jabatan_terakhir: emp.jabatan_terakhir || emp.jabatan,
-        pangkat_golongan: emp.pangkat_golongan || emp.pangkat,
-        tipe_pegawai: emp.tipe_pegawai,
-        email: emp.email,
-        handphone: emp.handphone,
-        tanggal_lahir: emp.tanggal_lahir,
-        tmt_pensiun: emp.tmt_pensiun,
-        is_active: emp.is_active !== false, // Default to true if undefined
+        nip: emp.nip || undefined,
+        jabatan: emp.jabatan || undefined,
+        status: emp.status || undefined,
+        unit: emp.unit || undefined,
+        pangkat: emp.pangkat || undefined,
         created_at: emp.created_at,
-        // Keep old fields for compatibility
-        jabatan: emp.jabatan,
-        status: emp.status,
-        unit: emp.unit,
-        pangkat: emp.pangkat,
         updated_at: emp.updated_at
       }));
 
@@ -123,35 +102,27 @@ export default function AdminPegawai() {
         filteredEmployees = filteredEmployees.filter(emp =>
           emp.nama.toLowerCase().includes(term) ||
           (emp.nip && emp.nip.toLowerCase().includes(term)) ||
-          (emp.nik && emp.nik.toLowerCase().includes(term)) ||
-          (emp.unit_kerja && emp.unit_kerja.toLowerCase().includes(term))
+          (emp.unit && emp.unit.toLowerCase().includes(term))
         );
       }
 
       if (unitFilter !== 'all') {
         filteredEmployees = filteredEmployees.filter(emp => 
-          emp.unit_kerja === unitFilter || emp.unit === unitFilter
+          emp.unit === unitFilter
         );
       }
 
       if (pangkatFilter !== 'all') {
         filteredEmployees = filteredEmployees.filter(emp => 
-          emp.pangkat_golongan === pangkatFilter || emp.pangkat === pangkatFilter
+          emp.pangkat === pangkatFilter
         );
       }
 
       if (statusFilter !== 'all') {
         if (statusFilter === 'active') {
-          filteredEmployees = filteredEmployees.filter(emp => emp.is_active !== false);
+          filteredEmployees = filteredEmployees.filter(emp => emp.status === 'active');
         } else if (statusFilter === 'inactive') {
-          filteredEmployees = filteredEmployees.filter(emp => emp.is_active === false);
-        } else if (statusFilter === 'approaching_retirement') {
-          const twoYearsFromNow = new Date();
-          twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
-          filteredEmployees = filteredEmployees.filter(emp => 
-            emp.is_active !== false && emp.tmt_pensiun && 
-            new Date(emp.tmt_pensiun) <= twoYearsFromNow
-          );
+          filteredEmployees = filteredEmployees.filter(emp => emp.status === 'inactive');
         }
       }
 
@@ -159,14 +130,9 @@ export default function AdminPegawai() {
       
       // Calculate stats
       const total = filteredEmployees.length;
-      const active = filteredEmployees.filter(emp => emp.is_active !== false).length;
-      const twoYearsFromNow = new Date();
-      twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
-      const approaching_retirement = filteredEmployees.filter(emp => 
-        emp.is_active !== false && emp.tmt_pensiun && 
-        new Date(emp.tmt_pensiun) <= twoYearsFromNow
-      ).length;
-      const units = new Set(filteredEmployees.map(emp => emp.unit_kerja || emp.unit).filter(Boolean)).size;
+      const active = filteredEmployees.filter(emp => emp.status === 'active').length;
+      const approaching_retirement = 0; // Not available in current schema
+      const units = new Set(filteredEmployees.map(emp => emp.unit).filter(Boolean)).size;
       
       setStats({ total, active, approaching_retirement, units });
 
@@ -228,18 +194,8 @@ export default function AdminPegawai() {
   };
 
   const getStatusBadge = (employee: Employee) => {
-    if (employee.is_active === false) {
+    if (employee.status === 'inactive') {
       return <Badge className="bg-gray-100 text-gray-700">Tidak Aktif</Badge>;
-    }
-    
-    if (employee.tmt_pensiun) {
-      const pensiunDate = new Date(employee.tmt_pensiun);
-      const twoYearsFromNow = new Date();
-      twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2);
-      
-      if (pensiunDate <= twoYearsFromNow) {
-        return <Badge className="bg-orange-100 text-orange-700">Mendekati Pensiun</Badge>;
-      }
     }
     
     return <Badge className="bg-green-100 text-green-700">Aktif</Badge>;
@@ -387,9 +343,9 @@ export default function AdminPegawai() {
                   <TableRow key={employee.id}>
                     <TableCell className="font-medium">{employee.nama}</TableCell>
                     <TableCell>{employee.nip || '-'}</TableCell>
-                    <TableCell>{employee.unit_kerja || employee.unit || '-'}</TableCell>
-                    <TableCell>{employee.jabatan_terakhir || employee.jabatan || '-'}</TableCell>
-                    <TableCell>{employee.pangkat_golongan || employee.pangkat || '-'}</TableCell>
+                    <TableCell>{employee.unit || '-'}</TableCell>
+                    <TableCell>{employee.jabatan || '-'}</TableCell>
+                    <TableCell>{employee.pangkat || '-'}</TableCell>
                     <TableCell>{getStatusBadge(employee)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">

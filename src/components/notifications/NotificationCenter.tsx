@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,8 +15,6 @@ interface Notification {
   body?: string;
   type?: 'info' | 'success' | 'warning' | 'error';
   read_at?: string;
-  entity_type?: string;
-  entity_id?: string;
   created_at: string;
 }
 
@@ -41,8 +40,12 @@ export default function NotificationCenter() {
           }, 
           (payload) => {
             const newNotification: Notification = {
-              ...payload.new as any,
-              type: (payload.new as any).type || 'info'
+              id: (payload.new as any).id,
+              title: (payload.new as any).title,
+              body: (payload.new as any).body,
+              type: 'info',
+              read_at: (payload.new as any).read_at,
+              created_at: (payload.new as any).created_at
             };
             setNotifications(prev => [newNotification, ...prev]);
             setUnreadCount(prev => prev + 1);
@@ -69,15 +72,13 @@ export default function NotificationCenter() {
 
       if (error) throw error;
 
-      // Map the data and ensure type field exists with default value
+      // Map the data to match our Notification interface
       const notificationsWithType: Notification[] = (data || []).map(notification => ({
         id: notification.id,
         title: notification.title,
         body: notification.body,
-        type: (notification as any).type || 'info',
+        type: 'info', // Default type since it's not in the database
         read_at: notification.read_at,
-        entity_type: notification.entity_type,
-        entity_id: notification.entity_id,
         created_at: notification.created_at
       }));
 
