@@ -13,7 +13,7 @@ interface Notification {
   id: string;
   title: string;
   body?: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type?: 'info' | 'success' | 'warning' | 'error';
   read_at?: string;
   entity_type?: string;
   entity_id?: string;
@@ -41,7 +41,11 @@ export default function NotificationCenter() {
             filter: `recipient_id=eq.${user.id}`
           }, 
           (payload) => {
-            setNotifications(prev => [payload.new as Notification, ...prev]);
+            const newNotification = {
+              ...payload.new as any,
+              type: payload.new.type || 'info'
+            };
+            setNotifications(prev => [newNotification, ...prev]);
             setUnreadCount(prev => prev + 1);
           }
         )
@@ -66,8 +70,14 @@ export default function NotificationCenter() {
 
       if (error) throw error;
 
-      setNotifications(data || []);
-      setUnreadCount(data?.filter(n => !n.read_at).length || 0);
+      // Ensure type field exists with default value
+      const notificationsWithType = (data || []).map(notification => ({
+        ...notification,
+        type: notification.type || 'info'
+      })) as Notification[];
+
+      setNotifications(notificationsWithType);
+      setUnreadCount(notificationsWithType.filter(n => !n.read_at).length);
     } catch (error) {
       console.error('Error loading notifications:', error);
     } finally {
@@ -131,20 +141,6 @@ export default function NotificationCenter() {
     }
   };
 
-  const getNotificationBgColor = (type: string, isRead: boolean) => {
-    const opacity = isRead ? '50' : '100';
-    switch (type) {
-      case 'success':
-        return `bg-green-${opacity} border-green-200`;
-      case 'error':
-        return `bg-red-${opacity} border-red-200`;
-      case 'warning':
-        return `bg-orange-${opacity} border-orange-200`;
-      default:
-        return `bg-blue-${opacity} border-blue-200`;
-    }
-  };
-
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -183,7 +179,7 @@ export default function NotificationCenter() {
                 } hover:bg-gray-50 transition-colors`}
               >
                 <div className="flex items-start gap-3">
-                  {getNotificationIcon(notification.type)}
+                  {getNotificationIcon(notification.type || 'info')}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <h4 className="text-sm font-medium text-gray-900 truncate">

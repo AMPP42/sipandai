@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { X, Save, UserPlus } from 'lucide-react';
 
@@ -27,7 +26,7 @@ interface Employee {
   jabatan_terakhir?: string;
   email?: string;
   handphone?: string;
-  is_active: boolean;
+  is_active?: boolean;
 }
 
 interface EmployeeFormProps {
@@ -40,8 +39,19 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [pangkatOptions, setPangkatOptions] = useState<any[]>([]);
-  const [unitOptions, setUnitOptions] = useState<any[]>([]);
+  const [pangkatOptions] = useState([
+    { id: '1', kode: 'I/a', nama_pangkat: 'Juru Muda' },
+    { id: '2', kode: 'I/b', nama_pangkat: 'Juru Muda Tingkat I' },
+    { id: '3', kode: 'II/a', nama_pangkat: 'Pengatur Muda' },
+    { id: '4', kode: 'III/a', nama_pangkat: 'Penata Muda' },
+    { id: '5', kode: 'IV/a', nama_pangkat: 'Pembina' },
+  ]);
+  const [unitOptions] = useState([
+    { id: '1', nama_unit: 'BKPSDM' },
+    { id: '2', nama_unit: 'Dinas Pendidikan' },
+    { id: '3', nama_unit: 'Dinas Kesehatan' },
+    { id: '4', nama_unit: 'Dinas Perhubungan' },
+  ]);
   
   const [formData, setFormData] = useState<Employee>({
     nama: '',
@@ -61,24 +71,6 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
     is_active: true,
     ...employee
   });
-
-  useEffect(() => {
-    loadReferenceData();
-  }, []);
-
-  const loadReferenceData = async () => {
-    try {
-      const [pangkatResult, unitResult] = await Promise.all([
-        supabase.from('ref_pangkat_golongan').select('*').eq('is_active', true).order('urutan'),
-        supabase.from('ref_unit_kerja').select('*').eq('is_active', true).order('nama_unit')
-      ]);
-
-      if (pangkatResult.data) setPangkatOptions(pangkatResult.data);
-      if (unitResult.data) setUnitOptions(unitResult.data);
-    } catch (error) {
-      console.error('Error loading reference data:', error);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
