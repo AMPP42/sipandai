@@ -1,37 +1,47 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
-import { DashboardLayout } from "./components/layout/DashboardLayout";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from '@/contexts/AuthContext';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+
+// Import pages
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Apps from "./pages/Apps";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+
+// Admin pages
 import Verifikasi from "./pages/Verifikasi";
 import AdminPegawai from "./pages/AdminPegawai";
 import AdminFormasi from "./pages/AdminFormasi";
 import AdminUsers from "./pages/AdminUsers";
 import AdminReports from "./pages/AdminReports";
+
+// User pages
 import StatusUsulan from "./pages/StatusUsulan";
+import UsulanMutasi from "./pages/UsulanMutasi";
+import BuatUsulanMutasi from "./pages/BuatUsulanMutasi";
+import DetailUsulanMutasi from "./pages/DetailUsulanMutasi";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AuthProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
         <BrowserRouter>
           <Routes>
+            {/* Public routes */}
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            
+            {/* Protected routes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <DashboardLayout>
@@ -39,6 +49,7 @@ const App = () => (
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            
             <Route path="/apps" element={
               <ProtectedRoute>
                 <DashboardLayout>
@@ -46,6 +57,7 @@ const App = () => (
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+
             <Route path="/settings" element={
               <ProtectedRoute>
                 <DashboardLayout>
@@ -53,8 +65,33 @@ const App = () => (
                 </DashboardLayout>
               </ProtectedRoute>
             } />
-            
-            {/* Admin Pusat Only Routes */}
+
+            {/* Usulan Mutasi routes */}
+            <Route path="/usulan-mutasi" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <UsulanMutasi />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/usulan-mutasi/buat" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <BuatUsulanMutasi />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/usulan-mutasi/:id" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <DetailUsulanMutasi />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+
+            {/* Admin routes (admin_pusat only) */}
             <Route path="/verifikasi" element={
               <ProtectedRoute requiredRole="admin_pusat">
                 <DashboardLayout>
@@ -62,16 +99,15 @@ const App = () => (
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+
             <Route path="/admin" element={
               <ProtectedRoute requiredRole="admin_pusat">
                 <DashboardLayout>
-                  <div className="p-6">
-                    <h1 className="text-2xl font-bold">Panel Admin</h1>
-                    <p className="text-gray-600">Panel administrasi - akan segera diimplementasikan</p>
-                  </div>
+                  <AdminPegawai />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+
             <Route path="/admin/pegawai" element={
               <ProtectedRoute requiredRole="admin_pusat">
                 <DashboardLayout>
@@ -79,6 +115,7 @@ const App = () => (
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+
             <Route path="/admin/formasi" element={
               <ProtectedRoute requiredRole="admin_pusat">
                 <DashboardLayout>
@@ -86,6 +123,7 @@ const App = () => (
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+
             <Route path="/admin/users" element={
               <ProtectedRoute requiredRole="admin_pusat">
                 <DashboardLayout>
@@ -93,6 +131,7 @@ const App = () => (
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+
             <Route path="/admin/reports" element={
               <ProtectedRoute requiredRole="admin_pusat">
                 <DashboardLayout>
@@ -100,21 +139,22 @@ const App = () => (
                 </DashboardLayout>
               </ProtectedRoute>
             } />
-            
-            {/* Admin Unit Only Routes */}
+
+            {/* User routes */}
             <Route path="/status" element={
-              <ProtectedRoute requiredRole="admin_unit">
+              <ProtectedRoute>
                 <DashboardLayout>
                   <StatusUsulan />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
             
+            {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

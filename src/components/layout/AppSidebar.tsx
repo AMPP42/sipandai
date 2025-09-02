@@ -14,7 +14,8 @@ import {
   MessageCircle,
   BarChart3,
   UserCheck,
-  Shield
+  Shield,
+  GitBranch
 } from "lucide-react";
 
 import {
@@ -76,6 +77,7 @@ export function AppSidebar() {
       return [
         ...commonItems,
         { title: "Portal Aplikasi", url: "/apps", icon: FileText },
+        { title: "Usulan Mutasi", url: "/usulan-mutasi", icon: GitBranch },
         { title: "Status Usulan", url: "/status", icon: Clock },
       ];
     }
