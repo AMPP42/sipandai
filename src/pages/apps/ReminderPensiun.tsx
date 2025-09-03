@@ -874,14 +874,15 @@ export default function ReminderPensiun() {
       const message = generateReminderMessage(reminderTemplates.whatsapp, employee);
       const encodedMessage = encodeURIComponent(message);
       
-      // Use wa.me format as recommended by WhatsApp (not API format)
+      // Use wa.me format as recommended by WhatsApp (FIXED 2025-09-03)
       const whatsappUrl = `https://wa.me/${employee.formattedNumber}?text=${encodedMessage}`;
       
-      console.log('WhatsApp URL Generated:', {
+      console.log('🔧 WhatsApp URL Generated (FIXED):', {
         employee: employee.nama,
         number: employee.formattedNumber,
         url: whatsappUrl,
-        message: message
+        message: message,
+        timestamp: new Date().toISOString()
       });
       
       // Open in new window/tab
