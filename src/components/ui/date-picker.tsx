@@ -1,10 +1,9 @@
 import * as React from "react"
-import { format } from "date-fns"
-import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
+import { format, getYear, getMonth } from "date-fns"
+import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { Input } from "@/components/ui/input"
 import {
   Popover,
   PopoverContent,
@@ -46,7 +45,13 @@ export function DatePicker({ date, onSelect, placeholder = "Pilih tanggal", clas
   }
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
-    onSelect?.(selectedDate)
+    if (selectedDate) {
+      // Create a new date with local timezone to avoid timezone shift
+      const localDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate())
+      onSelect?.(localDate)
+    } else {
+      onSelect?.(undefined)
+    }
     setIsOpen(false)
   }
 
@@ -74,7 +79,7 @@ export function DatePicker({ date, onSelect, placeholder = "Pilih tanggal", clas
       <PopoverContent className="w-auto p-0" align="start">
         <div className="p-3 border-b">
           <div className="flex items-center justify-between gap-2">
-            <Select value={month.getMonth().toString()} onValueChange={handleMonthChange}>
+            <Select value={getMonth(month).toString()} onValueChange={handleMonthChange}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue />
               </SelectTrigger>
@@ -87,7 +92,7 @@ export function DatePicker({ date, onSelect, placeholder = "Pilih tanggal", clas
               </SelectContent>
             </Select>
             
-            <Select value={month.getFullYear().toString()} onValueChange={handleYearChange}>
+            <Select value={getYear(month).toString()} onValueChange={handleYearChange}>
               <SelectTrigger className="w-[100px]">
                 <SelectValue />
               </SelectTrigger>

@@ -183,10 +183,12 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
               <div className="space-y-2">
                 <Label htmlFor="tanggal_lahir">Tanggal Lahir</Label>
                 <DatePicker
-                  date={formData.tanggal_lahir ? new Date(formData.tanggal_lahir) : undefined}
+                  date={formData.tanggal_lahir ? new Date(formData.tanggal_lahir + 'T00:00:00') : undefined}
                   onSelect={(date) => setFormData(prev => ({ 
                     ...prev, 
-                    tanggal_lahir: date ? date.toISOString().split('T')[0] : '' 
+                    tanggal_lahir: date ? 
+                      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` 
+                      : '' 
                   }))}
                   placeholder="Pilih tanggal lahir"
                 />
@@ -347,10 +349,12 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
               <div className="space-y-2">
                 <Label htmlFor="tmt_jabatan_terakhir">TMT Jabatan Terakhir</Label>
                 <DatePicker
-                  date={formData.tmt_jabatan_terakhir ? new Date(formData.tmt_jabatan_terakhir) : undefined}
+                  date={formData.tmt_jabatan_terakhir ? new Date(formData.tmt_jabatan_terakhir + 'T00:00:00') : undefined}
                   onSelect={(date) => setFormData(prev => ({ 
                     ...prev, 
-                    tmt_jabatan_terakhir: date ? date.toISOString().split('T')[0] : '' 
+                    tmt_jabatan_terakhir: date ? 
+                      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` 
+                      : '' 
                   }))}
                   placeholder="Pilih TMT jabatan terakhir"
                 />
@@ -376,10 +380,12 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
               <div className="space-y-2">
                 <Label htmlFor="tmt_pangkat_terakhir">TMT Pangkat Terakhir</Label>
                 <DatePicker
-                  date={formData.tmt_pangkat_terakhir ? new Date(formData.tmt_pangkat_terakhir) : undefined}
+                  date={formData.tmt_pangkat_terakhir ? new Date(formData.tmt_pangkat_terakhir + 'T00:00:00') : undefined}
                   onSelect={(date) => setFormData(prev => ({ 
                     ...prev, 
-                    tmt_pangkat_terakhir: date ? date.toISOString().split('T')[0] : '' 
+                    tmt_pangkat_terakhir: date ? 
+                      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` 
+                      : '' 
                   }))}
                   placeholder="Pilih TMT pangkat terakhir"
                 />
@@ -394,10 +400,12 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
               <div className="space-y-2">
                 <Label htmlFor="tmt_cpns">TMT CPNS</Label>
                 <DatePicker
-                  date={formData.tmt_cpns ? new Date(formData.tmt_cpns) : undefined}
+                  date={formData.tmt_cpns ? new Date(formData.tmt_cpns + 'T00:00:00') : undefined}
                   onSelect={(date) => setFormData(prev => ({ 
                     ...prev, 
-                    tmt_cpns: date ? date.toISOString().split('T')[0] : '' 
+                    tmt_cpns: date ? 
+                      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` 
+                      : '' 
                   }))}
                   placeholder="Pilih TMT CPNS"
                 />
@@ -405,10 +413,12 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
               <div className="space-y-2">
                 <Label htmlFor="tmt_pns">TMT PNS</Label>
                 <DatePicker
-                  date={formData.tmt_pns ? new Date(formData.tmt_pns) : undefined}
+                  date={formData.tmt_pns ? new Date(formData.tmt_pns + 'T00:00:00') : undefined}
                   onSelect={(date) => setFormData(prev => ({ 
                     ...prev, 
-                    tmt_pns: date ? date.toISOString().split('T')[0] : '' 
+                    tmt_pns: date ? 
+                      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` 
+                      : '' 
                   }))}
                   placeholder="Pilih TMT PNS"
                 />
@@ -416,10 +426,12 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
               <div className="space-y-2">
                 <Label htmlFor="tmt_pensiun">TMT Pensiun</Label>
                 <DatePicker
-                  date={formData.tmt_pensiun ? new Date(formData.tmt_pensiun) : undefined}
+                  date={formData.tmt_pensiun ? new Date(formData.tmt_pensiun + 'T00:00:00') : undefined}
                   onSelect={(date) => setFormData(prev => ({ 
                     ...prev, 
-                    tmt_pensiun: date ? date.toISOString().split('T')[0] : '' 
+                    tmt_pensiun: date ? 
+                      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` 
+                      : '' 
                   }))}
                   placeholder="Pilih TMT pensiun"
                   disabled
