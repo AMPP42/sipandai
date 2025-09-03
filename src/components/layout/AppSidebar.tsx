@@ -79,9 +79,8 @@ export function AppSidebar() {
         ...commonItems,
         { 
           title: "Panel Admin", 
-          url: "/admin", 
-          icon: Shield,
-          badge: "3" // Badge for pending verifications
+          url: "/verifikasi", 
+          icon: Shield
         },
         { title: "Portal Aplikasi", url: "/apps", icon: FileText },
       ];

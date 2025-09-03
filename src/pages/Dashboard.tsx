@@ -240,10 +240,10 @@ export default function Dashboard() {
 
   const quickActions = user?.role === 'admin_pusat'
     ? [
-        { title: 'Verifikasi Usulan', desc: 'Review dan verifikasi usulan yang masuk', href: '/panel-admin', icon: CheckCircle, badge: stats.pendingApplications > 0 ? `${stats.pendingApplications} baru` : undefined },
-        { title: 'Database Pegawai', desc: 'Kelola data master pegawai', href: '/panel-admin', icon: Users },
-        { title: 'Laporan Statistik', desc: 'Lihat laporan dan analisis data', href: '/panel-admin', icon: BarChart3 },
-        { title: 'User Management', desc: 'Kelola akun pengguna sistem', href: '/panel-admin', icon: Users }
+        { title: 'Verifikasi Usulan', desc: 'Review dan verifikasi usulan yang masuk', href: '/verifikasi', icon: CheckCircle, badge: stats.pendingApplications > 0 ? `${stats.pendingApplications} baru` : undefined },
+        { title: 'Database Pegawai', desc: 'Kelola data master pegawai', href: '/admin-pegawai', icon: Users },
+        { title: 'Laporan Statistik', desc: 'Lihat laporan dan analisis data', href: '/admin-reports', icon: BarChart3 },
+        { title: 'User Management', desc: 'Kelola akun pengguna sistem', href: '/admin-users', icon: Users }
       ]
     : [
         { title: 'Pengajuan Mutasi', desc: 'Ajukan usulan mutasi pegawai', href: '/apps/pengajuan-mutasi', icon: FileText },
@@ -319,9 +319,9 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Actions */}
-        <Card>
+        <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-brand-600" />
@@ -335,9 +335,9 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3">
               {quickActions.map((action, index) => (
-                <div key={index} className="app-card">
+                <div key={index} className="p-4 border border-gray-200 rounded-lg hover:border-brand-300 hover:shadow-sm transition-all cursor-pointer" onClick={() => handleQuickAction(action.href)}>
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-brand-100 rounded-lg flex-shrink-0">
                       <action.icon className="w-5 h-5 text-brand-600" />
@@ -351,15 +351,9 @@ export default function Dashboard() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-gray-600 mb-3">{action.desc}</p>
-                      <Button 
-                        size="sm" 
-                        className="btn-secondary text-xs"
-                        onClick={() => handleQuickAction(action.href)}
-                      >
-                        Buka <ArrowRight className="w-3 h-3 ml-1" />
-                      </Button>
+                      <p className="text-xs text-gray-600">{action.desc}</p>
                     </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   </div>
                 </div>
               ))}
@@ -367,13 +361,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Notifications */}
-        <div className="lg:col-span-1">
-          <NotificationCenter />
-        </div>
-
         {/* Recent Activities */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-1">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
