@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Calendar, 
   Clock, 
@@ -19,8 +21,21 @@ import {
   Download,
   Search,
   Send,
-  Upload
+  Upload,
+  Loader2
 } from "lucide-react";
+
+interface Employee {
+  id: string;
+  nama: string;
+  nip: string | null;
+  tanggal_lahir: string | null;
+  tmt_pensiun: string | null;
+  unit: string | null;
+  jabatan: string | null;
+  pangkat: string | null;
+  masa_kerja: string | null;
+}
 
 interface PensiunData {
   id: string;
@@ -31,8 +46,9 @@ interface PensiunData {
   sisaHari: number;
   unitKerja: string;
   jabatan: string;
+  pangkat: string;
+  masaKerja: string;
   statusPersiapan: 'belum_mulai' | 'dalam_proses' | 'hampir_selesai' | 'siap';
-  dokumenLengkap: boolean;
 }
 
 interface ChecklistItem {
@@ -50,46 +66,71 @@ export default function ReminderPensiun() {
   const [selectedEmployee, setSelectedEmployee] = useState<PensiunData | null>(null);
   const [retirementCategory, setRetirementCategory] = useState("");
   const [documents, setDocuments] = useState<{ [key: string]: string }>({});
+  const [pensiunData, setPensiunData] = useState<PensiunData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  // Mock data for demonstration
-  const pensiunData: PensiunData[] = [
-    {
-      id: "1",
-      nama: "Drs. H. Bambang Sutrisno, M.M.",
-      nip: "196401051990031001",
-      tanggalLahir: "1964-01-05",
-      tanggalPensiun: "2024-01-05",
-      sisaHari: 45,
-      unitKerja: "Biro Kepegawaian",
-      jabatan: "Kepala Bidang Mutasi",
-      statusPersiapan: "dalam_proses",
-      dokumenLengkap: false
-    },
-    {
-      id: "2",
-      nama: "Hj. Siti Maryam, S.E., M.M.",
-      nip: "196203151987032001",
-      tanggalLahir: "1962-03-15",
-      tanggalPensiun: "2024-06-15",
-      sisaHari: 180,
-      unitKerja: "Inspektorat",
-      jabatan: "Auditor Madya",
-      statusPersiapan: "belum_mulai",
-      dokumenLengkap: false
-    },
-    {
-      id: "3",
-      nama: "Ir. Abdul Rahman, M.T.",
-      nip: "196109101985031002",
-      tanggalLahir: "1961-09-10",
-      tanggalPensiun: "2025-03-10",
-      sisaHari: 420,
-      unitKerja: "Biro Perencanaan",
-      jabatan: "Perencana Ahli Madya",
-      statusPersiapan: "hampir_selesai",
-      dokumenLengkap: true
+  useEffect(() => {
+    fetchEmployeeData();
+  }, []);
+
+  const fetchEmployeeData = async () => {
+    try {
+      setLoading(true);
+      const { data: employees, error } = await supabase
+        .from('employees')
+        .select('id, nama, nip, tanggal_lahir, tmt_pensiun, unit, jabatan, pangkat, masa_kerja')
+        .not('tmt_pensiun', 'is', null)
+        .order('tmt_pensiun', { ascending: true });
+
+      if (error) throw error;
+
+      // Transform employee data to pension data with calculations
+      const transformedData: PensiunData[] = (employees || []).map((emp: Employee) => {
+        const today = new Date();
+        const pensionDate = new Date(emp.tmt_pensiun!);
+        const timeDiff = pensionDate.getTime() - today.getTime();
+        const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        
+        // Determine preparation status based on days remaining
+        let statusPersiapan: 'belum_mulai' | 'dalam_proses' | 'hampir_selesai' | 'siap';
+        if (daysDiff <= 30) {
+          statusPersiapan = 'siap';
+        } else if (daysDiff <= 90) {
+          statusPersiapan = 'hampir_selesai';
+        } else if (daysDiff <= 365) {
+          statusPersiapan = 'dalam_proses';
+        } else {
+          statusPersiapan = 'belum_mulai';
+        }
+
+        return {
+          id: emp.id,
+          nama: emp.nama,
+          nip: emp.nip || '-',
+          tanggalLahir: emp.tanggal_lahir || '',
+          tanggalPensiun: emp.tmt_pensiun || '',
+          sisaHari: Math.max(0, daysDiff),
+          unitKerja: emp.unit || '-',
+          jabatan: emp.jabatan || '-',
+          pangkat: emp.pangkat || '-',
+          masaKerja: emp.masa_kerja || '-',
+          statusPersiapan
+        };
+      });
+
+      setPensiunData(transformedData);
+    } catch (error) {
+      console.error('Error fetching employee data:', error);
+      toast({
+        title: "Error",
+        description: "Gagal mengambil data pegawai",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const checklistPersiapan: ChecklistItem[] = [
     {
@@ -332,9 +373,37 @@ export default function ReminderPensiun() {
     }));
   };
 
-  const handleSubmitPengajuan = () => {
-    // Handle submission logic here
-    alert("Pengajuan pensiun berhasil disubmit!");
+  const handleSubmitPengajuan = async () => {
+    if (!selectedEmployee || !retirementCategory) {
+      toast({
+        title: "Error", 
+        description: "Pilih pegawai dan kategori pensiun terlebih dahulu",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // In a real implementation, this would create a retirement application
+      // For now, we'll just show a success message
+      toast({
+        title: "Berhasil",
+        description: `Pengajuan pensiun untuk ${selectedEmployee.nama} berhasil disubmit!`,
+      });
+      
+      // Reset form
+      setSelectedEmployee(null);
+      setRetirementCategory("");
+      setDocuments({});
+      setActiveTab("dashboard");
+    } catch (error) {
+      console.error('Error submitting retirement application:', error);
+      toast({
+        title: "Error",
+        description: "Gagal mengajukan usulan pensiun",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -352,12 +421,18 @@ export default function ReminderPensiun() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Badge className="bg-red-100 text-red-700">
-              {pensiunData.filter(p => p.sisaHari <= 90).length} Urgen (≤3 bulan)
-            </Badge>
-            <Badge className="bg-yellow-100 text-yellow-700">
-              {pensiunData.filter(p => p.sisaHari <= 365 && p.sisaHari > 90).length} Perlu Perhatian (≤1 tahun)
-            </Badge>
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Badge className="bg-red-100 text-red-700">
+                  {pensiunData.filter(p => p.sisaHari <= 90).length} Urgen (≤3 bulan)
+                </Badge>
+                <Badge className="bg-yellow-100 text-yellow-700">
+                  {pensiunData.filter(p => p.sisaHari <= 365 && p.sisaHari > 90).length} Perlu Perhatian (≤1 tahun)
+                </Badge>
+              </>
+            )}
           </div>
         </div>
 
@@ -476,8 +551,24 @@ export default function ReminderPensiun() {
             </Card>
 
             {/* Pegawai List */}
-            <div className="space-y-4">
-              {filteredPensiunData.map((pegawai) => (
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <span className="ml-2">Memuat data pegawai...</span>
+              </div>
+            ) : pensiunData.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Tidak Ada Data Pegawai</h3>
+                  <p className="text-muted-foreground">
+                    Belum ada data pegawai dengan informasi TMT Pensiun
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {filteredPensiunData.map((pegawai) => (
                 <Card key={pegawai.id} className={`border ${pegawai.sisaHari <= 90 ? 'border-red-200 bg-red-50' : pegawai.sisaHari <= 365 ? 'border-yellow-200 bg-yellow-50' : 'border-border'}`}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -503,6 +594,14 @@ export default function ReminderPensiun() {
                           <div>
                             <p className="text-muted-foreground">Jabatan</p>
                             <p className="font-medium">{pegawai.jabatan}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Pangkat</p>
+                            <p className="font-medium">{pegawai.pangkat}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Masa Kerja</p>
+                            <p className="font-medium">{pegawai.masaKerja}</p>
                           </div>
                           <div>
                             <p className="text-muted-foreground">TMT Pensiun</p>
@@ -535,8 +634,9 @@ export default function ReminderPensiun() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           {/* Tab: Checklist Preparation */}
@@ -649,26 +749,42 @@ export default function ReminderPensiun() {
                     <Card className="bg-blue-50 border-blue-200">
                       <CardContent className="p-4">
                         <h4 className="font-semibold text-blue-900 mb-2">Data Pegawai Terpilih</h4>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <p className="text-blue-600">Nama</p>
-                            <p className="font-medium text-blue-900">{selectedEmployee.nama}</p>
-                          </div>
-                          <div>
-                            <p className="text-blue-600">NIP</p>
-                            <p className="font-mono text-blue-900">{selectedEmployee.nip}</p>
-                          </div>
-                          <div>
-                            <p className="text-blue-600">Unit Kerja</p>
-                            <p className="font-medium text-blue-900">{selectedEmployee.unitKerja}</p>
-                          </div>
-                          <div>
-                            <p className="text-blue-600">TMT Pensiun</p>
-                            <p className="font-medium text-blue-900">
-                              {new Date(selectedEmployee.tanggalPensiun).toLocaleDateString('id-ID')}
-                            </p>
-                          </div>
-                        </div>
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                           <div>
+                             <p className="text-blue-600">Nama</p>
+                             <p className="font-medium text-blue-900">{selectedEmployee.nama}</p>
+                           </div>
+                           <div>
+                             <p className="text-blue-600">NIP</p>
+                             <p className="font-mono text-blue-900">{selectedEmployee.nip}</p>
+                           </div>
+                           <div>
+                             <p className="text-blue-600">Unit Kerja</p>
+                             <p className="font-medium text-blue-900">{selectedEmployee.unitKerja}</p>
+                           </div>
+                           <div>
+                             <p className="text-blue-600">Jabatan</p>
+                             <p className="font-medium text-blue-900">{selectedEmployee.jabatan}</p>
+                           </div>
+                           <div>
+                             <p className="text-blue-600">Pangkat</p>
+                             <p className="font-medium text-blue-900">{selectedEmployee.pangkat}</p>
+                           </div>
+                           <div>
+                             <p className="text-blue-600">Masa Kerja</p>
+                             <p className="font-medium text-blue-900">{selectedEmployee.masaKerja}</p>
+                           </div>
+                           <div>
+                             <p className="text-blue-600">Sisa Waktu</p>
+                             <p className="font-medium text-blue-900">{formatSisaWaktu(selectedEmployee.sisaHari)}</p>
+                           </div>
+                           <div>
+                             <p className="text-blue-600">TMT Pensiun</p>
+                             <p className="font-medium text-blue-900">
+                               {new Date(selectedEmployee.tanggalPensiun).toLocaleDateString('id-ID')}
+                             </p>
+                           </div>
+                         </div>
                       </CardContent>
                     </Card>
                   )}
