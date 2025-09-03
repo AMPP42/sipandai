@@ -405,8 +405,7 @@ export default function ReminderPensiun() {
       label: "Pensiun Reguler",
       documents: [
         "Surat Permohonan Pensiun dari Ybs (tanpa kop unit kerja)",
-        "Daftar Susunan Keluarga - pastikan jumlah anak sama dengan di DPCPP",
-        "Bila anak sudah berkeluarga, tetap dimasukkan saja untuk data",
+        "Daftar Susunan Keluarga - pastikan jumlah anak sama dengan di DPCPP (bila anak sudah berkeluarga, tetap dimasukkan saja untuk data)",
         "Kartu Pegawai (KARPEG)",
         "Optional - Akte / Surat Nikah",
         "Akte Kelahiran Anak (apabila masih ada anak yang menjadi tanggungan)",
