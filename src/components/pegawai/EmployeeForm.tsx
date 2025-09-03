@@ -51,11 +51,32 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [pangkatOptions] = useState([
+    // Golongan I (Juru)
     { id: '1', kode: 'I/a', nama_pangkat: 'Juru Muda' },
     { id: '2', kode: 'I/b', nama_pangkat: 'Juru Muda Tingkat I' },
-    { id: '3', kode: 'II/a', nama_pangkat: 'Pengatur Muda' },
-    { id: '4', kode: 'III/a', nama_pangkat: 'Penata Muda' },
-    { id: '5', kode: 'IV/a', nama_pangkat: 'Pembina' },
+    { id: '3', kode: 'I/c', nama_pangkat: 'Juru' },
+    { id: '4', kode: 'I/d', nama_pangkat: 'Juru Tingkat I' },
+    // Golongan II (Pengatur)
+    { id: '5', kode: 'II/a', nama_pangkat: 'Pengatur Muda' },
+    { id: '6', kode: 'II/b', nama_pangkat: 'Pengatur Muda Tingkat I' },
+    { id: '7', kode: 'II/c', nama_pangkat: 'Pengatur' },
+    { id: '8', kode: 'II/d', nama_pangkat: 'Pengatur Tingkat I' },
+    // Golongan III (Penata)
+    { id: '9', kode: 'III/a', nama_pangkat: 'Penata Muda' },
+    { id: '10', kode: 'III/b', nama_pangkat: 'Penata Muda Tingkat I' },
+    { id: '11', kode: 'III/c', nama_pangkat: 'Penata' },
+    { id: '12', kode: 'III/d', nama_pangkat: 'Penata Tingkat I' },
+    // Golongan IV (Pembina)
+    { id: '13', kode: 'IV/a', nama_pangkat: 'Pembina' },
+    { id: '14', kode: 'IV/b', nama_pangkat: 'Pembina Tingkat I' },
+    { id: '15', kode: 'IV/c', nama_pangkat: 'Pembina Utama Muda' },
+    { id: '16', kode: 'IV/d', nama_pangkat: 'Pembina Utama Madya' },
+    { id: '17', kode: 'IV/e', nama_pangkat: 'Pembina Utama' },
+    // Pangkat Golongan PPPK
+    { id: '18', kode: 'III', nama_pangkat: 'PPPK Golongan III' },
+    { id: '19', kode: 'V', nama_pangkat: 'PPPK Golongan V' },
+    { id: '20', kode: 'VII', nama_pangkat: 'PPPK Golongan VII' },
+    { id: '21', kode: 'IX', nama_pangkat: 'PPPK Golongan IX' },
   ]);
   const [unitOptions] = useState([
     { id: '1', nama_unit: 'BKPSDM' },
