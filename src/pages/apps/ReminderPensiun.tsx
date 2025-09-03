@@ -64,6 +64,7 @@ interface RetirementApplication {
   progress: number;
   submitter_name: string;
   submitter_unit: string;
+  keterangan?: string;
 }
 
 interface ChecklistItem {
@@ -197,7 +198,8 @@ export default function ReminderPensiun() {
         estimasi: app.estimasi || '14-30 hari kerja',
         progress: app.progress || 0,
         submitter_name: app.submitter_name || 'Tidak diketahui',
-        submitter_unit: app.submitter_unit || 'Tidak diketahui'
+        submitter_unit: app.submitter_unit || 'Tidak diketahui',
+        keterangan: app.keterangan
       }));
 
       setApplications(transformedApps);
@@ -319,7 +321,14 @@ export default function ReminderPensiun() {
     return <Badge className={statusInfo.className}>{statusInfo.label}</Badge>;
   };
 
-  const getApplicationStatusBadge = (status: string) => {
+  const getApplicationStatusBadge = (status: string, keterangan?: string) => {
+    // Check if this is a resubmitted application
+    const isResubmitted = keterangan?.includes('Perbaikan - Diajukan Ulang');
+    
+    if (status === 'submitted' && isResubmitted) {
+      return <Badge className="bg-blue-100 text-blue-700">Menunggu Verifikasi Ulang</Badge>;
+    }
+    
     const statusMap = {
       draft: { label: "Draft", className: "bg-gray-100 text-gray-700" },
       submitted: { label: "Menunggu Verifikasi", className: "bg-yellow-100 text-yellow-700" },
@@ -589,7 +598,8 @@ export default function ReminderPensiun() {
             judul: `Pengajuan Pensiun - ${selectedEmployee.nama}`,
             status: 'submitted',
             keterangan: `Perbaikan - Diajukan Ulang - Kategori: ${retirementCategories[retirementCategory as keyof typeof retirementCategories].label}`,
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            progress: 20  // Reset progress for resubmission
           })
           .eq('id', editingApplicationId);
 
@@ -682,7 +692,18 @@ export default function ReminderPensiun() {
       
       // Navigate back to status page or refresh
       if (isEditing) {
-        navigate('/status-usulan');
+        // Clear edit state
+        setIsEditing(false);
+        setEditingApplicationId(null);
+        setDocumentVerificationStatus({});
+        setFixedDocuments(new Set());
+        setSelectedEmployee(null);
+        setRetirementCategory("");
+        setDocuments({});
+        
+        // Navigate to status tab and refresh applications
+        await fetchApplications();
+        setActiveTab("status");
       } else {
         await fetchApplications();
         setSelectedEmployee(null);
@@ -1270,7 +1291,7 @@ export default function ReminderPensiun() {
                                 </p>
                               </div>
                             </div>
-                            {getApplicationStatusBadge(app.status)}
+                            {getApplicationStatusBadge(app.status, app.keterangan)}
                           </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -1288,7 +1309,20 @@ export default function ReminderPensiun() {
                             </div>
                           </div>
 
-                          {app.status === 'submitted' && (
+                          {app.status === 'submitted' && app.keterangan?.includes('Perbaikan - Diajukan Ulang') && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Clock className="w-4 h-4 text-blue-600" />
+                                <span className="text-sm font-medium text-blue-800">Perbaikan Sedang Diverifikasi Ulang</span>
+                              </div>
+                              <p className="text-xs text-blue-700">
+                                Perbaikan Anda telah diterima dan sedang menunggu verifikasi ulang oleh Admin Pusat. 
+                                Estimasi waktu verifikasi 3-5 hari kerja.
+                              </p>
+                            </div>
+                          )}
+
+                          {app.status === 'submitted' && !app.keterangan?.includes('Perbaikan - Diajukan Ulang') && (
                             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                               <div className="flex items-center gap-2 mb-1">
                                 <Clock className="w-4 h-4 text-yellow-600" />
@@ -1298,7 +1332,7 @@ export default function ReminderPensiun() {
                                 Pengajuan Anda sedang menunggu verifikasi oleh Admin Pusat. Estimasi waktu verifikasi 3-5 hari kerja.
                               </p>
                             </div>
-                           )}
+                          )}
 
                           {app.status === 'revision_needed' && (
                             <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
@@ -1394,7 +1428,7 @@ export default function ReminderPensiun() {
                           {app.submitter_name} • {new Date(app.tanggal_pengajuan).toLocaleDateString('id-ID')}
                         </p>
                         <div className="mt-1">
-                          {getApplicationStatusBadge(app.status)}
+                          {getApplicationStatusBadge(app.status, app.keterangan)}
                         </div>
                       </div>
                     </div>
