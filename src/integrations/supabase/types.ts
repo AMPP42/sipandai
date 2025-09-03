@@ -541,7 +541,12 @@ export type Database = {
         | "approved"
         | "rejected"
         | "completed"
-      application_type: "mutasi" | "kenaikan_pangkat" | "pensiun" | "konsultasi"
+      application_type:
+        | "mutasi"
+        | "kenaikan_pangkat"
+        | "pensiun"
+        | "konsultasi"
+        | "mutasi_terpadu"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -678,7 +683,13 @@ export const Constants = {
         "rejected",
         "completed",
       ],
-      application_type: ["mutasi", "kenaikan_pangkat", "pensiun", "konsultasi"],
+      application_type: [
+        "mutasi",
+        "kenaikan_pangkat",
+        "pensiun",
+        "konsultasi",
+        "mutasi_terpadu",
+      ],
     },
   },
 } as const

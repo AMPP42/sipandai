@@ -27,6 +27,10 @@ import {
   Building
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import type { Database } from '@/integrations/supabase/types';
+
+type Application = Database['public']['Tables']['applications']['Row'];
+type ApplicationInsert = Database['public']['Tables']['applications']['Insert'];
 
 interface Employee {
   id: string;
@@ -47,21 +51,6 @@ interface Position {
   status: string;
 }
 
-interface MutasiApplication {
-  id: string;
-  nomor_usulan: string;
-  employee_id: string;
-  employee_name: string;
-  employee_nip: string;
-  unit_asal: string;
-  position_id: string;
-  unit_tujuan: string;
-  jabatan_tujuan: string;
-  alasan_mutasi: string;
-  status: string;
-  tanggal_usulan: string;
-  created_at: string;
-}
 
 const DOCUMENT_REQUIREMENTS = [
   'Surat Pernyataan Lolos Butuh dari PPK Instansi Asal (Asli)',
@@ -88,7 +77,7 @@ export default function PengajuanMutasiTerpadu() {
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
-  const [applications, setApplications] = useState<MutasiApplication[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [searchEmployee, setSearchEmployee] = useState('');
   const [searchPosition, setSearchPosition] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -190,13 +179,13 @@ export default function PengajuanMutasiTerpadu() {
       const sequence = String(existingApps?.length + 1 || 1).padStart(4, '0');
       const nomorUsulan = `MT/${currentYear}/${sequence}`;
 
-      const applicationData = {
-        jenis: 'mutasi_terpadu',
+      const applicationData: ApplicationInsert = {
+        jenis: 'mutasi_terpadu' as const,
         judul: `Pengajuan Mutasi Terpadu - ${selectedEmployee.nama}`,
-        submitter_id: user?.id,
+        submitter_id: user?.id || '',
         submitter_name: user?.name || '',
         submitter_unit: user?.unit || '',
-        status: 'draft',
+        status: 'draft' as const,
         estimasi: JSON.stringify({
           employee_id: selectedEmployee.id,
           employee_name: selectedEmployee.nama,
@@ -212,7 +201,7 @@ export default function PengajuanMutasiTerpadu() {
 
       const { error } = await supabase
         .from('applications')
-        .insert([applicationData]);
+        .insert(applicationData);
 
       if (error) throw error;
 
