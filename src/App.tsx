@@ -16,6 +16,7 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 // Admin pages
+import PanelAdmin from "./pages/PanelAdmin";
 import Verifikasi from "./pages/Verifikasi";
 import AdminPegawai from "./pages/AdminPegawai";
 import AdminFormasi from "./pages/AdminFormasi";
@@ -91,19 +92,20 @@ const App = () => (
               </ProtectedRoute>
             } />
 
-            {/* Admin routes (admin_pusat only) */}
-            <Route path="/verifikasi" element={
+            {/* Main Admin Panel route */}
+            <Route path="/admin" element={
               <ProtectedRoute requiredRole="admin_pusat">
                 <DashboardLayout>
-                  <Verifikasi />
+                  <PanelAdmin />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
 
-            <Route path="/admin" element={
+            {/* Legacy admin routes - redirect to main panel */}
+            <Route path="/verifikasi" element={
               <ProtectedRoute requiredRole="admin_pusat">
                 <DashboardLayout>
-                  <AdminPegawai />
+                  <PanelAdmin />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
@@ -111,7 +113,7 @@ const App = () => (
             <Route path="/admin/pegawai" element={
               <ProtectedRoute requiredRole="admin_pusat">
                 <DashboardLayout>
-                  <AdminPegawai />
+                  <PanelAdmin />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
@@ -119,7 +121,7 @@ const App = () => (
             <Route path="/admin/formasi" element={
               <ProtectedRoute requiredRole="admin_pusat">
                 <DashboardLayout>
-                  <AdminFormasi />
+                  <PanelAdmin />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
@@ -127,7 +129,7 @@ const App = () => (
             <Route path="/admin/users" element={
               <ProtectedRoute requiredRole="admin_pusat">
                 <DashboardLayout>
-                  <AdminUsers />
+                  <PanelAdmin />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
@@ -135,7 +137,7 @@ const App = () => (
             <Route path="/admin/reports" element={
               <ProtectedRoute requiredRole="admin_pusat">
                 <DashboardLayout>
-                  <AdminReports />
+                  <PanelAdmin />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
