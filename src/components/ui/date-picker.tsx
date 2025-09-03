@@ -30,7 +30,7 @@ export function DatePicker({ date, onSelect, placeholder = "Pilih tanggal", clas
   const [isOpen, setIsOpen] = React.useState(false)
 
   const currentYear = new Date().getFullYear()
-  const yearOptions = Array.from({ length: 100 }, (_, i) => currentYear - i)
+  const yearOptions = Array.from({ length: 150 }, (_, i) => currentYear - 50 + i)
 
   const handleYearChange = (year: string) => {
     const newDate = new Date(month)
