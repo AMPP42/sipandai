@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   Calendar, 
   Clock, 
@@ -51,6 +52,18 @@ interface PensiunData {
   statusPersiapan: 'belum_mulai' | 'dalam_proses' | 'hampir_selesai' | 'siap';
 }
 
+interface RetirementApplication {
+  id: string;
+  judul: string;
+  jenis: string;
+  status: string;
+  tanggal_pengajuan: string;
+  estimasi: string;
+  progress: number;
+  submitter_name: string;
+  submitter_unit: string;
+}
+
 interface ChecklistItem {
   id: string;
   nama: string;
@@ -67,11 +80,15 @@ export default function ReminderPensiun() {
   const [retirementCategory, setRetirementCategory] = useState("");
   const [documents, setDocuments] = useState<{ [key: string]: string }>({});
   const [pensiunData, setPensiunData] = useState<PensiunData[]>([]);
+  const [applications, setApplications] = useState<RetirementApplication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingApplications, setLoadingApplications] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchEmployeeData();
+    fetchApplications();
   }, []);
 
   const fetchEmployeeData = async () => {
@@ -132,53 +149,42 @@ export default function ReminderPensiun() {
     }
   };
 
-  const checklistPersiapan: ChecklistItem[] = [
-    {
-      id: "1",
-      nama: "Surat Permohonan Pensiun",
-      deskripsi: "Mengajukan surat permohonan pensiun kepada atasan langsung",
-      completed: true,
-      priority: "high",
-      deadline: "3 bulan sebelum TMT Pensiun"
-    },
-    {
-      id: "2",
-      nama: "Penyelesaian Tugas & Tanggungjawab",
-      deskripsi: "Menyelesaikan semua tugas dan tanggung jawab yang sedang berjalan",
-      completed: true,
-      priority: "high"
-    },
-    {
-      id: "3",
-      nama: "Serah Terima Jabatan",
-      deskripsi: "Melakukan serah terima jabatan kepada pejabat pengganti",
-      completed: false,
-      priority: "high",
-      deadline: "1 bulan sebelum TMT Pensiun"
-    },
-    {
-      id: "4",
-      nama: "Kliring Administrasi",
-      deskripsi: "Menyelesaikan kliring dengan berbagai unit terkait",
-      completed: false,
-      priority: "medium"
-    },
-    {
-      id: "5",
-      nama: "Penyelesaian Keuangan",
-      deskripsi: "Menyelesaikan semua urusan keuangan dan gaji",
-      completed: false,
-      priority: "medium"
-    },
-    {
-      id: "6",
-      nama: "Surat Keterangan Pensiun",
-      deskripsi: "Mengurus surat keterangan pensiun dari BKN",
-      completed: false,
-      priority: "high",
-      deadline: "2 minggu sebelum TMT Pensiun"
+  const fetchApplications = async () => {
+    try {
+      setLoadingApplications(true);
+      const { data: apps, error } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('jenis', 'pensiun')
+        .eq('submitter_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const transformedApps: RetirementApplication[] = (apps || []).map(app => ({
+        id: app.id,
+        judul: app.judul || 'Pengajuan Pensiun',
+        jenis: app.jenis,
+        status: app.status,
+        tanggal_pengajuan: app.tanggal_pengajuan || app.created_at,
+        estimasi: app.estimasi || '14-30 hari kerja',
+        progress: app.progress || 0,
+        submitter_name: app.submitter_name || 'Tidak diketahui',
+        submitter_unit: app.submitter_unit || 'Tidak diketahui'
+      }));
+
+      setApplications(transformedApps);
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+      toast({
+        title: "Error",
+        description: "Gagal mengambil data pengajuan",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingApplications(false);
     }
-  ];
+  };
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
@@ -190,6 +196,32 @@ export default function ReminderPensiun() {
     
     const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.belum_mulai;
     return <Badge className={statusInfo.className}>{statusInfo.label}</Badge>;
+  };
+
+  const getApplicationStatusBadge = (status: string) => {
+    const statusMap = {
+      draft: { label: "Draft", className: "bg-gray-100 text-gray-700" },
+      submitted: { label: "Menunggu Verifikasi", className: "bg-yellow-100 text-yellow-700" },
+      in_review: { label: "Sedang Ditinjau", className: "bg-blue-100 text-blue-700" },
+      approved: { label: "Disetujui", className: "bg-green-100 text-green-700" },
+      rejected: { label: "Ditolak", className: "bg-red-100 text-red-700" },
+      revision_needed: { label: "Perlu Revisi", className: "bg-orange-100 text-orange-700" }
+    };
+    
+    const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.draft;
+    return <Badge className={statusInfo.className}>{statusInfo.label}</Badge>;
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'draft': return <FileText className="w-4 h-4" />;
+      case 'submitted': return <Clock className="w-4 h-4" />;
+      case 'in_review': return <Search className="w-4 h-4" />;
+      case 'approved': return <CheckCircle className="w-4 h-4" />;
+      case 'rejected': return <AlertTriangle className="w-4 h-4" />;
+      case 'revision_needed': return <AlertTriangle className="w-4 h-4" />;
+      default: return <FileText className="w-4 h-4" />;
+    }
   };
 
   const getPriorityColor = (priority: string) => {
@@ -383,19 +415,44 @@ export default function ReminderPensiun() {
       return;
     }
 
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "User tidak terautentikasi",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
-      // In a real implementation, this would create a retirement application
-      // For now, we'll just show a success message
+      // Create retirement application record
+      const { error } = await supabase
+        .from('applications')
+        .insert({
+          submitter_id: user.id,
+          submitter_name: selectedEmployee.nama,
+          submitter_unit: selectedEmployee.unitKerja,
+          judul: `Pengajuan Pensiun - ${selectedEmployee.nama}`,
+          jenis: 'pensiun',
+          status: 'submitted',
+          keterangan: `Kategori: ${retirementCategories[retirementCategory as keyof typeof retirementCategories].label}`,
+          tanggal_pengajuan: new Date().toISOString(),
+          estimasi: '14-30 hari kerja'
+        });
+
+      if (error) throw error;
+
       toast({
         title: "Berhasil",
-        description: `Pengajuan pensiun untuk ${selectedEmployee.nama} berhasil disubmit!`,
+        description: `Pengajuan pensiun untuk ${selectedEmployee.nama} berhasil disubmit dan sedang menunggu verifikasi!`,
       });
       
-      // Reset form
+      // Refresh applications and redirect to status tab
+      await fetchApplications();
       setSelectedEmployee(null);
       setRetirementCategory("");
       setDocuments({});
-      setActiveTab("dashboard");
+      setActiveTab("status");
     } catch (error) {
       console.error('Error submitting retirement application:', error);
       toast({
@@ -438,22 +495,18 @@ export default function ReminderPensiun() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Dashboard Countdown
-            </TabsTrigger>
-            <TabsTrigger value="checklist" className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
-              Checklist Persiapan
             </TabsTrigger>
             <TabsTrigger value="pengajuan" className="flex items-center gap-2">
               <Send className="w-4 h-4" />
               Pengajuan Pensiun
             </TabsTrigger>
-            <TabsTrigger value="reminder" className="flex items-center gap-2">
-              <Bell className="w-4 h-4" />
-              Auto Reminder
+            <TabsTrigger value="status" className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" />
+              Status Usulan
             </TabsTrigger>
             <TabsTrigger value="documents" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
@@ -582,7 +635,7 @@ export default function ReminderPensiun() {
                             </Badge>
                           )}
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
                           <div>
                             <p className="text-muted-foreground">NIP</p>
                             <p className="font-mono">{pegawai.nip}</p>
@@ -637,80 +690,6 @@ export default function ReminderPensiun() {
                 ))}
               </div>
             )}
-          </TabsContent>
-
-          {/* Tab: Checklist Preparation */}
-          <TabsContent value="checklist" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Checklist Persiapan Pensiun</CardTitle>
-                <CardDescription>
-                  Panduan langkah-langkah persiapan pensiun yang harus diselesaikan
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="font-semibold">Progress Keseluruhan</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {checklistPersiapan.filter(item => item.completed).length} dari {checklistPersiapan.length} langkah selesai
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-primary">
-                        {hitungProgressPersiapan(checklistPersiapan)}%
-                      </p>
-                      <Progress value={hitungProgressPersiapan(checklistPersiapan)} className="w-32 h-2" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {checklistPersiapan.map((item) => (
-                      <Card key={item.id} className={`border ${item.completed ? 'bg-green-50 border-green-200' : 'border-border'}`}>
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            {item.completed ? (
-                              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
-                            ) : (
-                              <Clock className={`w-5 h-5 ${getPriorityColor(item.priority)} mt-0.5`} />
-                            )}
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-medium">{item.nama}</h4>
-                                <Badge 
-                                  className={
-                                    item.priority === 'high' ? 'bg-red-100 text-red-700' :
-                                    item.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                                    'bg-green-100 text-green-700'
-                                  }
-                                >
-                                  {item.priority === 'high' ? 'Prioritas Tinggi' :
-                                   item.priority === 'medium' ? 'Prioritas Sedang' :
-                                   'Prioritas Rendah'}
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-muted-foreground mb-2">{item.deskripsi}</p>
-                              {item.deadline && (
-                                <p className="text-xs text-muted-foreground">
-                                  <strong>Deadline:</strong> {item.deadline}
-                                </p>
-                              )}
-                            </div>
-                            <Button 
-                              variant={item.completed ? "outline" : "default"}
-                              size="sm"
-                            >
-                              {item.completed ? "Selesai" : "Tandai Selesai"}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* Tab: Pengajuan Pensiun */}
@@ -855,8 +834,12 @@ export default function ReminderPensiun() {
 
                 {/* Submit Button */}
                 <div className="flex justify-end gap-4">
-                  <Button variant="outline" onClick={() => setActiveTab("dashboard")}>
-                    Kembali
+                  <Button 
+                    variant="outline"
+                    onClick={() => setActiveTab("status")}
+                    className="min-w-32"
+                  >
+                    Lihat Status Pengajuan
                   </Button>
                   <Button 
                     onClick={handleSubmitPengajuan}
@@ -887,25 +870,136 @@ export default function ReminderPensiun() {
             </Card>
           </TabsContent>
 
-          {/* Tab: Auto Reminder */}
-          <TabsContent value="reminder" className="space-y-6">
+          {/* Tab: Status Usulan */}
+          <TabsContent value="status" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Sistem Auto Reminder</CardTitle>
+                <CardTitle>Status Usulan Pensiun</CardTitle>
                 <CardDescription>
-                  Konfigurasi reminder otomatis untuk persiapan pensiun pegawai
+                  Pantau status pengajuan usulan pensiun yang telah disubmit
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <Bell className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Sistem Reminder Segera Hadir</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Fitur auto-reminder akan mengirimkan notifikasi email dan SMS berdasarkan timeline pensiun.
-                  </p>
-                  <Button disabled>
-                    Konfigurasi Reminder
-                  </Button>
+                {loadingApplications ? (
+                  <div className="flex justify-center items-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                    <span className="ml-2">Memuat data pengajuan...</span>
+                  </div>
+                ) : applications.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Belum Ada Pengajuan</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Anda belum memiliki pengajuan pensiun yang disubmit.
+                    </p>
+                    <Button onClick={() => setActiveTab("pengajuan")}>
+                      <Send className="w-4 h-4 mr-2" />
+                      Buat Pengajuan Baru
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {applications.map((app) => (
+                      <Card key={app.id} className="border">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              {getStatusIcon(app.status)}
+                              <div>
+                                <h4 className="font-semibold">{app.judul}</h4>
+                                <p className="text-sm text-muted-foreground">
+                                  Diajukan pada {new Date(app.tanggal_pengajuan).toLocaleDateString('id-ID')}
+                                </p>
+                              </div>
+                            </div>
+                            {getApplicationStatusBadge(app.status)}
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Nama Pegawai</p>
+                              <p className="font-medium">{app.submitter_name}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Unit Kerja</p>
+                              <p className="font-medium">{app.submitter_unit}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Estimasi Proses</p>
+                              <p className="font-medium">{app.estimasi}</p>
+                            </div>
+                          </div>
+
+                          {app.status === 'submitted' && (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Clock className="w-4 h-4 text-yellow-600" />
+                                <span className="text-sm font-medium text-yellow-800">Sedang Menunggu Verifikasi</span>
+                              </div>
+                              <p className="text-xs text-yellow-700">
+                                Pengajuan Anda sedang menunggu verifikasi oleh Admin Pusat. Estimasi waktu verifikasi 3-5 hari kerja.
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">Progress:</span>
+                              <Progress value={app.progress} className="w-32 h-2" />
+                              <span className="text-sm font-medium">{app.progress}%</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm">
+                                <FileText className="w-3 h-3 mr-1" />
+                                Detail
+                              </Button>
+                              {app.status === 'approved' && (
+                                <Button variant="outline" size="sm">
+                                  <Download className="w-3 h-3 mr-1" />
+                                  Download
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Recent Timeline */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Timeline Terbaru</CardTitle>
+                <CardDescription>
+                  Aktivitas terbaru terkait pengajuan pensiun
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {applications.slice(0, 3).map((app) => (
+                    <div key={app.id} className="flex items-start gap-3 pb-3 border-b last:border-b-0">
+                      <div className={`p-2 rounded-full ${
+                        app.status === 'approved' ? 'bg-green-100' :
+                        app.status === 'submitted' ? 'bg-yellow-100' :
+                        app.status === 'rejected' ? 'bg-red-100' :
+                        'bg-blue-100'
+                      }`}>
+                        {getStatusIcon(app.status)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium">{app.judul}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {app.submitter_name} • {new Date(app.tanggal_pengajuan).toLocaleDateString('id-ID')}
+                        </p>
+                        <div className="mt-1">
+                          {getApplicationStatusBadge(app.status)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
