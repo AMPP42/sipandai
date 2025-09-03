@@ -164,8 +164,12 @@ export default function Dashboard() {
     }
   };
 
-  const handleQuickAction = (href: string) => {
-    navigate(href);
+  const handleQuickAction = (href: string, tab?: string) => {
+    if (tab && href === '/panel-admin') {
+      navigate(`${href}?tab=${tab}`);
+    } else {
+      navigate(href);
+    }
   };
 
   const statsCards = user?.role === 'admin_pusat' 
@@ -240,10 +244,10 @@ export default function Dashboard() {
 
   const quickActions = user?.role === 'admin_pusat'
     ? [
-        { title: 'Verifikasi Usulan', desc: 'Review dan verifikasi usulan yang masuk', href: '/verifikasi', icon: CheckCircle, badge: stats.pendingApplications > 0 ? `${stats.pendingApplications} baru` : undefined },
-        { title: 'Database Pegawai', desc: 'Kelola data master pegawai', href: '/admin-pegawai', icon: Users },
-        { title: 'Laporan Statistik', desc: 'Lihat laporan dan analisis data', href: '/admin-reports', icon: BarChart3 },
-        { title: 'User Management', desc: 'Kelola akun pengguna sistem', href: '/admin-users', icon: Users }
+        { title: 'Verifikasi Usulan', desc: 'Review dan verifikasi usulan yang masuk', href: '/panel-admin', tab: 'verifikasi-usulan', icon: CheckCircle, badge: stats.pendingApplications > 0 ? `${stats.pendingApplications} baru` : undefined },
+        { title: 'Database Pegawai', desc: 'Kelola data master pegawai', href: '/panel-admin', tab: 'database-pegawai', icon: Users },
+        { title: 'Laporan Statistik', desc: 'Lihat laporan dan analisis data', href: '/panel-admin', tab: 'statistik-laporan', icon: BarChart3 },
+        { title: 'User Management', desc: 'Kelola akun pengguna sistem', href: '/panel-admin', tab: 'user-management', icon: Users }
       ]
     : [
         { title: 'Pengajuan Mutasi', desc: 'Ajukan usulan mutasi pegawai', href: '/apps/pengajuan-mutasi', icon: FileText },
@@ -337,7 +341,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="grid grid-cols-1 gap-3">
               {quickActions.map((action, index) => (
-                <div key={index} className="p-4 border border-gray-200 rounded-lg hover:border-brand-300 hover:shadow-sm transition-all cursor-pointer" onClick={() => handleQuickAction(action.href)}>
+                <div key={index} className="p-4 border border-gray-200 rounded-lg hover:border-brand-300 hover:shadow-sm transition-all cursor-pointer" onClick={() => handleQuickAction(action.href, action.tab)}>
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-brand-100 rounded-lg flex-shrink-0">
                       <action.icon className="w-5 h-5 text-brand-600" />
