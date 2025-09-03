@@ -760,30 +760,141 @@ export default function ReminderPensiun() {
       .replace(/{kontak_admin}/g, user?.email || 'admin@instansi.go.id');
   };
 
+  // Phone number validation and formatting
+  const validateAndFormatPhoneNumber = (phoneNumber: string): { isValid: boolean; formattedNumber: string; error?: string } => {
+    if (!phoneNumber || phoneNumber.trim() === '') {
+      return { isValid: false, formattedNumber: '', error: 'Nomor handphone kosong' };
+    }
+    
+    // Remove all non-digit characters
+    const cleanNumber = phoneNumber.replace(/\D/g, '');
+    
+    // Check if number starts with 0 (Indonesian format), replace with 62
+    let formattedNumber = cleanNumber;
+    if (cleanNumber.startsWith('0')) {
+      formattedNumber = '62' + cleanNumber.substring(1);
+    } else if (!cleanNumber.startsWith('62')) {
+      formattedNumber = '62' + cleanNumber;
+    }
+    
+    // Validate Indonesian phone number format (should be 10-15 digits after 62)
+    if (formattedNumber.length < 10 || formattedNumber.length > 15) {
+      return { isValid: false, formattedNumber, error: 'Format nomor tidak valid' };
+    }
+    
+    return { isValid: true, formattedNumber };
+  };
+
+  // Preview WhatsApp link function
+  const previewWhatsAppLink = (employee: PensiunData) => {
+    const validation = validateAndFormatPhoneNumber(employee.handphone || '');
+    if (!validation.isValid) {
+      toast({
+        title: "Preview Error",
+        description: `${employee.nama}: ${validation.error}`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const message = generateReminderMessage(reminderTemplates.whatsapp, employee);
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${validation.formattedNumber}?text=${encodedMessage}`;
+    
+    console.log('WhatsApp Preview:', {
+      employee: employee.nama,
+      originalNumber: employee.handphone,
+      formattedNumber: validation.formattedNumber,
+      url: whatsappUrl
+    });
+    
+    toast({
+      title: "Preview Link",
+      description: `${employee.nama}: wa.me/${validation.formattedNumber}`,
+    });
+  };
+
   // Direct WhatsApp reminder function
-  const handleDirectWhatsAppReminder = () => {
+  const handleDirectWhatsAppReminder = async () => {
     const selectedEmployees = pensiunData.filter(emp => 
       selectedEmployeesForReminder.has(emp.id)
     );
 
-    const adminNumber = "6282245911976";
+    if (selectedEmployees.length === 0) {
+      toast({
+        title: "Error",
+        description: "Pilih minimal satu pegawai untuk mengirim reminder WhatsApp",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate all phone numbers first
+    const validEmployees = [];
+    const invalidEmployees = [];
     
     selectedEmployees.forEach(employee => {
-      // Assume employee has handphone field, if not we'll use a placeholder
-      const employeeNumber = employee.handphone || "628123456789"; // Fallback number
+      const validation = validateAndFormatPhoneNumber(employee.handphone || '');
+      if (validation.isValid) {
+        validEmployees.push({ ...employee, formattedNumber: validation.formattedNumber });
+      } else {
+        invalidEmployees.push({ employee, error: validation.error });
+      }
+    });
+
+    // Show errors for invalid numbers
+    if (invalidEmployees.length > 0) {
+      const errorMessage = invalidEmployees.map(item => 
+        `${item.employee.nama}: ${item.error}`
+      ).join('\n');
+      
+      toast({
+        title: "Nomor Tidak Valid",
+        description: `${invalidEmployees.length} pegawai memiliki nomor tidak valid. Periksa console untuk detail.`,
+        variant: "destructive"
+      });
+      
+      console.error('Invalid phone numbers:', invalidEmployees);
+    }
+
+    if (validEmployees.length === 0) {
+      return;
+    }
+
+    // Confirm batch sending
+    const shouldProceed = window.confirm(
+      `Akan membuka ${validEmployees.length} tab WhatsApp. Pastikan popup blocker dinonaktifkan. Lanjutkan?`
+    );
+    
+    if (!shouldProceed) return;
+
+    // Open WhatsApp links with delay to avoid popup blocker
+    for (let i = 0; i < validEmployees.length; i++) {
+      const employee = validEmployees[i];
       const message = generateReminderMessage(reminderTemplates.whatsapp, employee);
       const encodedMessage = encodeURIComponent(message);
       
-      // Create WhatsApp link using WhatsApp Business API format
-      const whatsappUrl = `https://api.whatsapp.com/send/?phone=${employeeNumber}&text=${encodedMessage}&type=phone_number&app_absent=0`;
+      // Use wa.me format as recommended by WhatsApp
+      const whatsappUrl = `https://wa.me/${employee.formattedNumber}?text=${encodedMessage}`;
+      
+      console.log('Opening WhatsApp for:', {
+        employee: employee.nama,
+        number: employee.formattedNumber,
+        url: whatsappUrl
+      });
       
       // Open in new window/tab
       window.open(whatsappUrl, '_blank');
-    });
+      
+      // Add delay between opens to avoid popup blocker (except for last one)
+      if (i < validEmployees.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
 
     toast({
       title: "WhatsApp Links Dibuka",
-      description: `${selectedEmployees.length} link WhatsApp telah dibuka. Silakan kirim pesan manual dari browser/tab baru.`
+      description: `${validEmployees.length} link WhatsApp berhasil dibuka${invalidEmployees.length > 0 ? `, ${invalidEmployees.length} gagal karena nomor tidak valid` : ''}.`
     });
   };
 
@@ -1691,16 +1802,30 @@ export default function ReminderPensiun() {
                                 </p>
                               </div>
                             </div>
-                            <div className="text-right">
-                              {pegawai.sisaHari <= 90 && (
-                                <Badge className="bg-red-100 text-red-700 mb-2">URGEN</Badge>
-                              )}
-                              <div className="text-xs text-muted-foreground">
-                                <p>📧 Email: Tersedia</p>
-                                <p>📱 HP: Tersedia</p>
-                                <p>💬 WhatsApp: Tersedia</p>
-                              </div>
-                            </div>
+                      <div className="text-right">
+                        {pegawai.sisaHari <= 90 && (
+                          <Badge className="bg-red-100 text-red-700 mb-2">URGEN</Badge>
+                        )}
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <p>📧 Email: {pegawai.email || 'Tidak tersedia'}</p>
+                          <p>📱 HP: {pegawai.handphone || 'Tidak tersedia'}</p>
+                          <div className="flex gap-1">
+                            <span>💬 WhatsApp:</span>
+                            {pegawai.handphone ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-5 px-2 text-xs"
+                                onClick={() => previewWhatsAppLink(pegawai)}
+                              >
+                                Preview
+                              </Button>
+                            ) : (
+                              <span>Tidak tersedia</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                           </div>
                         </div>
                       ))}
