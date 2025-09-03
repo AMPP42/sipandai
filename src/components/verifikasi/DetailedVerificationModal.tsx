@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle, XCircle, Clock, FileText, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, FileText, AlertCircle, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ApplicationItem {
@@ -44,6 +44,17 @@ interface DocumentVerification {
   admin_notes?: string;
   verified_by?: string;
   verified_at?: string;
+  document_id?: string;
+  document_link?: string;
+}
+
+interface ActualDocument {
+  id: string;
+  title: string;
+  drive_link?: string;
+  document_category?: string;
+  document_index?: number;
+  created_at: string;
 }
 
 interface Props {
@@ -101,6 +112,7 @@ const getRequiredDocuments = (application: ApplicationItem) => {
 export default function DetailedVerificationModal({ open, onOpenChange, application, onVerificationComplete }: Props) {
   const { user } = useAuth();
   const [documentVerifications, setDocumentVerifications] = useState<DocumentVerification[]>([]);
+  const [actualDocuments, setActualDocuments] = useState<ActualDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -115,19 +127,30 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Load actual documents first
+      const { data: documents, error: documentsError } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('application_id', application.id)
+        .order('document_index');
+
+      if (documentsError) throw documentsError;
+      setActualDocuments((documents || []) as ActualDocument[]);
+
+      // Load existing verifications
+      const { data: verifications, error: verificationsError } = await supabase
         .from('document_verifications')
         .select('*')
         .eq('application_id', application.id)
         .order('document_type');
 
-      if (error) throw error;
+      if (verificationsError) throw verificationsError;
 
-      // If no verifications exist, create initial ones
-      if (!data || data.length === 0) {
-        await initializeDocumentVerifications();
+      // If no verifications exist, create initial ones based on actual uploaded documents
+      if (!verifications || verifications.length === 0) {
+        await initializeDocumentVerifications(documents || []);
       } else {
-        setDocumentVerifications(data as DocumentVerification[]);
+        setDocumentVerifications(verifications as DocumentVerification[]);
       }
     } catch (error) {
       console.error('Error loading document verifications:', error);
@@ -137,15 +160,16 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
     }
   };
 
-  const initializeDocumentVerifications = async () => {
-    if (!application) return;
+  const initializeDocumentVerifications = async (documents: ActualDocument[]) => {
+    if (!application || !documents || documents.length === 0) return;
 
-    const requiredDocs = getRequiredDocuments(application);
-    const initialVerifications = requiredDocs.map(doc => ({
+    const initialVerifications = documents.map(doc => ({
       application_id: application.id,
-      document_type: doc.type,
-      document_name: doc.name,
-      status: 'pending' as const
+      document_type: `doc_${doc.document_index || 0}`,
+      document_name: doc.title,
+      status: 'pending' as const,
+      document_id: doc.id,
+      document_link: doc.drive_link
     }));
 
     try {
@@ -370,6 +394,29 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
                             <h4 className="font-medium">{verification.document_name}</h4>
                             {getStatusBadge(verification.status)}
                           </div>
+
+                          {/* Document Link */}
+                          {verification.document_link && (
+                            <div className="mb-3 p-2 bg-gray-50 rounded border">
+                              <div className="flex items-center gap-2 mb-1">
+                                <FileText className="w-4 h-4 text-blue-600" />
+                                <span className="text-sm font-medium text-gray-700">Dokumen yang diupload:</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <a 
+                                  href={verification.document_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                  Lihat Dokumen
+                                </a>
+                                <span className="text-xs text-gray-500">•</span>
+                                <span className="text-xs text-gray-500">Google Drive</span>
+                              </div>
+                            </div>
+                          )}
                           
                           <div className="space-y-3">
                             <div>

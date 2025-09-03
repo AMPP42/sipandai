@@ -427,7 +427,7 @@ export default function ReminderPensiun() {
 
     try {
       // Create retirement application record
-      const { error } = await supabase
+      const { data: applicationData, error: applicationError } = await supabase
         .from('applications')
         .insert({
           submitter_id: user.id,
@@ -439,9 +439,36 @@ export default function ReminderPensiun() {
           keterangan: `Kategori: ${retirementCategories[retirementCategory as keyof typeof retirementCategories].label}`,
           tanggal_pengajuan: new Date().toISOString(),
           estimasi: '14-30 hari kerja'
+        })
+        .select()
+        .single();
+
+      if (applicationError) throw applicationError;
+
+      // Insert documents with their links
+      const documentInserts = Object.entries(documents)
+        .filter(([key, link]) => link.trim() !== '')
+        .map(([key, link]) => {
+          const index = parseInt(key.replace('doc_', ''));
+          const documentName = retirementCategories[retirementCategory as keyof typeof retirementCategories].documents[index];
+          
+          return {
+            application_id: applicationData.id,
+            title: documentName,
+            drive_link: link.trim(),
+            created_by: user.id,
+            document_category: 'pensiun',
+            document_index: index
+          };
         });
 
-      if (error) throw error;
+      if (documentInserts.length > 0) {
+        const { error: documentsError } = await supabase
+          .from('documents')
+          .insert(documentInserts);
+
+        if (documentsError) throw documentsError;
+      }
 
       toast({
         title: "Berhasil",

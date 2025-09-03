@@ -103,6 +103,8 @@ export type Database = {
           admin_notes: string | null
           application_id: string
           created_at: string
+          document_id: string | null
+          document_link: string | null
           document_name: string
           document_type: string
           id: string
@@ -115,6 +117,8 @@ export type Database = {
           admin_notes?: string | null
           application_id: string
           created_at?: string
+          document_id?: string | null
+          document_link?: string | null
           document_name: string
           document_type: string
           id?: string
@@ -127,6 +131,8 @@ export type Database = {
           admin_notes?: string | null
           application_id?: string
           created_at?: string
+          document_id?: string | null
+          document_link?: string | null
           document_name?: string
           document_type?: string
           id?: string
@@ -135,13 +141,23 @@ export type Database = {
           verified_at?: string | null
           verified_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "document_verifications_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       documents: {
         Row: {
           application_id: string
           created_at: string
           created_by: string
+          document_category: string | null
+          document_index: number | null
           drive_link: string | null
           id: string
           title: string
@@ -150,6 +166,8 @@ export type Database = {
           application_id: string
           created_at?: string
           created_by: string
+          document_category?: string | null
+          document_index?: number | null
           drive_link?: string | null
           id?: string
           title: string
@@ -158,6 +176,8 @@ export type Database = {
           application_id?: string
           created_at?: string
           created_by?: string
+          document_category?: string | null
+          document_index?: number | null
           drive_link?: string | null
           id?: string
           title?: string
