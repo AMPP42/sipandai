@@ -139,7 +139,30 @@ export default function AdminUsers() {
         return;
       }
 
-      // Generate a new UUID for the user
+      // Check if email already exists in profiles
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', newUser.email)
+        .single();
+
+      if (existingProfile) {
+        toast({
+          title: "Error", 
+          description: "Email sudah terdaftar dalam sistem",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('Creating new user profile:', {
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        unit: newUser.unit
+      });
+
+      // Generate a new UUID for the user profile
       const userId = crypto.randomUUID();
       
       // Create user profile in profiles table
@@ -154,11 +177,16 @@ export default function AdminUsers() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+
+      console.log('User profile created successfully:', data);
 
       toast({
         title: "Berhasil",
-        description: "User berhasil ditambahkan ke sistem"
+        description: `Profile user ${newUser.name} berhasil ditambahkan. User perlu mendaftar dengan email ${newUser.email} untuk dapat login.`
       });
 
       // Reset form and close dialog
@@ -175,6 +203,7 @@ export default function AdminUsers() {
       loadUsers();
 
     } catch (error: any) {
+      console.error('Error creating user:', error);
       toast({
         title: "Error",
         description: error.message || "Gagal membuat user",
