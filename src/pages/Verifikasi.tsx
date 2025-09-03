@@ -44,7 +44,11 @@ interface ApplicationItem {
   created_at: string;
 }
 
-export default function Verifikasi() {
+interface VerifikasiProps {
+  showResubmittedOnly?: boolean;
+}
+
+export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiProps) {
   const { user } = useAuth();
   const [applicationList, setApplicationList] = useState<ApplicationItem[]>([]);
   const [filteredApplications, setFilteredApplications] = useState<ApplicationItem[]>([]);
@@ -127,12 +131,22 @@ export default function Verifikasi() {
   };
 
   const filterApplications = () => {
+    let filtered = applicationList;
+
+    // Filter for resubmitted applications if showResubmittedOnly is true
+    if (showResubmittedOnly) {
+      filtered = filtered.filter(app => 
+        app.keterangan?.includes('Perbaikan - Diajukan Ulang') ||
+        (app.status === 'submitted' && app.catatan_reviewer)
+      );
+    }
+
     if (filterType === 'all') {
-      setFilteredApplications(applicationList);
+      setFilteredApplications(filtered);
     } else if (filterType === 'mutasi') {
-      setFilteredApplications(applicationList.filter(app => app.type === 'usulan_mutasi'));
+      setFilteredApplications(filtered.filter(app => app.type === 'usulan_mutasi'));
     } else {
-      setFilteredApplications(applicationList.filter(app => 
+      setFilteredApplications(filtered.filter(app => 
         app.type === 'application' && app.jenis === filterType
       ));
     }

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Database, CheckCircle, UserCheck, Users, BarChart3 } from "lucide-react";
+import { Database, CheckCircle, UserCheck, Users, BarChart3, MessageSquare } from "lucide-react";
 
 // Import existing admin components
 import AdminPegawai from "./AdminPegawai";
@@ -27,7 +27,7 @@ export default function PanelAdmin() {
 
         {/* Admin Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="database-pegawai" className="flex items-center gap-2">
               <Database className="w-4 h-4" />
               Database Pegawai
@@ -35,6 +35,10 @@ export default function PanelAdmin() {
             <TabsTrigger value="verifikasi-usulan" className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4" />
               Verifikasi Usulan
+            </TabsTrigger>
+            <TabsTrigger value="perbaikan-usulan" className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              Perbaikan Usulan
             </TabsTrigger>
             <TabsTrigger value="formasi-jabatan" className="flex items-center gap-2">
               <UserCheck className="w-4 h-4" />
@@ -81,6 +85,23 @@ export default function PanelAdmin() {
               </CardHeader>
               <CardContent>
                 <Verifikasi />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="perbaikan-usulan" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  Perbaikan Usulan
+                </CardTitle>
+                <CardDescription>
+                  Usulan yang telah diperbaiki dan diajukan kembali
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Verifikasi showResubmittedOnly />
               </CardContent>
             </Card>
           </TabsContent>

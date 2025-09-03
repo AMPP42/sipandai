@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation, useNavigate } from 'react-router-dom';
 import DocumentVerificationStatus from "@/components/applications/DocumentVerificationStatus";
 import { 
   Calendar, 
@@ -84,13 +85,27 @@ export default function ReminderPensiun() {
   const [applications, setApplications] = useState<RetirementApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingApplications, setLoadingApplications] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingApplicationId, setEditingApplicationId] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchEmployeeData();
     fetchApplications();
-  }, []);
+    
+    // Check if we're in edit mode
+    const urlParams = new URLSearchParams(location.search);
+    const editId = urlParams.get('edit');
+    if (editId) {
+      setIsEditing(true);
+      setEditingApplicationId(editId);
+      setActiveTab("pengajuan");
+      loadApplicationData(editId);
+    }
+  }, [location.search]);
 
   const fetchEmployeeData = async () => {
     try {
@@ -184,6 +199,78 @@ export default function ReminderPensiun() {
       });
     } finally {
       setLoadingApplications(false);
+    }
+  };
+
+  const loadApplicationData = async (applicationId: string) => {
+    try {
+      // Load application data
+      const { data: applicationData, error: appError } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('id', applicationId)
+        .single();
+
+      if (appError) throw appError;
+
+      // Load documents
+      const { data: documentsData, error: docsError } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('application_id', applicationId)
+        .order('document_index');
+
+      if (docsError) throw docsError;
+
+      // Extract retirement category from keterangan
+      const kategorMatch = applicationData.keterangan?.match(/Kategori: (.+)/);
+      if (kategorMatch) {
+        const categoryLabel = kategorMatch[1];
+        const categoryKey = Object.keys(retirementCategories).find(key => 
+          retirementCategories[key as keyof typeof retirementCategories].label === categoryLabel
+        );
+        if (categoryKey) {
+          setRetirementCategory(categoryKey);
+        }
+      }
+
+      // Populate documents
+      const loadedDocuments: { [key: string]: string } = {};
+      documentsData.forEach(doc => {
+        if (doc.document_index !== null) {
+          loadedDocuments[`doc_${doc.document_index}`] = doc.drive_link || '';
+        }
+      });
+      setDocuments(loadedDocuments);
+
+      // Set selected employee based on submitter info
+      const employeeData: PensiunData = {
+        id: applicationData.submitter_id,
+        nama: applicationData.submitter_name || '',
+        nip: '',
+        tanggalLahir: '',
+        tanggalPensiun: '',
+        sisaHari: 0,
+        unitKerja: applicationData.submitter_unit || '',
+        jabatan: '',
+        pangkat: '',
+        masaKerja: '',
+        statusPersiapan: 'dalam_proses'
+      };
+      setSelectedEmployee(employeeData);
+
+      toast({
+        title: "Data Dimuat",
+        description: "Data usulan berhasil dimuat untuk diedit"
+      });
+
+    } catch (error) {
+      console.error('Error loading application data:', error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat data usulan",
+        variant: "destructive"
+      });
     }
   };
 
@@ -437,66 +524,122 @@ export default function ReminderPensiun() {
     }
 
     try {
-      // Create retirement application record
-      const { data: applicationData, error: applicationError } = await supabase
-        .from('applications')
-        .insert({
-          submitter_id: user.id,
-          submitter_name: selectedEmployee.nama,
-          submitter_unit: selectedEmployee.unitKerja,
-          judul: `Pengajuan Pensiun - ${selectedEmployee.nama}`,
-          jenis: 'pensiun',
-          status: 'submitted',
-          keterangan: `Kategori: ${retirementCategories[retirementCategory as keyof typeof retirementCategories].label}`,
-          tanggal_pengajuan: new Date().toISOString(),
-          estimasi: '14-30 hari kerja'
-        })
-        .select()
-        .single();
+      if (isEditing && editingApplicationId) {
+        // Update existing application
+        const { error: updateError } = await supabase
+          .from('applications')
+          .update({
+            submitter_name: selectedEmployee.nama,
+            submitter_unit: selectedEmployee.unitKerja,
+            judul: `Pengajuan Pensiun - ${selectedEmployee.nama}`,
+            status: 'submitted',
+            keterangan: `Perbaikan - Diajukan Ulang - Kategori: ${retirementCategories[retirementCategory as keyof typeof retirementCategories].label}`,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingApplicationId);
 
-      if (applicationError) throw applicationError;
+        if (updateError) throw updateError;
 
-      // Insert documents with their links
-      const documentInserts = Object.entries(documents)
-        .filter(([key, link]) => link.trim() !== '')
-        .map(([key, link]) => {
-          const index = parseInt(key.replace('doc_', ''));
-          const documentName = retirementCategories[retirementCategory as keyof typeof retirementCategories].documents[index];
-          
-          return {
-            application_id: applicationData.id,
-            title: documentName,
-            drive_link: link.trim(),
-            created_by: user.id,
-            document_category: 'pensiun',
-            document_index: index
-          };
-        });
-
-      if (documentInserts.length > 0) {
-        const { error: documentsError } = await supabase
+        // Delete existing documents
+        const { error: deleteDocsError } = await supabase
           .from('documents')
-          .insert(documentInserts);
+          .delete()
+          .eq('application_id', editingApplicationId);
 
-        if (documentsError) throw documentsError;
+        if (deleteDocsError) throw deleteDocsError;
+
+        // Insert new documents
+        const documentInserts = Object.entries(documents)
+          .filter(([key, link]) => link.trim() !== '')
+          .map(([key, link]) => {
+            const index = parseInt(key.replace('doc_', ''));
+            const documentName = retirementCategories[retirementCategory as keyof typeof retirementCategories].documents[index];
+            
+            return {
+              application_id: editingApplicationId,
+              title: documentName,
+              drive_link: link.trim(),
+              created_by: user.id,
+              document_category: 'pensiun',
+              document_index: index
+            };
+          });
+
+        if (documentInserts.length > 0) {
+          const { error: documentsError } = await supabase
+            .from('documents')
+            .insert(documentInserts);
+
+          if (documentsError) throw documentsError;
+        }
+      } else {
+        // Create new retirement application record
+        const { data: applicationData, error: applicationError } = await supabase
+          .from('applications')
+          .insert({
+            submitter_id: user.id,
+            submitter_name: selectedEmployee.nama,
+            submitter_unit: selectedEmployee.unitKerja,
+            judul: `Pengajuan Pensiun - ${selectedEmployee.nama}`,
+            jenis: 'pensiun',
+            status: 'submitted',
+            keterangan: `Kategori: ${retirementCategories[retirementCategory as keyof typeof retirementCategories].label}`,
+            tanggal_pengajuan: new Date().toISOString(),
+            estimasi: '14-30 hari kerja'
+          })
+          .select()
+          .single();
+
+        if (applicationError) throw applicationError;
+
+        // Insert documents with their links
+        const documentInserts = Object.entries(documents)
+          .filter(([key, link]) => link.trim() !== '')
+          .map(([key, link]) => {
+            const index = parseInt(key.replace('doc_', ''));
+            const documentName = retirementCategories[retirementCategory as keyof typeof retirementCategories].documents[index];
+            
+            return {
+              application_id: applicationData.id,
+              title: documentName,
+              drive_link: link.trim(),
+              created_by: user.id,
+              document_category: 'pensiun',
+              document_index: index
+            };
+          });
+
+        if (documentInserts.length > 0) {
+          const { error: documentsError } = await supabase
+            .from('documents')
+            .insert(documentInserts);
+
+          if (documentsError) throw documentsError;
+        }
       }
 
       toast({
         title: "Berhasil",
-        description: `Pengajuan pensiun untuk ${selectedEmployee.nama} berhasil disubmit dan sedang menunggu verifikasi!`,
+        description: isEditing 
+          ? `Perbaikan usulan pensiun untuk ${selectedEmployee.nama} berhasil dikirim ulang!`
+          : `Pengajuan pensiun untuk ${selectedEmployee.nama} berhasil disubmit dan sedang menunggu verifikasi!`,
       });
       
-      // Refresh applications and redirect to status tab
-      await fetchApplications();
-      setSelectedEmployee(null);
-      setRetirementCategory("");
-      setDocuments({});
-      setActiveTab("status");
+      // Navigate back to status page or refresh
+      if (isEditing) {
+        navigate('/status-usulan');
+      } else {
+        await fetchApplications();
+        setSelectedEmployee(null);
+        setRetirementCategory("");
+        setDocuments({});
+        setActiveTab("status");
+      }
     } catch (error) {
       console.error('Error submitting retirement application:', error);
       toast({
         title: "Error",
-        description: "Gagal mengajukan usulan pensiun",
+        description: isEditing ? "Gagal mengirim ulang usulan pensiun" : "Gagal mengajukan usulan pensiun",
         variant: "destructive"
       });
     }
