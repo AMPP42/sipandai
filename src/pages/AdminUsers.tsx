@@ -478,7 +478,7 @@ export default function AdminUsers() {
                   <TableHead>Unit</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last Login</TableHead>
-                  <TableHead>Aksi</TableHead>
+                  
                 </TableRow>
               </TableHeader>
               <TableBody>
