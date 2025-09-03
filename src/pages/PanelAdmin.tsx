@@ -35,7 +35,6 @@ export default function PanelAdmin() {
             <TabsTrigger value="verifikasi-usulan" className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4" />
               Verifikasi Usulan
-              <Badge className="bg-red-500 text-white text-xs px-1.5 py-0.5">3</Badge>
             </TabsTrigger>
             <TabsTrigger value="formasi-jabatan" className="flex items-center gap-2">
               <UserCheck className="w-4 h-4" />
@@ -75,7 +74,6 @@ export default function PanelAdmin() {
                 <CardTitle className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5" />
                   Verifikasi Usulan
-                  <Badge className="bg-red-500 text-white text-xs px-1.5 py-0.5">3</Badge>
                 </CardTitle>
                 <CardDescription>
                   Verifikasi dan proses usulan mutasi pegawai

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   FileText, 
@@ -13,37 +13,47 @@ import {
   CheckCircle, 
   XCircle, 
   Eye,
-  Download,
+  Filter,
   MessageSquare,
   Check,
   X
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-interface UsulanMutasi {
+interface ApplicationItem {
   id: string;
-  nomor_usulan: string;
-  nama_pegawai: string;
-  unit_asal: string;
-  unit_tujuan: string;
-  jenis_mutasi: string;
-  alasan_mutasi: string;
-  tanggal_usulan: string;
+  type: 'usulan_mutasi' | 'application';
+  nomor_usulan?: string;
+  judul?: string;
+  nama_pegawai?: string;
+  submitter_name?: string;
+  unit_asal?: string;
+  unit_tujuan?: string;
+  submitter_unit?: string;
+  jenis_mutasi?: string;
+  jenis?: string;
+  alasan_mutasi?: string;
+  keterangan?: string;
+  tanggal_usulan?: string;
+  tanggal_pengajuan?: string;
   status: string;
   catatan_reviewer?: string;
-  user_id: string;
+  user_id?: string;
+  submitter_id?: string;
   created_at: string;
 }
 
 export default function Verifikasi() {
   const { user } = useAuth();
-  const [usulanList, setUsulanList] = useState<UsulanMutasi[]>([]);
+  const [applicationList, setApplicationList] = useState<ApplicationItem[]>([]);
+  const [filteredApplications, setFilteredApplications] = useState<ApplicationItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedUsulan, setSelectedUsulan] = useState<UsulanMutasi | null>(null);
+  const [selectedApplication, setSelectedApplication] = useState<ApplicationItem | null>(null);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'revision'>('approve');
   const [processing, setProcessing] = useState(false);
+  const [filterType, setFilterType] = useState<string>('all');
 
   const [stats, setStats] = useState({
     total: 0,
@@ -54,50 +64,91 @@ export default function Verifikasi() {
 
   useEffect(() => {
     if (user?.role === 'admin_pusat') {
-      loadUsulan();
+      loadApplications();
     }
   }, [user]);
 
-  const loadUsulan = async () => {
+  useEffect(() => {
+    filterApplications();
+  }, [applicationList, filterType]);
+
+  const loadApplications = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Load usulan_mutasi
+      const { data: usulanData, error: usulanError } = await supabase
         .from('usulan_mutasi')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (usulanError) throw usulanError;
 
-      setUsulanList(data || []);
+      // Load applications (pensiun, mutasi, kenaikan pangkat, etc.)
+      const { data: applicationsData, error: applicationsError } = await supabase
+        .from('applications')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (applicationsError) throw applicationsError;
+
+      // Combine and standardize data
+      const combinedData: ApplicationItem[] = [
+        ...(usulanData || []).map(item => ({
+          ...item,
+          type: 'usulan_mutasi' as const
+        })),
+        ...(applicationsData || []).map(item => ({
+          ...item,
+          type: 'application' as const
+        }))
+      ];
+
+      // Sort by created_at desc
+      combinedData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setApplicationList(combinedData);
       
       // Calculate stats
-      const total = data?.length || 0;
-      const pending = data?.filter(u => ['submitted', 'in_review'].includes(u.status)).length || 0;
-      const approved = data?.filter(u => u.status === 'approved').length || 0;
-      const rejected = data?.filter(u => u.status === 'rejected').length || 0;
+      const total = combinedData.length;
+      const pending = combinedData.filter(app => ['submitted', 'in_review'].includes(app.status)).length;
+      const approved = combinedData.filter(app => app.status === 'approved').length;
+      const rejected = combinedData.filter(app => app.status === 'rejected').length;
       
       setStats({ total, pending, approved, rejected });
 
     } catch (error) {
-      console.error('Error loading usulan:', error);
+      console.error('Error loading applications:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleReview = (usulan: UsulanMutasi, action: 'approve' | 'reject' | 'revision') => {
-    setSelectedUsulan(usulan);
+  const filterApplications = () => {
+    if (filterType === 'all') {
+      setFilteredApplications(applicationList);
+    } else if (filterType === 'mutasi') {
+      setFilteredApplications(applicationList.filter(app => app.type === 'usulan_mutasi'));
+    } else {
+      setFilteredApplications(applicationList.filter(app => 
+        app.type === 'application' && app.jenis === filterType
+      ));
+    }
+  };
+
+  const handleReview = (application: ApplicationItem, action: 'approve' | 'reject' | 'revision') => {
+    setSelectedApplication(application);
     setReviewAction(action);
-    setReviewNote(usulan.catatan_reviewer || '');
+    setReviewNote(application.catatan_reviewer || '');
     setShowReviewDialog(true);
   };
 
   const submitReview = async () => {
-    if (!selectedUsulan || !user) return;
+    if (!selectedApplication || !user) return;
 
     setProcessing(true);
     try {
-      let newStatus: string;
+      let newStatus: 'approved' | 'rejected' | 'revision_needed' | 'in_review';
       switch (reviewAction) {
         case 'approve':
           newStatus = 'approved';
@@ -112,22 +163,46 @@ export default function Verifikasi() {
           newStatus = 'in_review';
       }
 
-      const { error } = await supabase
-        .from('usulan_mutasi')
-        .update({
-          status: newStatus,
-          catatan_reviewer: reviewNote,
-          reviewed_by: user.id,
-          reviewed_at: new Date().toISOString()
-        })
-        .eq('id', selectedUsulan.id);
+      if (selectedApplication.type === 'usulan_mutasi') {
+        const { error } = await supabase
+          .from('usulan_mutasi')
+          .update({
+            status: newStatus,
+            catatan_reviewer: reviewNote,
+            reviewed_by: user.id,
+            reviewed_at: new Date().toISOString()
+          })
+          .eq('id', selectedApplication.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('applications')
+          .update({
+            status: newStatus
+          })
+          .eq('id', selectedApplication.id);
+
+        if (error) throw error;
+
+        // Log workflow change
+        const { error: workflowError } = await supabase
+          .from('workflows')
+          .insert({
+            application_id: selectedApplication.id,
+            from_status: selectedApplication.status as 'approved' | 'rejected' | 'draft' | 'submitted' | 'in_review' | 'revision_needed' | 'completed',
+            to_status: newStatus,
+            actor_id: user.id,
+            note: reviewNote
+          });
+
+        if (workflowError) console.error('Workflow error:', workflowError);
+      }
 
       setShowReviewDialog(false);
-      setSelectedUsulan(null);
+      setSelectedApplication(null);
       setReviewNote('');
-      loadUsulan();
+      loadApplications();
 
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -141,9 +216,9 @@ export default function Verifikasi() {
       case 'draft':
         return <Badge className="bg-gray-100 text-gray-700">Draft</Badge>;
       case 'submitted':
-        return <Badge className="bg-blue-100 text-blue-700">Disubmit</Badge>;
+        return <Badge className="bg-blue-100 text-blue-700">Menunggu Verifikasi</Badge>;
       case 'in_review':
-        return <Badge className="bg-yellow-100 text-yellow-700">Review</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-700">Sedang Review</Badge>;
       case 'revision_needed':
         return <Badge className="bg-orange-100 text-orange-700">Perlu Revisi</Badge>;
       case 'approved':
@@ -157,8 +232,44 @@ export default function Verifikasi() {
     }
   };
 
-  const getActionButtons = (usulan: UsulanMutasi) => {
-    const canReview = ['submitted', 'in_review'].includes(usulan.status);
+  const getApplicationName = (app: ApplicationItem) => {
+    if (app.type === 'usulan_mutasi') {
+      return app.nama_pegawai || '';
+    }
+    return app.submitter_name || '';
+  };
+
+  const getApplicationTitle = (app: ApplicationItem) => {
+    if (app.type === 'usulan_mutasi') {
+      return app.nomor_usulan || '';
+    }
+    return app.judul || '';
+  };
+
+  const getApplicationType = (app: ApplicationItem) => {
+    if (app.type === 'usulan_mutasi') {
+      return app.jenis_mutasi || 'Mutasi';
+    }
+    
+    switch (app.jenis) {
+      case 'pensiun':
+        return 'Pengajuan Pensiun';
+      case 'mutasi':
+        return 'Pengajuan Mutasi';
+      case 'kenaikan_pangkat':
+        return 'Kenaikan Pangkat';
+      default:
+        return app.jenis || 'Lainnya';
+    }
+  };
+
+  const getApplicationDate = (app: ApplicationItem) => {
+    const date = app.tanggal_usulan || app.tanggal_pengajuan || app.created_at;
+    return new Date(date).toLocaleDateString('id-ID');
+  };
+
+  const getActionButtons = (application: ApplicationItem) => {
+    const canReview = ['submitted', 'in_review'].includes(application.status);
     
     return (
       <div className="flex gap-2">
@@ -171,7 +282,7 @@ export default function Verifikasi() {
             <Button 
               size="sm" 
               variant="outline"
-              onClick={() => handleReview(usulan, 'approve')}
+              onClick={() => handleReview(application, 'approve')}
               className="text-green-600 hover:text-green-700"
               title="Setujui"
             >
@@ -180,7 +291,7 @@ export default function Verifikasi() {
             <Button 
               size="sm" 
               variant="outline"
-              onClick={() => handleReview(usulan, 'revision')}
+              onClick={() => handleReview(application, 'revision')}
               className="text-orange-600 hover:text-orange-700"
               title="Minta Revisi"
             >
@@ -189,7 +300,7 @@ export default function Verifikasi() {
             <Button 
               size="sm" 
               variant="outline"
-              onClick={() => handleReview(usulan, 'reject')}
+              onClick={() => handleReview(application, 'reject')}
               className="text-red-600 hover:text-red-700"
               title="Tolak"
             >
@@ -225,7 +336,7 @@ export default function Verifikasi() {
               Verifikasi Usulan
             </h1>
             <p className="text-gray-600 mt-2">
-              Review dan verifikasi usulan yang masuk dari berbagai unit kerja
+              Review dan verifikasi usulan yang masuk dari berbagai aplikasi
             </p>
           </div>
           <div className="text-right">
@@ -283,20 +394,38 @@ export default function Verifikasi() {
         </Card>
       </div>
 
-      {/* Usulan Table */}
+      {/* Filter and Applications Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Daftar Usulan</CardTitle>
-          <CardDescription>
-            Kelola dan verifikasi usulan yang masuk
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Daftar Usulan</CardTitle>
+              <CardDescription>
+                Kelola dan verifikasi usulan yang masuk dari berbagai aplikasi
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-gray-500" />
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter berdasarkan jenis" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Aplikasi</SelectItem>
+                  <SelectItem value="pensiun">Pengajuan Pensiun</SelectItem>
+                  <SelectItem value="mutasi">Pengajuan Mutasi</SelectItem>
+                  <SelectItem value="kenaikan_pangkat">Kenaikan Pangkat</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
             </div>
-          ) : usulanList.length === 0 ? (
+          ) : filteredApplications.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               Tidak ada usulan yang ditemukan
             </div>
@@ -304,27 +433,31 @@ export default function Verifikasi() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nomor Usulan</TableHead>
-                  <TableHead>Nama Pegawai</TableHead>
-                  <TableHead>Unit Asal</TableHead>
-                  <TableHead>Unit Tujuan</TableHead>
-                  <TableHead>Jenis</TableHead>
+                  <TableHead>Nomor/Judul</TableHead>
+                  <TableHead>Nama Pengaju</TableHead>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Jenis Aplikasi</TableHead>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {usulanList.map((usulan) => (
-                  <TableRow key={usulan.id}>
-                    <TableCell className="font-medium">{usulan.nomor_usulan}</TableCell>
-                    <TableCell>{usulan.nama_pegawai}</TableCell>
-                    <TableCell>{usulan.unit_asal}</TableCell>
-                    <TableCell>{usulan.unit_tujuan}</TableCell>
-                    <TableCell>{usulan.jenis_mutasi}</TableCell>
-                    <TableCell>{new Date(usulan.tanggal_usulan).toLocaleDateString('id-ID')}</TableCell>
-                    <TableCell>{getStatusBadge(usulan.status)}</TableCell>
-                    <TableCell>{getActionButtons(usulan)}</TableCell>
+                {filteredApplications.map((application) => (
+                  <TableRow key={`${application.type}-${application.id}`}>
+                    <TableCell className="font-medium">
+                      {getApplicationTitle(application)}
+                    </TableCell>
+                    <TableCell>{getApplicationName(application)}</TableCell>
+                    <TableCell>
+                      {application.type === 'usulan_mutasi' 
+                        ? application.unit_asal 
+                        : application.submitter_unit}
+                    </TableCell>
+                    <TableCell>{getApplicationType(application)}</TableCell>
+                    <TableCell>{getApplicationDate(application)}</TableCell>
+                    <TableCell>{getStatusBadge(application.status)}</TableCell>
+                    <TableCell>{getActionButtons(application)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -343,7 +476,7 @@ export default function Verifikasi() {
               {reviewAction === 'revision' && 'Minta Revisi'}
             </DialogTitle>
             <DialogDescription>
-              {selectedUsulan && `Usulan ${selectedUsulan.nomor_usulan} - ${selectedUsulan.nama_pegawai}`}
+              {selectedApplication && `${getApplicationTitle(selectedApplication)} - ${getApplicationName(selectedApplication)}`}
             </DialogDescription>
           </DialogHeader>
           
