@@ -6,11 +6,11 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import DocumentVerificationStatus from '@/components/applications/DocumentVerificationStatus';
 import { 
   ArrowLeft, 
   User, 
@@ -22,13 +22,14 @@ import {
   CheckCircle,
   AlertCircle,
   Clock,
-  Send
+  Send,
+  Loader2,
+  AlertTriangle
 } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
 
 type Application = Database['public']['Tables']['applications']['Row'];
-type Document = Database['public']['Tables']['documents']['Row'];
 
 interface ApplicationDetail extends Application {
   employee_data?: {
@@ -41,6 +42,14 @@ interface ApplicationDetail extends Application {
     jabatan_tujuan: string;
     alasan_mutasi: string;
     nomor_usulan: string;
+  };
+}
+
+interface DocumentVerificationStatus {
+  [key: string]: {
+    status: 'approved' | 'needs_fix' | 'pending';
+    admin_notes?: string;
+    document_name: string;
   };
 }
 
@@ -66,21 +75,29 @@ export default function DetailMutasiTerpadu() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [application, setApplication] = useState<ApplicationDetail | null>(null);
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [selectedDocumentIndex, setSelectedDocumentIndex] = useState<number | null>(null);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [driveLink, setDriveLink] = useState('');
+  const [documents, setDocuments] = useState<{ [key: string]: string }>({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [documentVerificationStatus, setDocumentVerificationStatus] = useState<DocumentVerificationStatus>({});
+  const [fixedDocuments, setFixedDocuments] = useState<Set<string>>(new Set());
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [additionalNotes, setAdditionalNotes] = useState('');
 
   useEffect(() => {
     if (id) {
       loadApplication();
-      loadDocuments();
     }
-  }, [id]);
+    
+    // Check if we're in edit mode
+    const urlParams = new URLSearchParams(location.search);
+    const editMode = urlParams.get('edit');
+    if (editMode) {
+      setIsEditing(true);
+      loadApplicationForEdit();
+    }
+  }, [id, location.search]);
 
   const loadApplication = async () => {
     try {
@@ -111,146 +128,268 @@ export default function DetailMutasiTerpadu() {
     }
   };
 
-  const loadDocuments = async () => {
+  const loadApplicationForEdit = async () => {
     try {
-      const { data, error } = await supabase
+      // Load documents
+      const { data: documentsData, error: docsError } = await supabase
         .from('documents')
         .select('*')
         .eq('application_id', id)
         .order('document_index');
 
-      if (error) throw error;
-      setDocuments(data || []);
+      if (docsError) throw docsError;
+
+      // Load document verification status
+      const { data: verificationData, error: verificationError } = await supabase
+        .from('document_verifications')
+        .select('*')
+        .eq('application_id', id);
+
+      if (verificationError) throw verificationError;
+
+      // Populate documents
+      const loadedDocuments: { [key: string]: string } = {};
+      documentsData?.forEach(doc => {
+        if (doc.document_index !== null) {
+          loadedDocuments[`doc_${doc.document_index}`] = doc.drive_link || '';
+        }
+      });
+      setDocuments(loadedDocuments);
+
+      // Populate document verification status
+      const verificationStatus: DocumentVerificationStatus = {};
+      verificationData?.forEach(verification => {
+        if (verification.document_type) {
+          const docIndex = verification.document_type.replace('doc_', '');
+          const docKey = `doc_${docIndex}`;
+          verificationStatus[docKey] = {
+            status: verification.status as 'approved' | 'needs_fix' | 'pending',
+            admin_notes: verification.admin_notes || undefined,
+            document_name: verification.document_name
+          };
+        }
+      });
+      setDocumentVerificationStatus(verificationStatus);
+
+      toast({
+        title: "Data Dimuat",
+        description: "Data usulan berhasil dimuat untuk diedit"
+      });
+
     } catch (error) {
-      console.error('Error loading documents:', error);
+      console.error('Error loading application data for edit:', error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat data usulan untuk edit",
+        variant: "destructive"
+      });
     }
+  };
+
+  const handleDocumentChange = (index: number, value: string) => {
+    const docKey = `doc_${index}`;
+    setDocuments(prev => ({
+      ...prev,
+      [docKey]: value
+    }));
+  };
+
+  const handleMarkDocumentFixed = (docKey: string) => {
+    setFixedDocuments(prev => new Set(prev).add(docKey));
+    toast({
+      title: "Dokumen Diperbaiki",
+      description: "Dokumen telah ditandai sebagai diperbaiki"
+    });
   };
 
   const handleSubmitApplication = async () => {
-    if (!application) return;
+    if (!application || !application.employee_data) return;
 
-    try {
-      setLoading(true);
-      const { error } = await supabase
-        .from('applications')
-        .update({ 
-          status: 'submitted',
-          tanggal_pengajuan: new Date().toISOString()
-        })
-        .eq('id', application.id);
-
-      if (error) throw error;
-
+    // Check if at least one document is provided
+    const documentEntries = Object.entries(documents).filter(([key, link]) => link.trim() !== '');
+    if (documentEntries.length === 0) {
       toast({
-        title: "Berhasil",
-        description: "Pengajuan berhasil disubmit",
-        variant: "default"
-      });
-
-      await loadApplication();
-    } catch (error: any) {
-      console.error('Error submitting application:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Gagal submit pengajuan",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUploadDocument = async () => {
-    if (!uploadFile && !driveLink) {
-      toast({
-        title: "Error",
-        description: "Mohon pilih file atau masukkan link Google Drive",
+        title: "Error", 
+        description: "Harap upload minimal satu dokumen persyaratan",
         variant: "destructive"
       });
       return;
     }
 
-    if (selectedDocumentIndex === null) return;
-
-    try {
-      setUploading(true);
-      
-      const documentData = {
-        application_id: id,
-        title: DOCUMENT_REQUIREMENTS[selectedDocumentIndex],
-        document_index: selectedDocumentIndex,
-        document_category: 'persyaratan',
-        drive_link: driveLink || null,
-        created_by: user?.id
-      };
-
-      const { error } = await supabase
-        .from('documents')
-        .insert(documentData);
-
-      if (error) throw error;
-
-      toast({
-        title: "Berhasil",
-        description: "Dokumen berhasil diupload",
-        variant: "default"
-      });
-
-      setUploadDialogOpen(false);
-      setUploadFile(null);
-      setDriveLink('');
-      setSelectedDocumentIndex(null);
-      await loadDocuments();
-
-    } catch (error: any) {
-      console.error('Error uploading document:', error);
+    if (!user?.id) {
       toast({
         title: "Error",
-        description: error.message || "Gagal upload dokumen",
+        description: "User tidak terautentikasi",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      if (isEditing) {
+        // Update existing application
+        const { error: updateError } = await supabase
+          .from('applications')
+          .update({
+            status: 'submitted',
+            keterangan: `Perbaikan - Diajukan Ulang - Kategori: Mutasi Terpadu${additionalNotes ? ` - ${additionalNotes}` : ''}`,
+            updated_at: new Date().toISOString(),
+            progress: 20  // Reset progress for resubmission
+          })
+          .eq('id', id);
+
+        if (updateError) throw updateError;
+
+        // Delete existing documents
+        const { error: deleteDocsError } = await supabase
+          .from('documents')
+          .delete()
+          .eq('application_id', id);
+
+        if (deleteDocsError) throw deleteDocsError;
+
+        // Insert new documents
+        const documentInserts = Object.entries(documents)
+          .filter(([key, link]) => link.trim() !== '')
+          .map(([key, link]) => {
+            const index = parseInt(key.replace('doc_', ''));
+            const documentName = DOCUMENT_REQUIREMENTS[index];
+            
+            return {
+              application_id: id,
+              title: documentName,
+              drive_link: link.trim(),
+              created_by: user.id,
+              document_category: 'mutasi_terpadu',
+              document_index: index
+            };
+          });
+
+        if (documentInserts.length > 0) {
+          const { error: documentsError } = await supabase
+            .from('documents')
+            .insert(documentInserts);
+
+          if (documentsError) throw documentsError;
+        }
+
+        toast({
+          title: "Berhasil",
+          description: `Perbaikan usulan mutasi untuk ${application.employee_data.employee_name} berhasil dikirim ulang!`,
+        });
+
+        // Clear edit state and navigate back
+        setIsEditing(false);
+        setDocumentVerificationStatus({});
+        setFixedDocuments(new Set());
+        setDocuments({});
+        setAdditionalNotes('');
+        navigate('/apps/pengajuan-mutasi-terpadu');
+
+      } else {
+        // Submit new application
+        const { error } = await supabase
+          .from('applications')
+          .update({ 
+            status: 'submitted',
+            tanggal_pengajuan: new Date().toISOString(),
+            keterangan: `Kategori: Mutasi Terpadu${additionalNotes ? ` - ${additionalNotes}` : ''}`
+          })
+          .eq('id', application.id);
+
+        if (error) throw error;
+
+        // Insert documents
+        const documentInserts = Object.entries(documents)
+          .filter(([key, link]) => link.trim() !== '')
+          .map(([key, link]) => {
+            const index = parseInt(key.replace('doc_', ''));
+            const documentName = DOCUMENT_REQUIREMENTS[index];
+            
+            return {
+              application_id: id,
+              title: documentName,
+              drive_link: link.trim(),
+              created_by: user.id,
+              document_category: 'mutasi_terpadu',
+              document_index: index
+            };
+          });
+
+        if (documentInserts.length > 0) {
+          const { error: documentsError } = await supabase
+            .from('documents')
+            .insert(documentInserts);
+
+          if (documentsError) throw documentsError;
+        }
+
+        toast({
+          title: "Berhasil",
+          description: `Pengajuan mutasi untuk ${application.employee_data.employee_name} berhasil disubmit dan sedang menunggu verifikasi!`,
+        });
+
+        navigate('/apps/pengajuan-mutasi-terpadu');
+      }
+
+    } catch (error: any) {
+      console.error('Error submitting application:', error);
+      toast({
+        title: "Error",
+        description: isEditing ? "Gagal mengirim ulang usulan mutasi" : "Gagal submit pengajuan mutasi",
         variant: "destructive"
       });
     } finally {
-      setUploading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      'draft': 'secondary',
-      'submitted': 'default',
-      'in_review': 'outline',
-      'approved': 'default',
-      'rejected': 'destructive'
+  const getStatusBadge = (status: string, keterangan?: string) => {
+    // Check if this is a resubmitted application
+    const isResubmitted = keterangan?.includes('Perbaikan - Diajukan Ulang');
+    
+    if (status === 'submitted' && isResubmitted) {
+      return <Badge className="bg-blue-100 text-blue-700">Menunggu Verifikasi Ulang</Badge>;
+    }
+    
+    const statusMap = {
+      draft: { label: "Draft", className: "bg-gray-100 text-gray-700" },
+      submitted: { label: "Menunggu Verifikasi", className: "bg-yellow-100 text-yellow-700" },
+      in_review: { label: "Sedang Ditinjau", className: "bg-blue-100 text-blue-700" },
+      approved: { label: "Disetujui", className: "bg-green-100 text-green-700" },
+      rejected: { label: "Ditolak", className: "bg-red-100 text-red-700" },
+      revision_needed: { label: "Perlu Revisi", className: "bg-orange-100 text-orange-700" }
     };
-
-    const labels: Record<string, string> = {
-      'draft': 'Draft',
-      'submitted': 'Diajukan',
-      'in_review': 'Dalam Review',
-      'approved': 'Disetujui',
-      'rejected': 'Ditolak'
-    };
-
-    return (
-      <Badge variant={variants[status] || 'outline'}>
-        {labels[status] || status}
-      </Badge>
-    );
+    
+    const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.draft;
+    return <Badge className={statusInfo.className}>{statusInfo.label}</Badge>;
   };
 
-  const getDocumentStatus = (index: number) => {
-    const doc = documents.find(d => d.document_index === index);
-    return doc ? 'uploaded' : 'pending';
+  const getVerificationStatusBadge = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return <Badge className="bg-green-100 text-green-700">✓ Disetujui</Badge>;
+      case 'needs_fix':
+        return <Badge className="bg-red-100 text-red-700">✗ Perlu Diperbaiki</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-700">⏳ Menunggu</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-700">Belum Diperiksa</Badge>;
+    }
   };
 
-  const canEdit = application?.status === 'draft' || application?.status === 'revision_needed';
-  const canSubmit = canEdit && documents.length === DOCUMENT_REQUIREMENTS.length;
-  const progressPercentage = Math.round((documents.length / DOCUMENT_REQUIREMENTS.length) * 100);
+  const canEdit = application?.status === 'draft' || application?.status === 'revision_needed' || isEditing;
+  const submittedDocumentsCount = Object.values(documents).filter(link => link.trim() !== '').length;
+  const canSubmit = canEdit && submittedDocumentsCount > 0;
+  const progressPercentage = Math.round((submittedDocumentsCount / DOCUMENT_REQUIREMENTS.length) * 100);
 
   if (loading) {
     return (
       <div className="container mx-auto py-6">
         <div className="text-center py-8">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
           <p>Memuat data pengajuan...</p>
         </div>
       </div>
@@ -279,17 +418,28 @@ export default function DetailMutasiTerpadu() {
           Kembali
         </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">Detail Pengajuan Mutasi Terpadu</h1>
+          <h1 className="text-3xl font-bold">
+            {isEditing ? 'Edit Pengajuan Mutasi Terpadu' : 'Detail Pengajuan Mutasi Terpadu'}
+          </h1>
           <p className="text-muted-foreground">
             {application.employee_data?.nomor_usulan || 'Nomor belum tersedia'}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {getStatusBadge(application.status)}
+          {getStatusBadge(application.status, application.keterangan)}
           {canSubmit && (
-            <Button onClick={handleSubmitApplication} disabled={loading}>
-              <Send className="w-4 h-4 mr-2" />
-              Submit Pengajuan
+            <Button onClick={handleSubmitApplication} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {isEditing ? 'Mengirim Perbaikan...' : 'Mengirim...'}
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  {isEditing ? 'Submit Perbaikan' : 'Submit Pengajuan'}
+                </>
+              )}
             </Button>
           )}
         </div>
@@ -307,7 +457,7 @@ export default function DetailMutasiTerpadu() {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Dokumen yang sudah diupload</span>
-              <span>{documents.length} dari {DOCUMENT_REQUIREMENTS.length}</span>
+              <span>{submittedDocumentsCount} dari {DOCUMENT_REQUIREMENTS.length}</span>
             </div>
             <Progress value={progressPercentage} className="w-full" />
             <p className="text-xs text-muted-foreground">
@@ -316,6 +466,48 @@ export default function DetailMutasiTerpadu() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Mode Summary */}
+      {isEditing && Object.keys(documentVerificationStatus).length > 0 && (
+        <Card className="bg-orange-50 border-orange-200">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-orange-900 mb-2">Ringkasan Status Verifikasi</h4>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <Badge className="bg-green-100 text-green-700">✓ Disetujui</Badge>
+                <span className="text-green-800">
+                  {Object.values(documentVerificationStatus).filter(v => v.status === 'approved').length} dokumen
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-red-100 text-red-700">✗ Perlu Diperbaiki</Badge>
+                <span className="text-red-800">
+                  {Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length} dokumen
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-blue-100 text-blue-700">✓ Diperbaiki</Badge>
+                <span className="text-blue-800">
+                  {fixedDocuments.size} dokumen
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-yellow-100 text-yellow-700">⏳ Menunggu</Badge>
+                <span className="text-yellow-800">
+                  {Object.values(documentVerificationStatus).filter(v => v.status === 'pending').length} dokumen
+                </span>
+              </div>
+            </div>
+            {Object.values(documentVerificationStatus).some(v => v.status === 'needs_fix') && (
+              <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg">
+                <p className="text-sm font-medium text-red-900">
+                  Fokus pada dokumen yang perlu diperbaiki. Pastikan untuk menekan tombol "Perbaiki" setelah mengupdate link dokumen.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Application Details */}
@@ -377,62 +569,103 @@ export default function DetailMutasiTerpadu() {
           </CardContent>
         </Card>
 
-        {/* Documents */}
+        {/* Documents Section */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="w-5 h-5" />
-              Dokumen Persyaratan
+              {isEditing ? 'Edit Dokumen Persyaratan' : 'Dokumen Persyaratan'}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            {isEditing && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <h4 className="font-semibold text-blue-900 mb-2">Panduan Edit Dokumen</h4>
+                <div className="text-sm text-blue-800 space-y-1">
+                  <p>• <span className="font-medium text-green-700">✓ Disetujui</span>: Dokumen sudah benar, tidak perlu diubah</p>
+                  <p>• <span className="font-medium text-red-700">✗ Perlu Diperbaiki</span>: Dokumen harus diperbaiki dan diupload ulang</p>
+                  <p>• <span className="font-medium text-yellow-700">⏳ Menunggu</span>: Dokumen belum diperiksa</p>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4">
               {DOCUMENT_REQUIREMENTS.map((requirement, index) => {
-                const status = getDocumentStatus(index);
-                const document = documents.find(d => d.document_index === index);
+                const docKey = `doc_${index}`;
+                const verificationStatus = documentVerificationStatus[docKey];
+                const needsAttention = isEditing && verificationStatus?.status === 'needs_fix';
+                const isApproved = verificationStatus?.status === 'approved';
+                const isFixed = fixedDocuments.has(docKey);
+                
+                // In edit mode, only show documents that need fixing or are new
+                if (isEditing && isApproved) {
+                  return (
+                    <div key={index} className="space-y-2 bg-green-50 border border-green-200 rounded-lg p-3 opacity-75">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium text-green-800">
+                          {index + 1}. {requirement}
+                        </Label>
+                        {getVerificationStatusBadge(verificationStatus.status)}
+                      </div>
+                      <p className="text-xs text-green-700">Dokumen sudah disetujui, tidak perlu diubah</p>
+                    </div>
+                  );
+                }
                 
                 return (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{requirement}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        {status === 'uploaded' ? (
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <AlertCircle className="w-4 h-4 text-amber-500" />
-                        )}
-                        <span className={`text-xs ${
-                          status === 'uploaded' ? 'text-green-600' : 'text-amber-600'
-                        }`}>
-                          {status === 'uploaded' ? 'Sudah diupload' : 'Belum diupload'}
-                        </span>
+                  <div key={index} className={`space-y-2 ${needsAttention ? 'bg-red-50 border border-red-200 rounded-lg p-3' : ''} ${isFixed ? 'bg-blue-50 border border-blue-200' : ''}`}>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`doc-${index}`} className={`text-sm font-medium ${needsAttention ? 'text-red-800' : isFixed ? 'text-blue-800' : ''}`}>
+                        {index + 1}. {requirement}
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        {verificationStatus && getVerificationStatusBadge(verificationStatus.status)}
+                        {isFixed && <Badge className="bg-blue-100 text-blue-700">✓ Diperbaiki</Badge>}
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                      {status === 'uploaded' && document?.drive_link && (
+                    {verificationStatus?.admin_notes && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
+                        <p className="text-xs font-medium text-yellow-800">Catatan Admin:</p>
+                        <p className="text-xs text-yellow-700">{verificationStatus.admin_notes}</p>
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-2">
+                      <Input
+                        id={`doc-${index}`}
+                        placeholder="Masukkan link Google Drive dokumen..."
+                        value={documents[docKey] || ""}
+                        onChange={(e) => handleDocumentChange(index, e.target.value)}
+                        className={needsAttention ? 'border-red-300 focus:border-red-500' : isFixed ? 'border-blue-300 focus:border-blue-500' : ''}
+                        disabled={!canEdit}
+                      />
+                      {needsAttention && !isFixed && documents[docKey] && (
+                        <Button 
+                          onClick={() => handleMarkDocumentFixed(docKey)}
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
+                        >
+                          Perbaiki
+                        </Button>
+                      )}
+                      {documents[docKey] && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => window.open(document.drive_link!, '_blank')}
+                          onClick={() => window.open(documents[docKey], '_blank')}
                         >
                           <Download className="w-4 h-4" />
                         </Button>
                       )}
-                      
-                      {canEdit && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedDocumentIndex(index);
-                            setUploadDialogOpen(true);
-                          }}
-                        >
-                          <Upload className="w-4 h-4" />
-                        </Button>
-                      )}
                     </div>
+                    
+                    {isFixed && (
+                      <div className="bg-blue-50 border border-blue-200 rounded p-2">
+                        <p className="text-xs font-medium text-blue-800">✓ Dokumen telah diperbaiki</p>
+                        <p className="text-xs text-blue-700">Dokumen ini telah ditandai sebagai diperbaiki dan siap untuk direview ulang.</p>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -441,44 +674,48 @@ export default function DetailMutasiTerpadu() {
         </Card>
       </div>
 
-      {/* Upload Dialog */}
-      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Upload Dokumen</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {selectedDocumentIndex !== null && (
-              <div className="p-3 bg-muted rounded-lg">
-                <p className="text-sm font-medium">
-                  {DOCUMENT_REQUIREMENTS[selectedDocumentIndex]}
+      {/* Additional Notes */}
+      {canEdit && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Catatan Tambahan</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              placeholder="Masukkan catatan atau keterangan tambahan jika diperlukan..."
+              value={additionalNotes}
+              onChange={(e) => setAdditionalNotes(e.target.value)}
+              rows={4}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Document Verification Status */}
+      {application.status !== 'draft' && (
+        <DocumentVerificationStatus 
+          applicationId={application.id} 
+          applicationStatus={application.status} 
+        />
+      )}
+
+      {/* Information Card */}
+      {canEdit && (
+        <Card className="bg-amber-50 border-amber-200">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+              <div>
+                <h4 className="font-semibold text-amber-900 mb-1">Informasi Penting</h4>
+                <p className="text-sm text-amber-800">
+                  Pastikan semua dokumen yang diupload sudah sesuai dengan persyaratan dan dapat diakses melalui link Google Drive yang diberikan. 
+                  Dokumen yang tidak lengkap atau tidak dapat diakses akan menyebabkan pengajuan dikembalikan untuk perbaikan.
                 </p>
               </div>
-            )}
-            
-            <div className="space-y-2">
-              <Label>Link Google Drive</Label>
-              <Input
-                placeholder="https://drive.google.com/..."
-                value={driveLink}
-                onChange={(e) => setDriveLink(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Pastikan file dapat diakses oleh siapa saja dengan link
-              </p>
             </div>
-
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>
-                Batal
-              </Button>
-              <Button onClick={handleUploadDocument} disabled={uploading}>
-                {uploading ? 'Mengupload...' : 'Upload'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
