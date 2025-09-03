@@ -38,6 +38,8 @@ interface Employee {
   jabatan: string | null;
   pangkat: string | null;
   masa_kerja: string | null;
+  handphone: string | null;
+  email: string | null;
 }
 
 interface PensiunData {
@@ -52,6 +54,8 @@ interface PensiunData {
   pangkat: string;
   masaKerja: string;
   statusPersiapan: 'belum_mulai' | 'dalam_proses' | 'hampir_selesai' | 'siap';
+  handphone?: string;
+  email?: string;
 }
 
 interface RetirementApplication {
@@ -172,7 +176,9 @@ export default function ReminderPensiun() {
           jabatan: emp.jabatan || '-',
           pangkat: emp.pangkat || '-',
           masaKerja: emp.masa_kerja || '-',
-          statusPersiapan
+          statusPersiapan,
+          handphone: emp.handphone || '',
+          email: emp.email || ''
         };
       });
 
@@ -752,6 +758,60 @@ export default function ReminderPensiun() {
       .replace(/{tanggal_pensiun}/g, new Date(employee.tanggalPensiun).toLocaleDateString('id-ID'))
       .replace(/{sisa_hari}/g, employee.sisaHari.toString())
       .replace(/{kontak_admin}/g, user?.email || 'admin@instansi.go.id');
+  };
+
+  // Direct WhatsApp reminder function
+  const handleDirectWhatsAppReminder = () => {
+    const selectedEmployees = pensiunData.filter(emp => 
+      selectedEmployeesForReminder.has(emp.id)
+    );
+
+    const adminNumber = "6282245911976";
+    
+    selectedEmployees.forEach(employee => {
+      // Assume employee has handphone field, if not we'll use a placeholder
+      const employeeNumber = employee.handphone || "628123456789"; // Fallback number
+      const message = generateReminderMessage(reminderTemplates.whatsapp, employee);
+      const encodedMessage = encodeURIComponent(message);
+      
+      // Create WhatsApp link
+      const whatsappUrl = `https://wa.me/${employeeNumber}?text=${encodedMessage}`;
+      
+      // Open in new window/tab
+      window.open(whatsappUrl, '_blank');
+    });
+
+    toast({
+      title: "WhatsApp Links Dibuka",
+      description: `${selectedEmployees.length} link WhatsApp telah dibuka. Silakan kirim pesan manual dari browser/tab baru.`
+    });
+  };
+
+  // Direct Email reminder function  
+  const handleDirectEmailReminder = () => {
+    const selectedEmployees = pensiunData.filter(emp => 
+      selectedEmployeesForReminder.has(emp.id)
+    );
+
+    const adminEmail = "primastiwardani93@gmail.com";
+    
+    selectedEmployees.forEach(employee => {
+      // Assume employee has email field, if not we'll use a placeholder
+      const employeeEmail = employee.email || "employee@example.com"; // Fallback email
+      const subject = encodeURIComponent(`Reminder Pensiun - ${employee.nama}`);
+      const body = encodeURIComponent(generateReminderMessage(reminderTemplates.email, employee));
+      
+      // Create mailto link
+      const mailtoUrl = `mailto:${employeeEmail}?subject=${subject}&body=${body}&from=${adminEmail}`;
+      
+      // Open email client
+      window.location.href = mailtoUrl;
+    });
+
+    toast({
+      title: "Email Client Dibuka",
+      description: `Email client dibuka untuk ${selectedEmployees.length} pegawai. Silakan kirim email.`
+    });
   };
 
   const simulateNotificationSending = async () => {
@@ -1726,20 +1786,22 @@ export default function ReminderPensiun() {
                       Jadwalkan Otomatis
                     </Button>
                     <Button 
-                      onClick={simulateNotificationSending}
-                      disabled={isRemindingSending || selectedEmployeesForReminder.size === 0}
+                      onClick={() => handleDirectWhatsAppReminder()}
+                      disabled={selectedEmployeesForReminder.size === 0 || !enabledChannels.whatsapp}
+                      variant="outline"
+                      className="bg-green-600 hover:bg-green-700 text-white"
                     >
-                      {isRemindingSending ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Mengirim Reminder...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4 mr-2" />
-                          Kirim Reminder Sekarang ({selectedEmployeesForReminder.size})
-                        </>
-                      )}
+                      <Send className="w-4 h-4 mr-2" />
+                      Kirim via WhatsApp ({selectedEmployeesForReminder.size})
+                    </Button>
+                    <Button 
+                      onClick={() => handleDirectEmailReminder()}
+                      disabled={selectedEmployeesForReminder.size === 0 || !enabledChannels.email}
+                      variant="outline"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      Kirim via Email ({selectedEmployeesForReminder.size})
                     </Button>
                   </div>
                 </div>
