@@ -15,7 +15,9 @@ import {
   BarChart3,
   UserCheck,
   Shield,
-  GitBranch
+  GitBranch,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 
 import {
@@ -29,11 +31,21 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
   useSidebar,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 
 interface MenuItem {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+}
+
+interface AdminMenuItem {
   title: string;
   url: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -46,13 +58,18 @@ export function AppSidebar() {
   const { user } = useAuth();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
+  const [adminMenuOpen, setAdminMenuOpen] = useState(true);
 
   const isActive = (path: string) => currentPath === path;
+  const isAdminPathActive = () => {
+    return currentPath.startsWith('/admin') || currentPath === '/verifikasi';
+  };
+  
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     `sidebar-nav-item ${isActive ? 'sidebar-nav-active' : ''}`;
 
-  // Define menu items based on user role
-  const getMenuItems = (): MenuItem[] => {
+  // Define main menu items
+  const getMainMenuItems = (): MenuItem[] => {
     const commonItems: MenuItem[] = [
       { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
     ];
@@ -60,17 +77,6 @@ export function AppSidebar() {
     if (user?.role === 'admin_pusat') {
       return [
         ...commonItems,
-        { 
-          title: "Verifikasi Usulan", 
-          url: "/verifikasi", 
-          icon: CheckCircle,
-          badge: "3" // Mock notification count
-        },
-        { title: "Panel Admin", url: "/admin", icon: Shield },
-        { title: "Database Pegawai", url: "/admin/pegawai", icon: Database },
-        { title: "Formasi Jabatan", url: "/admin/formasi", icon: UserCheck },
-        { title: "User Management", url: "/admin/users", icon: Users },
-        { title: "Statistik & Laporan", url: "/admin/reports", icon: BarChart3 },
         { title: "Portal Aplikasi", url: "/apps", icon: FileText },
       ];
     } else {
@@ -83,7 +89,24 @@ export function AppSidebar() {
     }
   };
 
-  const menuItems = getMenuItems();
+  // Define admin menu items
+  const getAdminMenuItems = (): AdminMenuItem[] => {
+    return [
+      { 
+        title: "Verifikasi Usulan", 
+        url: "/verifikasi", 
+        icon: CheckCircle,
+        badge: "3"
+      },
+      { title: "Database Pegawai", url: "/admin/pegawai", icon: Database },
+      { title: "Formasi Jabatan", url: "/admin/formasi", icon: UserCheck },
+      { title: "User Management", url: "/admin/users", icon: Users },
+      { title: "Statistik & Laporan", url: "/admin/reports", icon: BarChart3 },
+    ];
+  };
+
+  const mainMenuItems = getMainMenuItems();
+  const adminMenuItems = getAdminMenuItems();
 
   return (
     <Sidebar
@@ -105,13 +128,14 @@ export function AppSidebar() {
       </div>
 
       <SidebarContent className="p-4">
+        {/* Main Menu */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/70 mb-2">
             {!collapsed && "Menu Utama"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {menuItems.map((item) => (
+              {mainMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} className={getNavCls}>
@@ -133,6 +157,56 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Admin Panel Menu - Only for admin_pusat */}
+        {user?.role === 'admin_pusat' && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-sidebar-foreground/70 mb-2 mt-6">
+              {!collapsed && "Panel Admin"}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-1">
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => setAdminMenuOpen(!adminMenuOpen)}
+                    className={`sidebar-nav-item ${isAdminPathActive() ? 'sidebar-nav-active' : ''}`}
+                  >
+                    <Shield className="w-5 h-5 flex-shrink-0" />
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1">Panel Admin</span>
+                        {adminMenuOpen ? (
+                          <ChevronDown className="w-4 h-4" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4" />
+                        )}
+                      </>
+                    )}
+                  </SidebarMenuButton>
+                  {!collapsed && adminMenuOpen && (
+                    <SidebarMenuSub>
+                      {adminMenuItems.map((item) => (
+                        <SidebarMenuSubItem key={item.title}>
+                          <SidebarMenuSubButton asChild>
+                            <NavLink to={item.url} className={getNavCls}>
+                              <item.icon className="w-4 h-4 flex-shrink-0" />
+                              <span className="flex-1">{item.title}</span>
+                              {item.badge && (
+                                <Badge className="bg-red-500 text-white text-xs px-1.5 py-0.5">
+                                  {item.badge}
+                                </Badge>
+                              )}
+                            </NavLink>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  )}
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {/* User Info */}
         {user && (
