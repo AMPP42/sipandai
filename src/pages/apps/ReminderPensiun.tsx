@@ -138,11 +138,11 @@ export default function ReminderPensiun() {
   const fetchEmployeeData = async () => {
     try {
       setLoading(true);
-      const { data: employees, error } = await supabase
-        .from('employees')
-        .select('id, nama, nip, tanggal_lahir, tmt_pensiun, unit, jabatan, pangkat, masa_kerja')
-        .not('tmt_pensiun', 'is', null)
-        .order('tmt_pensiun', { ascending: true });
+    const { data: employees, error } = await supabase
+      .from('employees')
+      .select('id, nama, nip, tanggal_lahir, tmt_pensiun, unit, jabatan, pangkat, masa_kerja, handphone, email')
+      .not('tmt_pensiun', 'is', null)
+      .order('tmt_pensiun', { ascending: true });
 
       if (error) throw error;
 
