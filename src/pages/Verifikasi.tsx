@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import DetailedVerificationModal from '@/components/verifikasi/DetailedVerificationModal';
+import { createApplicationStatusNotification } from '@/lib/notifications';
 
 interface ApplicationItem {
   id: string;
@@ -213,6 +214,16 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
           });
 
         if (workflowError) console.error('Workflow error:', workflowError);
+
+        // Send notification to the applicant
+        const applicationTitle = selectedApplication.judul || `${selectedApplication.jenis || 'Usulan'} - ${selectedApplication.submitter_name}`;
+        await createApplicationStatusNotification(
+          selectedApplication.submitter_id || selectedApplication.user_id || '',
+          applicationTitle,
+          selectedApplication.status,
+          newStatus,
+          reviewNote
+        );
       }
 
       setShowReviewDialog(false);
