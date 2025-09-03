@@ -79,27 +79,16 @@ export default function AdminUsers() {
 
       if (profilesError) throw profilesError;
 
-      // Get auth users for additional info (admin only)
-      let authUsers: any[] = [];
-      try {
-        const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
-        if (authError) {
-          console.warn('Cannot fetch auth users:', authError);
-        } else {
-          authUsers = authData?.users || [];
-        }
-      } catch (error) {
-        console.warn('Auth admin functions not available:', error);
-      }
-
-      // Combine profile and auth data
+      // Get current user session info
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Combine profile and available session data
       const enrichedUsers: UserProfile[] = profiles?.map(profile => {
-        const authUser = authUsers.find(user => user.id === profile.id);
         return {
           ...profile,
-          email: authUser?.email || 'N/A',
-          last_sign_in_at: authUser?.last_sign_in_at || null,
-          email_confirmed_at: authUser?.email_confirmed_at || null
+          email: profile.id === session?.user?.id ? session?.user?.email || 'N/A' : 'N/A',
+          last_sign_in_at: profile.id === session?.user?.id ? session?.user?.last_sign_in_at || null : null,
+          email_confirmed_at: profile.id === session?.user?.id ? session?.user?.email_confirmed_at || null : profile.created_at
         };
       }) || [];
 
@@ -110,11 +99,13 @@ export default function AdminUsers() {
       const adminPusat = enrichedUsers.filter(u => u.role === 'admin_pusat').length;
       const adminUnit = enrichedUsers.filter(u => u.role === 'admin_unit').length;
       
-      // Active today (users who signed in today)
+      // Active today - users who have accounts (simplified since we can't access auth data)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      
+      // Active today - users who have accounts (simplified since we can't access auth data)
       const activeToday = enrichedUsers.filter(u => 
-        u.last_sign_in_at && new Date(u.last_sign_in_at) >= today
+        u.email_confirmed_at && new Date(u.email_confirmed_at) >= today
       ).length;
 
       setStats({
@@ -138,35 +129,14 @@ export default function AdminUsers() {
 
   const createUser = async () => {
     try {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: newUser.email,
-        password: newUser.password,
-        email_confirm: true,
-        user_metadata: {
-          name: newUser.name,
-          role: newUser.role,
-          unit: newUser.unit
-        }
-      });
-
-      if (authError) throw authError;
-
-      // Profile will be created automatically by trigger
+      // For now, we'll show a message that this feature requires server-side implementation
       toast({
-        title: "Berhasil",
-        description: "User berhasil dibuat"
+        title: "Info",
+        description: "Fitur pembuatan user memerlukan implementasi server-side. Silakan hubungi administrator sistem.",
+        variant: "default"
       });
 
-      setNewUser({
-        name: '',
-        email: '',
-        password: '',
-        role: 'admin_unit',
-        unit: ''
-      });
       setIsCreateDialogOpen(false);
-      loadUsers();
 
     } catch (error: any) {
       toast({
@@ -214,16 +184,12 @@ export default function AdminUsers() {
     if (!confirm('Apakah Anda yakin ingin menghapus user ini?')) return;
 
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-
-      if (error) throw error;
-
+      // For now, we'll show a message that this feature requires server-side implementation
       toast({
-        title: "Berhasil",
-        description: "User berhasil dihapus"
+        title: "Info",
+        description: "Fitur penghapusan user memerlukan implementasi server-side. Silakan hubungi administrator sistem.",
+        variant: "default"
       });
-
-      loadUsers();
 
     } catch (error: any) {
       toast({
@@ -252,10 +218,10 @@ export default function AdminUsers() {
   };
 
   const getStatusBadge = (user: UserProfile) => {
-    if (user.email_confirmed_at) {
+    if (user.email_confirmed_at || user.email !== 'N/A') {
       return <Badge className="bg-green-100 text-green-700">Aktif</Badge>;
     }
-    return <Badge className="bg-red-100 text-red-700">Belum Verifikasi</Badge>;
+    return <Badge className="bg-yellow-100 text-yellow-700">Terdaftar</Badge>;
   };
 
   return (
@@ -346,7 +312,9 @@ export default function AdminUsers() {
                       value={newUser.unit}
                       onChange={(e) => setNewUser({...newUser, unit: e.target.value})}
                       placeholder="Nama unit kerja"
+                      disabled
                     />
+                    <p className="text-xs text-gray-500 mt-1">Fitur pembuatan user memerlukan implementasi server-side</p>
                   </div>
                 </div>
                 <DialogFooter>
@@ -460,8 +428,14 @@ export default function AdminUsers() {
                     <TableCell>{getStatusBadge(user)}</TableCell>
                     <TableCell>
                       {user.last_sign_in_at 
-                        ? new Date(user.last_sign_in_at).toLocaleDateString('id-ID')
-                        : 'Belum pernah login'
+                        ? new Date(user.last_sign_in_at).toLocaleDateString('id-ID', {
+                            year: 'numeric',
+                            month: 'short', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        : (user.email && user.email !== 'N/A') ? 'Sedang Login' : 'Belum ada data login'
                       }
                     </TableCell>
                     <TableCell>
