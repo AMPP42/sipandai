@@ -63,6 +63,8 @@ export default function AdminFormasi() {
   });
   const { toast } = useToast();
 
+  console.log('Dialog state:', isCreateDialogOpen); // Debug log
+
   useEffect(() => {
     loadPositions();
   }, []);
@@ -277,7 +279,13 @@ export default function AdminFormasi() {
             </Button>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="btn-primary">
+                <Button 
+                  className="btn-primary"
+                  onClick={() => {
+                    console.log('Tambah Formasi clicked', isCreateDialogOpen);
+                    setIsCreateDialogOpen(true);
+                  }}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Tambah Formasi
                 </Button>
