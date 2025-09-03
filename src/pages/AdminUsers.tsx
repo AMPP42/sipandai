@@ -71,7 +71,7 @@ export default function AdminUsers() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // Get user profiles
+      // Get user profiles with email stored in profiles table
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -82,13 +82,14 @@ export default function AdminUsers() {
       // Get current user session info
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Combine profile and available session data
+      // Combine profile data and session data where available
       const enrichedUsers: UserProfile[] = profiles?.map(profile => {
+        const isCurrentUser = profile.id === session?.user?.id;
         return {
           ...profile,
-          email: profile.id === session?.user?.id ? session?.user?.email || 'N/A' : 'N/A',
-          last_sign_in_at: profile.id === session?.user?.id ? session?.user?.last_sign_in_at || null : null,
-          email_confirmed_at: profile.id === session?.user?.id ? session?.user?.email_confirmed_at || null : profile.created_at
+          email: isCurrentUser ? session?.user?.email || 'Email tidak tersedia' : 'Email tidak tersedia',
+          last_sign_in_at: isCurrentUser ? session?.user?.last_sign_in_at || null : null,
+          email_confirmed_at: isCurrentUser ? session?.user?.email_confirmed_at || null : profile.created_at
         };
       }) || [];
 
@@ -139,17 +140,16 @@ export default function AdminUsers() {
         return;
       }
 
-      // Check if email already exists in profiles
-      const { data: existingProfile } = await supabase
+      // Check if user with same name already exists
+      const { data: existingUsers } = await supabase
         .from('profiles')
-        .select('id')
-        .eq('id', newUser.email)
-        .single();
+        .select('name')
+        .eq('name', newUser.name);
 
-      if (existingProfile) {
+      if (existingUsers && existingUsers.length > 0) {
         toast({
           title: "Error", 
-          description: "Email sudah terdaftar dalam sistem",
+          description: "User dengan nama tersebut sudah ada dalam sistem",
           variant: "destructive"
         });
         return;
