@@ -62,7 +62,7 @@ export function AppSidebar() {
 
   const isActive = (path: string) => currentPath === path;
   const isAdminPathActive = () => {
-    return currentPath.startsWith('/admin') || currentPath === '/verifikasi';
+    return currentPath.startsWith('/panel-admin') || currentPath === '/verifikasi';
   };
   
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -79,7 +79,7 @@ export function AppSidebar() {
         ...commonItems,
         { 
           title: "Panel Admin", 
-          url: "/verifikasi", 
+          url: "/panel-admin", 
           icon: Shield
         },
         { title: "Portal Aplikasi", url: "/apps", icon: FileText },

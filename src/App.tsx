@@ -132,7 +132,7 @@ const App = () => (
             } />
 
             {/* Main Admin Panel route */}
-            <Route path="/admin" element={
+            <Route path="/panel-admin" element={
               <ProtectedRoute requiredRole="admin_pusat">
                 <DashboardLayout>
                   <PanelAdmin />
@@ -141,45 +141,12 @@ const App = () => (
             } />
 
             {/* Legacy admin routes - redirect to main panel */}
-            <Route path="/verifikasi" element={
-              <ProtectedRoute requiredRole="admin_pusat">
-                <DashboardLayout>
-                  <PanelAdmin />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-
-            <Route path="/admin/pegawai" element={
-              <ProtectedRoute requiredRole="admin_pusat">
-                <DashboardLayout>
-                  <PanelAdmin />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-
-            <Route path="/admin/formasi" element={
-              <ProtectedRoute requiredRole="admin_pusat">
-                <DashboardLayout>
-                  <PanelAdmin />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-
-            <Route path="/admin/users" element={
-              <ProtectedRoute requiredRole="admin_pusat">
-                <DashboardLayout>
-                  <PanelAdmin />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-
-            <Route path="/admin/reports" element={
-              <ProtectedRoute requiredRole="admin_pusat">
-                <DashboardLayout>
-                  <PanelAdmin />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
+            <Route path="/admin" element={<Navigate to="/panel-admin" replace />} />
+            <Route path="/verifikasi" element={<Navigate to="/panel-admin?tab=verifikasi-usulan" replace />} />
+            <Route path="/admin-pegawai" element={<Navigate to="/panel-admin?tab=database-pegawai" replace />} />
+            <Route path="/admin-formasi" element={<Navigate to="/panel-admin?tab=formasi-jabatan" replace />} />
+            <Route path="/admin-users" element={<Navigate to="/panel-admin?tab=user-management" replace />} />
+            <Route path="/admin-reports" element={<Navigate to="/panel-admin?tab=statistik-laporan" replace />} />
 
             {/* User routes */}
             <Route path="/status" element={
