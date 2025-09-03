@@ -1,4 +1,5 @@
 
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function Apps() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const applications = [
     {
@@ -26,7 +28,8 @@ export default function Apps() {
       color: 'blue',
       features: ['Form pengajuan online', 'Upload dokumen Google Drive', 'Tracking status real-time', 'Notifikasi otomatis'],
       stats: { total: 23, pending: 5, approved: 15 },
-      available: true
+      available: true,
+      route: '/apps/pengajuan-mutasi'
     },
     {
       id: 'pangkat',
@@ -36,7 +39,8 @@ export default function Apps() {
       color: 'green',
       features: ['Validasi syarat otomatis', 'Checklist dokumen', 'Kalkulasi masa kerja', 'Integrasi database kepangkatan'],
       stats: { total: 18, pending: 3, approved: 12 },
-      available: true
+      available: true,
+      route: '/apps/kenaikan-pangkat'
     },
     {
       id: 'pensiun',
@@ -46,7 +50,8 @@ export default function Apps() {
       color: 'orange',
       features: ['Auto-reminder pensiun', 'Dashboard countdown', 'Checklist persiapan', 'Generate surat keterangan'],
       stats: { total: 47, reminder: 12, processed: 5 },
-      available: true
+      available: true,
+      route: '/apps/reminder-pensiun'
     },
     {
       id: 'konsultasi',
@@ -56,9 +61,16 @@ export default function Apps() {
       color: 'purple',
       features: ['Ticketing system', 'Live chat konselor', 'Knowledge base FAQ', 'Rating & feedback'],
       stats: { active: 8, resolved: 45, pending: 3 },
-      available: true
+      available: true,
+      route: '/apps/konsultasi-sdm'
     }
   ];
+
+  const handleOpenApp = (app: any) => {
+    if (app.available && app.route) {
+      navigate(app.route);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
@@ -152,6 +164,7 @@ export default function Apps() {
                   className="btn-primary flex-1" 
                   disabled={!app.available}
                   size="sm"
+                  onClick={() => handleOpenApp(app)}
                 >
                   Buka Aplikasi
                   <ArrowRight className="w-4 h-4 ml-2" />

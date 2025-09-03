@@ -15,6 +15,12 @@ import Apps from "./pages/Apps";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
+// Application pages
+import PengajuanMutasi from "./pages/apps/PengajuanMutasi";
+import KenaikanPangkat from "./pages/apps/KenaikanPangkat";
+import ReminderPensiun from "./pages/apps/ReminderPensiun";
+import KonsultasiSDM from "./pages/apps/KonsultasiSDM";
+
 // Admin pages
 import PanelAdmin from "./pages/PanelAdmin";
 import Verifikasi from "./pages/Verifikasi";
@@ -63,6 +69,39 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <Settings />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+
+            {/* Application routes */}
+            <Route path="/apps/pengajuan-mutasi" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <PengajuanMutasi />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/apps/kenaikan-pangkat" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <KenaikanPangkat />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/apps/reminder-pensiun" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <ReminderPensiun />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/apps/konsultasi-sdm" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <KonsultasiSDM />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
