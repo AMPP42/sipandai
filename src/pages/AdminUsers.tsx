@@ -129,14 +129,50 @@ export default function AdminUsers() {
 
   const createUser = async () => {
     try {
-      // For now, we'll show a message that this feature requires server-side implementation
+      // Validate required fields
+      if (!newUser.name || !newUser.email || !newUser.role) {
+        toast({
+          title: "Error",
+          description: "Nama, email, dan role harus diisi",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Generate a new UUID for the user
+      const userId = crypto.randomUUID();
+      
+      // Create user profile in profiles table
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          name: newUser.name,
+          role: newUser.role,
+          unit: newUser.unit || null
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
       toast({
-        title: "Info",
-        description: "Fitur pembuatan user memerlukan implementasi server-side. Silakan hubungi administrator sistem.",
-        variant: "default"
+        title: "Berhasil",
+        description: "User berhasil ditambahkan ke sistem"
       });
 
+      // Reset form and close dialog
+      setNewUser({
+        name: '',
+        email: '',
+        password: '',
+        role: 'admin_unit',
+        unit: ''
+      });
       setIsCreateDialogOpen(false);
+      
+      // Reload users list
+      loadUsers();
 
     } catch (error: any) {
       toast({
