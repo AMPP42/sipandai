@@ -99,6 +99,18 @@ export default function ReminderPensiun() {
   const [documentVerificationStatus, setDocumentVerificationStatus] = useState<DocumentVerificationStatus>({});
   const [fixedDocuments, setFixedDocuments] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedEmployeesForReminder, setSelectedEmployeesForReminder] = useState<Set<string>>(new Set());
+  const [isRemindingSending, setIsRemindingSending] = useState(false);
+  const [reminderTemplates, setReminderTemplates] = useState({
+    email: "Yth. {nama_pegawai}, Kami informasikan bahwa masa pensiun Anda akan tiba pada {tanggal_pensiun}. Mohon segera melengkapi persyaratan pensiun.",
+    sms: "Hai {nama_pegawai}, masa pensiun Anda tinggal {sisa_hari} hari lagi. Segera lengkapi persyaratan pensiun. Info: {kontak_admin}",
+    whatsapp: "Halo {nama_pegawai}, ini adalah reminder bahwa masa pensiun Anda akan tiba pada {tanggal_pensiun}. Silakan hubungi admin untuk informasi persyaratan."
+  });
+  const [enabledChannels, setEnabledChannels] = useState({
+    email: true,
+    sms: true,
+    whatsapp: true
+  });
   const { toast } = useToast();
   const { user } = useAuth();
   const location = useLocation();
@@ -719,6 +731,114 @@ export default function ReminderPensiun() {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEmployeeSelectionForReminder = (employeeId: string, checked: boolean) => {
+    setSelectedEmployeesForReminder(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(employeeId);
+      } else {
+        newSet.delete(employeeId);
+      }
+      return newSet;
+    });
+  };
+
+  const generateReminderMessage = (template: string, employee: PensiunData) => {
+    return template
+      .replace(/{nama_pegawai}/g, employee.nama)
+      .replace(/{tanggal_pensiun}/g, new Date(employee.tanggalPensiun).toLocaleDateString('id-ID'))
+      .replace(/{sisa_hari}/g, employee.sisaHari.toString())
+      .replace(/{kontak_admin}/g, user?.email || 'admin@instansi.go.id');
+  };
+
+  const simulateNotificationSending = async () => {
+    setIsRemindingSending(true);
+    
+    try {
+      const selectedEmployees = pensiunData.filter(emp => 
+        selectedEmployeesForReminder.has(emp.id)
+      );
+
+      if (selectedEmployees.length === 0) {
+        toast({
+          title: "Error",
+          description: "Pilih minimal satu pegawai untuk dikirim reminder",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Simulate delay for sending process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Log notification activity (in real implementation, this would go to database)
+      const notificationLog = selectedEmployees.map(employee => {
+        const channels = [];
+        if (enabledChannels.email) channels.push('Email');
+        if (enabledChannels.sms) channels.push('SMS');
+        if (enabledChannels.whatsapp) channels.push('WhatsApp');
+
+        return {
+          employee_id: employee.id,
+          employee_name: employee.nama,
+          employee_nip: employee.nip,
+          channels_sent: channels,
+          messages: {
+            email: enabledChannels.email ? generateReminderMessage(reminderTemplates.email, employee) : null,
+            sms: enabledChannels.sms ? generateReminderMessage(reminderTemplates.sms, employee) : null,
+            whatsapp: enabledChannels.whatsapp ? generateReminderMessage(reminderTemplates.whatsapp, employee) : null
+          },
+          sent_at: new Date().toISOString(),
+          status: 'simulated' // In real implementation: 'sent', 'failed', etc.
+        };
+      });
+
+      // Here you would normally save to database
+      console.log('Notification Log:', notificationLog);
+
+      // Create notifications in database for audit trail
+      for (const employee of selectedEmployees) {
+        const channels = [];
+        if (enabledChannels.email) channels.push('Email');
+        if (enabledChannels.sms) channels.push('SMS');
+        if (enabledChannels.whatsapp) channels.push('WhatsApp');
+
+        await supabase
+          .from('notifications')
+          .insert({
+            recipient_id: user?.id, // In real implementation, this would be employee's user_id
+            title: `Reminder Pensiun - ${employee.nama}`,
+            body: `Notifikasi reminder pensiun telah dikirim via ${channels.join(', ')} kepada ${employee.nama} (${employee.nip}). Sisa waktu pensiun: ${formatSisaWaktu(employee.sisaHari)}`
+          });
+      }
+
+      toast({
+        title: "Reminder Berhasil Dikirim!",
+        description: `Notifikasi reminder pensiun telah dikirim kepada ${selectedEmployees.length} pegawai melalui ${Object.entries(enabledChannels).filter(([_, enabled]) => enabled).map(([channel]) => channel).join(', ')}`
+      });
+
+      // Clear selection after sending
+      setSelectedEmployeesForReminder(new Set());
+
+      // Show detailed preview of what was sent
+      const previewMessage = selectedEmployees.map(emp => 
+        `📧 ${emp.nama} (${emp.nip}): ${formatSisaWaktu(emp.sisaHari)} lagi`
+      ).join('\n');
+
+      console.log('Preview notifikasi yang dikirim:\n', previewMessage);
+
+    } catch (error) {
+      console.error('Error sending reminder:', error);
+      toast({
+        title: "Error",
+        description: "Gagal mengirim reminder. Silakan coba lagi.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRemindingSending(false);
     }
   };
 
@@ -1497,6 +1617,8 @@ export default function ReminderPensiun() {
                               <input
                                 type="checkbox"
                                 id={`reminder-${pegawai.id}`}
+                                checked={selectedEmployeesForReminder.has(pegawai.id)}
+                                onChange={(e) => handleEmployeeSelectionForReminder(pegawai.id, e.target.checked)}
                                 className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary"
                               />
                               <div>
@@ -1538,37 +1660,55 @@ export default function ReminderPensiun() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label>
-                          <input type="checkbox" className="mr-2" defaultChecked />
+                          <input 
+                            type="checkbox" 
+                            className="mr-2" 
+                            checked={enabledChannels.email}
+                            onChange={(e) => setEnabledChannels(prev => ({...prev, email: e.target.checked}))}
+                          />
                           📧 Email
                         </Label>
                         <Textarea 
                           placeholder="Template email notifikasi pensiun..."
                           className="h-24"
-                          defaultValue="Yth. {nama_pegawai}, Kami informasikan bahwa masa pensiun Anda akan tiba pada {tanggal_pensiun}. Mohon segera melengkapi persyaratan pensiun."
+                          value={reminderTemplates.email}
+                          onChange={(e) => setReminderTemplates(prev => ({...prev, email: e.target.value}))}
                         />
                       </div>
                       
                       <div className="space-y-2">
                         <Label>
-                          <input type="checkbox" className="mr-2" defaultChecked />
+                          <input 
+                            type="checkbox" 
+                            className="mr-2" 
+                            checked={enabledChannels.sms}
+                            onChange={(e) => setEnabledChannels(prev => ({...prev, sms: e.target.checked}))}
+                          />
                           📱 SMS
                         </Label>
                         <Textarea 
                           placeholder="Template SMS notifikasi pensiun..."
                           className="h-24"
-                          defaultValue="Hai {nama_pegawai}, masa pensiun Anda tinggal {sisa_hari} hari lagi. Segera lengkapi persyaratan pensiun. Info: {kontak_admin}"
+                          value={reminderTemplates.sms}
+                          onChange={(e) => setReminderTemplates(prev => ({...prev, sms: e.target.value}))}
                         />
                       </div>
                       
                       <div className="space-y-2">
                         <Label>
-                          <input type="checkbox" className="mr-2" defaultChecked />
+                          <input 
+                            type="checkbox" 
+                            className="mr-2" 
+                            checked={enabledChannels.whatsapp}
+                            onChange={(e) => setEnabledChannels(prev => ({...prev, whatsapp: e.target.checked}))}
+                          />
                           💬 WhatsApp
                         </Label>
                         <Textarea 
                           placeholder="Template WhatsApp notifikasi pensiun..."
                           className="h-24"
-                          defaultValue="Halo {nama_pegawai}, ini adalah reminder bahwa masa pensiun Anda akan tiba pada {tanggal_pensiun}. Silakan hubungi admin untuk informasi persyaratan."
+                          value={reminderTemplates.whatsapp}
+                          onChange={(e) => setReminderTemplates(prev => ({...prev, whatsapp: e.target.value}))}
                         />
                       </div>
                     </div>
@@ -1585,24 +1725,63 @@ export default function ReminderPensiun() {
                       <Clock className="w-4 h-4 mr-2" />
                       Jadwalkan Otomatis
                     </Button>
-                    <Button>
-                      <Send className="w-4 h-4 mr-2" />
-                      Kirim Reminder Sekarang
+                    <Button 
+                      onClick={simulateNotificationSending}
+                      disabled={isRemindingSending || selectedEmployeesForReminder.size === 0}
+                    >
+                      {isRemindingSending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Mengirim Reminder...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          Kirim Reminder Sekarang ({selectedEmployeesForReminder.size})
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
 
                 {/* Info Card */}
+                {/* Preview Selected Employees */}
+                {selectedEmployeesForReminder.size > 0 && (
+                  <Card className="bg-green-50 border-green-200">
+                    <CardContent className="p-4">
+                      <h4 className="font-semibold text-green-900 mb-2">
+                        Preview Reminder ({selectedEmployeesForReminder.size} pegawai terpilih)
+                      </h4>
+                      <div className="space-y-2 text-sm text-green-800">
+                        {pensiunData
+                          .filter(emp => selectedEmployeesForReminder.has(emp.id))
+                          .map(emp => (
+                            <div key={emp.id} className="flex justify-between">
+                              <span>📧 {emp.nama} ({emp.nip})</span>
+                              <span className="font-medium">{formatSisaWaktu(emp.sisaHari)} lagi</span>
+                            </div>
+                          ))
+                        }
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <Card className="bg-blue-50 border-blue-200">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
                       <Bell className="w-5 h-5 text-blue-600 mt-0.5" />
                       <div>
-                        <h4 className="font-semibold text-blue-900 mb-1">Fitur Reminder Otomatis</h4>
-                        <p className="text-sm text-blue-800">
-                          Sistem akan otomatis mengirim reminder kepada pegawai yang mendekati masa pensiun berdasarkan jadwal yang telah ditentukan. 
-                          Notifikasi akan dikirim melalui email, SMS, dan WhatsApp sesuai data kontak yang tersedia di database.
+                        <h4 className="font-semibold text-blue-900 mb-1">Mode Simulasi Aktif</h4>
+                        <p className="text-sm text-blue-800 mb-2">
+                          Saat ini sistem berjalan dalam mode simulasi. Notifikasi akan dicatat dalam sistem tanpa mengirim pesan sebenarnya.
+                          Untuk implementasi nyata, diperlukan integrasi dengan:
                         </p>
+                        <ul className="text-xs text-blue-700 space-y-1">
+                          <li>• 📧 <strong>Email:</strong> Resend API / SMTP Server</li>
+                          <li>• 📱 <strong>SMS:</strong> Twilio / AWS SNS / Local SMS Gateway</li>
+                          <li>• 💬 <strong>WhatsApp:</strong> WhatsApp Business API / Fonnte</li>
+                        </ul>
                       </div>
                     </div>
                   </CardContent>
