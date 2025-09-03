@@ -75,6 +75,14 @@ interface ChecklistItem {
   deadline?: string;
 }
 
+interface DocumentVerificationStatus {
+  [key: string]: {
+    status: 'approved' | 'needs_fix' | 'pending';
+    admin_notes?: string;
+    document_name: string;
+  };
+}
+
 export default function ReminderPensiun() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
@@ -87,6 +95,7 @@ export default function ReminderPensiun() {
   const [loadingApplications, setLoadingApplications] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingApplicationId, setEditingApplicationId] = useState<string | null>(null);
+  const [documentVerificationStatus, setDocumentVerificationStatus] = useState<DocumentVerificationStatus>({});
   const { toast } = useToast();
   const { user } = useAuth();
   const location = useLocation();
@@ -222,6 +231,14 @@ export default function ReminderPensiun() {
 
       if (docsError) throw docsError;
 
+      // Load document verification status
+      const { data: verificationData, error: verificationError } = await supabase
+        .from('document_verifications')
+        .select('*, documents(document_index, title)')
+        .eq('application_id', applicationId);
+
+      if (verificationError) throw verificationError;
+
       // Extract retirement category from keterangan
       const kategorMatch = applicationData.keterangan?.match(/Kategori: (.+)/);
       if (kategorMatch) {
@@ -242,6 +259,20 @@ export default function ReminderPensiun() {
         }
       });
       setDocuments(loadedDocuments);
+
+      // Populate document verification status
+      const verificationStatus: DocumentVerificationStatus = {};
+      verificationData.forEach(verification => {
+        if (verification.documents && verification.documents.document_index !== null) {
+          const docKey = `doc_${verification.documents.document_index}`;
+          verificationStatus[docKey] = {
+            status: verification.status as 'approved' | 'needs_fix' | 'pending',
+            admin_notes: verification.admin_notes || undefined,
+            document_name: verification.document_name
+          };
+        }
+      });
+      setDocumentVerificationStatus(verificationStatus);
 
       // Set selected employee based on submitter info
       const employeeData: PensiunData = {
@@ -298,6 +329,19 @@ export default function ReminderPensiun() {
     
     const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.draft;
     return <Badge className={statusInfo.className}>{statusInfo.label}</Badge>;
+  };
+
+  const getVerificationStatusBadge = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return <Badge className="bg-green-100 text-green-700">✓ Disetujui</Badge>;
+      case 'needs_fix':
+        return <Badge className="bg-red-100 text-red-700">✗ Perlu Diperbaiki</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-700">⏳ Menunggu</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-700">Belum Diperiksa</Badge>;
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -948,6 +992,42 @@ export default function ReminderPensiun() {
                          </div>
                       </CardContent>
                     </Card>
+                   )}
+
+                  {/* Edit Mode Summary */}
+                  {isEditing && Object.keys(documentVerificationStatus).length > 0 && (
+                    <Card className="bg-orange-50 border-orange-200">
+                      <CardContent className="p-4">
+                        <h4 className="font-semibold text-orange-900 mb-2">Ringkasan Status Verifikasi</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-green-100 text-green-700">✓ Disetujui</Badge>
+                            <span className="text-green-800">
+                              {Object.values(documentVerificationStatus).filter(v => v.status === 'approved').length} dokumen
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-red-100 text-red-700">✗ Perlu Diperbaiki</Badge>
+                            <span className="text-red-800">
+                              {Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length} dokumen
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-yellow-100 text-yellow-700">⏳ Menunggu</Badge>
+                            <span className="text-yellow-800">
+                              {Object.values(documentVerificationStatus).filter(v => v.status === 'pending').length} dokumen
+                            </span>
+                          </div>
+                        </div>
+                        {Object.values(documentVerificationStatus).some(v => v.status === 'needs_fix') && (
+                          <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg">
+                            <p className="text-sm font-medium text-red-900">
+                              Fokus pada dokumen yang perlu diperbaiki. Dokumen yang sudah disetujui tidak perlu diubah.
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
                   )}
                 </div>
 
@@ -973,32 +1053,80 @@ export default function ReminderPensiun() {
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">
-                        Dokumen Persyaratan - {retirementCategories[retirementCategory as keyof typeof retirementCategories].label}
+                        {isEditing ? 'Edit Dokumen Persyaratan' : 'Dokumen Persyaratan'} - {retirementCategories[retirementCategory as keyof typeof retirementCategories].label}
                       </CardTitle>
                       <CardDescription>
-                        Silakan upload link Google Drive untuk setiap dokumen yang diperlukan
+                        {isEditing 
+                          ? 'Perbaiki dokumen yang bermasalah sesuai catatan reviewer. Dokumen yang sudah disetujui tidak perlu diubah.'
+                          : 'Silakan upload link Google Drive untuk setiap dokumen yang diperlukan'
+                        }
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        {retirementCategories[retirementCategory as keyof typeof retirementCategories].documents.map((doc, index) => (
-                          <div key={index} className="space-y-2">
-                            <Label htmlFor={`doc-${index}`} className="text-sm font-medium">
-                              {index + 1}. {doc}
-                            </Label>
-                            <div className="flex gap-2">
-                              <Input
-                                id={`doc-${index}`}
-                                placeholder="Masukkan link Google Drive dokumen..."
-                                value={documents[`doc_${index}`] || ""}
-                                onChange={(e) => handleDocumentChange(index, e.target.value)}
-                              />
-                              <Button variant="outline" size="icon">
-                                <Upload className="w-4 h-4" />
-                              </Button>
+                        {isEditing && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <h4 className="font-semibold text-blue-900 mb-2">Panduan Edit Dokumen</h4>
+                            <div className="text-sm text-blue-800 space-y-1">
+                              <p>• <span className="font-medium text-green-700">✓ Disetujui</span>: Dokumen sudah benar, tidak perlu diubah</p>
+                              <p>• <span className="font-medium text-red-700">✗ Perlu Diperbaiki</span>: Dokumen harus diperbaiki dan diupload ulang</p>
+                              <p>• <span className="font-medium text-yellow-700">⏳ Menunggu</span>: Dokumen belum diperiksa</p>
                             </div>
                           </div>
-                        ))}
+                        )}
+                        
+                        {retirementCategories[retirementCategory as keyof typeof retirementCategories].documents.map((doc, index) => {
+                          const docKey = `doc_${index}`;
+                          const verificationStatus = documentVerificationStatus[docKey];
+                          const needsAttention = isEditing && verificationStatus?.status === 'needs_fix';
+                          const isApproved = verificationStatus?.status === 'approved';
+                          
+                          // In edit mode, only show documents that need fixing or are new
+                          if (isEditing && isApproved) {
+                            return (
+                              <div key={index} className="space-y-2 bg-green-50 border border-green-200 rounded-lg p-3 opacity-75">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-sm font-medium text-green-800">
+                                    {index + 1}. {doc}
+                                  </Label>
+                                  {getVerificationStatusBadge(verificationStatus.status)}
+                                </div>
+                                <p className="text-xs text-green-700">Dokumen sudah disetujui, tidak perlu diubah</p>
+                              </div>
+                            );
+                          }
+                          
+                          return (
+                            <div key={index} className={`space-y-2 ${needsAttention ? 'bg-red-50 border border-red-200 rounded-lg p-3' : ''}`}>
+                              <div className="flex items-center justify-between">
+                                <Label htmlFor={`doc-${index}`} className={`text-sm font-medium ${needsAttention ? 'text-red-800' : ''}`}>
+                                  {index + 1}. {doc}
+                                </Label>
+                                {verificationStatus && getVerificationStatusBadge(verificationStatus.status)}
+                              </div>
+                              
+                              {verificationStatus?.admin_notes && (
+                                <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
+                                  <p className="text-xs font-medium text-yellow-800">Catatan Admin:</p>
+                                  <p className="text-xs text-yellow-700">{verificationStatus.admin_notes}</p>
+                                </div>
+                              )}
+                              
+                              <div className="flex gap-2">
+                                <Input
+                                  id={`doc-${index}`}
+                                  placeholder="Masukkan link Google Drive dokumen..."
+                                  value={documents[docKey] || ""}
+                                  onChange={(e) => handleDocumentChange(index, e.target.value)}
+                                  className={needsAttention ? 'border-red-300 focus:border-red-500' : ''}
+                                />
+                                <Button variant="outline" size="icon">
+                                  <Upload className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>
