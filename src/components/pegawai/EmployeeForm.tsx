@@ -444,7 +444,7 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
                   placeholder="Pilih TMT PNS"
                 />
               </div>
-              <div className="space-y-2">
+               <div className="space-y-2">
                 <Label htmlFor="tmt_pensiun">TMT Pensiun</Label>
                 <DatePicker
                   date={formData.tmt_pensiun ? new Date(formData.tmt_pensiun + 'T00:00:00') : undefined}
@@ -455,9 +455,7 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
                       : '' 
                   }))}
                   placeholder="Pilih TMT pensiun"
-                  disabled
                 />
-                <p className="text-sm text-gray-500">Otomatis dihitung dari tanggal lahir + 60 tahun</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="masa_kerja">Masa Kerja</Label>
