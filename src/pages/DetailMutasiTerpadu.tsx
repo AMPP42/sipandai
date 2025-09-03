@@ -243,11 +243,23 @@ export default function DetailMutasiTerpadu() {
             status: 'submitted',
             keterangan: `Perbaikan - Diajukan Ulang - Kategori: Mutasi Terpadu${additionalNotes ? ` - ${additionalNotes}` : ''}`,
             updated_at: new Date().toISOString(),
-            progress: 20  // Reset progress for resubmission
+            progress: 20,  // Reset progress for resubmission
+            detailed_verification_status: 'not_started' // Reset verification status
           })
           .eq('id', id);
 
         if (updateError) throw updateError;
+
+        // Reset document verifications for admin to re-verify
+        const { error: deleteVerificationError } = await supabase
+          .from('document_verifications')
+          .delete()
+          .eq('application_id', id);
+
+        if (deleteVerificationError) {
+          console.error('Error deleting old verifications:', deleteVerificationError);
+          // Don't throw error, just log it since this is cleanup
+        }
 
         // Delete existing documents
         const { error: deleteDocsError } = await supabase
@@ -282,6 +294,12 @@ export default function DetailMutasiTerpadu() {
           if (documentsError) throw documentsError;
         }
 
+        console.log('Successfully resubmitted application for re-verification:', {
+          applicationId: id,
+          status: 'submitted',
+          documentsCount: documentInserts.length
+        });
+
         toast({
           title: "Berhasil",
           description: `Perbaikan usulan mutasi untuk ${application.employee_data.employee_name} berhasil dikirim ulang!`,
@@ -293,7 +311,7 @@ export default function DetailMutasiTerpadu() {
         setFixedDocuments(new Set());
         setDocuments({});
         setAdditionalNotes('');
-        navigate('/apps/pengajuan-mutasi-terpadu');
+        navigate('/status'); // Navigate to status page instead of creation page
 
       } else {
         // Submit new application
@@ -338,7 +356,7 @@ export default function DetailMutasiTerpadu() {
           description: `Pengajuan mutasi untuk ${application.employee_data.employee_name} berhasil disubmit dan sedang menunggu verifikasi!`,
         });
 
-        navigate('/apps/pengajuan-mutasi-terpadu');
+        navigate('/status'); // Navigate to status page
       }
 
     } catch (error: any) {

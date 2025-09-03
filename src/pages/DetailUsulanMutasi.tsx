@@ -119,8 +119,14 @@ export default function DetailUsulanMutasi() {
 
       if (error) throw error;
 
+      console.log('Successfully submitted usulan mutasi:', {
+        usulanId: id,
+        status: 'diajukan'
+      });
+      
       toast.success('Usulan berhasil diajukan');
-      fetchUsulanDetail();
+      // Navigate to status page after successful submission
+      navigate('/status');
     } catch (error) {
       console.error('Error submitting usulan:', error);
       toast.error('Gagal mengajukan usulan');
