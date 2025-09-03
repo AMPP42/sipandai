@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import PengajuanMutasi from "./pages/apps/PengajuanMutasi";
 import KenaikanPangkat from "./pages/apps/KenaikanPangkat";
 import ReminderPensiun from "./pages/apps/ReminderPensiun";
+import PengajuanMutasiTerpadu from "./pages/apps/PengajuanMutasiTerpadu";
 import KonsultasiSDM from "./pages/apps/KonsultasiSDM";
 
 // Admin pages
@@ -34,6 +35,7 @@ import StatusUsulan from "./pages/StatusUsulan";
 import UsulanMutasi from "./pages/UsulanMutasi";
 import BuatUsulanMutasi from "./pages/BuatUsulanMutasi";
 import DetailUsulanMutasi from "./pages/DetailUsulanMutasi";
+import DetailMutasiTerpadu from "./pages/DetailMutasiTerpadu";
 
 const queryClient = new QueryClient();
 
@@ -106,6 +108,14 @@ const App = () => (
               </ProtectedRoute>
             } />
 
+            <Route path="/apps/pengajuan-mutasi-terpadu" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <PengajuanMutasiTerpadu />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+
             {/* Usulan Mutasi routes */}
             <Route path="/usulan-mutasi" element={
               <ProtectedRoute>
@@ -136,6 +146,14 @@ const App = () => (
               <ProtectedRoute requiredRole="admin_pusat">
                 <DashboardLayout>
                   <PanelAdmin />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/detail-mutasi-terpadu/:id" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <DetailMutasiTerpadu />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
