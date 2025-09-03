@@ -19,6 +19,7 @@ import {
   X
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import DetailedVerificationModal from '@/components/verifikasi/DetailedVerificationModal';
 
 interface ApplicationItem {
   id: string;
@@ -50,6 +51,7 @@ export default function Verifikasi() {
   const [loading, setLoading] = useState(true);
   const [selectedApplication, setSelectedApplication] = useState<ApplicationItem | null>(null);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [showDetailedVerification, setShowDetailedVerification] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'revision'>('approve');
   const [processing, setProcessing] = useState(false);
@@ -268,12 +270,22 @@ export default function Verifikasi() {
     return new Date(date).toLocaleDateString('id-ID');
   };
 
+  const handleDetailedVerification = (application: ApplicationItem) => {
+    setSelectedApplication(application);
+    setShowDetailedVerification(true);
+  };
+
   const getActionButtons = (application: ApplicationItem) => {
     const canReview = ['submitted', 'in_review'].includes(application.status);
     
     return (
       <div className="flex gap-2">
-        <Button size="sm" variant="outline" title="Lihat Detail">
+        <Button 
+          size="sm" 
+          variant="outline" 
+          onClick={() => handleDetailedVerification(application)}
+          title="Verifikasi Detail"
+        >
           <Eye className="w-4 h-4" />
         </Button>
         
@@ -284,7 +296,7 @@ export default function Verifikasi() {
               variant="outline"
               onClick={() => handleReview(application, 'approve')}
               className="text-green-600 hover:text-green-700"
-              title="Setujui"
+              title="Setujui Langsung"
             >
               <Check className="w-4 h-4" />
             </Button>
@@ -524,6 +536,14 @@ export default function Verifikasi() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Detailed Verification Modal */}
+      <DetailedVerificationModal
+        open={showDetailedVerification}
+        onOpenChange={setShowDetailedVerification}
+        application={selectedApplication}
+        onVerificationComplete={loadApplications}
+      />
     </div>
   );
 }

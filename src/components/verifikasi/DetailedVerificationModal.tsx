@@ -1,0 +1,474 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { CheckCircle, XCircle, Clock, FileText, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface ApplicationItem {
+  id: string;
+  type: 'usulan_mutasi' | 'application';
+  nomor_usulan?: string;
+  judul?: string;
+  nama_pegawai?: string;
+  submitter_name?: string;
+  unit_asal?: string;
+  unit_tujuan?: string;
+  submitter_unit?: string;
+  jenis_mutasi?: string;
+  jenis?: string;
+  alasan_mutasi?: string;
+  keterangan?: string;
+  tanggal_usulan?: string;
+  tanggal_pengajuan?: string;
+  status: string;
+  catatan_reviewer?: string;
+  user_id?: string;
+  submitter_id?: string;
+  created_at: string;
+  detailed_verification_status?: string;
+}
+
+interface DocumentVerification {
+  id: string;
+  application_id: string;
+  document_type: string;
+  document_name: string;
+  status: 'pending' | 'approved' | 'needs_fix';
+  admin_notes?: string;
+  verified_by?: string;
+  verified_at?: string;
+}
+
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  application: ApplicationItem | null;
+  onVerificationComplete: () => void;
+}
+
+// Define required documents for each application type
+const getRequiredDocuments = (application: ApplicationItem) => {
+  if (application.type === 'usulan_mutasi') {
+    return [
+      { type: 'identity', name: 'Kartu Pegawai' },
+      { type: 'family', name: 'Kartu Keluarga' },
+      { type: 'position', name: 'SK Pangkat Terakhir' },
+      { type: 'education', name: 'Ijazah Pendidikan' },
+      { type: 'performance', name: 'SKP/Penilaian Kinerja' }
+    ];
+  }
+  
+  switch (application.jenis) {
+    case 'pensiun':
+      return [
+        { type: 'identity', name: 'Kartu Pegawai' },
+        { type: 'family', name: 'Kartu Keluarga' },
+        { type: 'pension_request', name: 'Surat Permohonan Pensiun' },
+        { type: 'position', name: 'SK Pangkat Terakhir' },
+        { type: 'health', name: 'Surat Keterangan Sehat' }
+      ];
+    case 'mutasi':
+      return [
+        { type: 'identity', name: 'Kartu Pegawai' },
+        { type: 'family', name: 'Kartu Keluarga' },
+        { type: 'transfer_request', name: 'Surat Permohonan Mutasi' },
+        { type: 'position', name: 'SK Pangkat Terakhir' },
+        { type: 'performance', name: 'SKP/Penilaian Kinerja' }
+      ];
+    case 'kenaikan_pangkat':
+      return [
+        { type: 'identity', name: 'Kartu Pegawai' },
+        { type: 'education', name: 'Ijazah Pendidikan' },
+        { type: 'position', name: 'SK Pangkat Terakhir' },
+        { type: 'performance', name: 'SKP/Penilaian Kinerja' },
+        { type: 'training', name: 'Sertifikat Diklat' }
+      ];
+    default:
+      return [
+        { type: 'identity', name: 'Kartu Pegawai' },
+        { type: 'supporting', name: 'Dokumen Pendukung' }
+      ];
+  }
+};
+
+export default function DetailedVerificationModal({ open, onOpenChange, application, onVerificationComplete }: Props) {
+  const { user } = useAuth();
+  const [documentVerifications, setDocumentVerifications] = useState<DocumentVerification[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open && application) {
+      loadDocumentVerifications();
+    }
+  }, [open, application]);
+
+  const loadDocumentVerifications = async () => {
+    if (!application) return;
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('document_verifications')
+        .select('*')
+        .eq('application_id', application.id)
+        .order('document_type');
+
+      if (error) throw error;
+
+      // If no verifications exist, create initial ones
+      if (!data || data.length === 0) {
+        await initializeDocumentVerifications();
+      } else {
+        setDocumentVerifications(data as DocumentVerification[]);
+      }
+    } catch (error) {
+      console.error('Error loading document verifications:', error);
+      toast.error('Gagal memuat data verifikasi dokumen');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const initializeDocumentVerifications = async () => {
+    if (!application) return;
+
+    const requiredDocs = getRequiredDocuments(application);
+    const initialVerifications = requiredDocs.map(doc => ({
+      application_id: application.id,
+      document_type: doc.type,
+      document_name: doc.name,
+      status: 'pending' as const
+    }));
+
+    try {
+      const { data, error } = await supabase
+        .from('document_verifications')
+        .insert(initialVerifications)
+        .select();
+
+      if (error) throw error;
+      setDocumentVerifications((data || []) as DocumentVerification[]);
+    } catch (error) {
+      console.error('Error initializing document verifications:', error);
+      toast.error('Gagal menginisialisasi verifikasi dokumen');
+    }
+  };
+
+  const updateDocumentStatus = async (verificationId: string, status: 'pending' | 'approved' | 'needs_fix', notes?: string) => {
+    try {
+      const { error } = await supabase
+        .from('document_verifications')
+        .update({
+          status,
+          admin_notes: notes || null,
+          verified_by: user?.id,
+          verified_at: new Date().toISOString()
+        })
+        .eq('id', verificationId);
+
+      if (error) throw error;
+
+      // Update local state
+      setDocumentVerifications(prev => 
+        prev.map(doc => 
+          doc.id === verificationId 
+            ? { ...doc, status, admin_notes: notes, verified_by: user?.id, verified_at: new Date().toISOString() }
+            : doc
+        )
+      );
+
+      toast.success('Status dokumen berhasil diperbarui');
+    } catch (error) {
+      console.error('Error updating document status:', error);
+      toast.error('Gagal memperbarui status dokumen');
+    }
+  };
+
+  const submitFinalVerification = async () => {
+    if (!application) return;
+
+    setSaving(true);
+    try {
+      // Check if all documents are verified (either approved or needs_fix)
+      const pendingDocs = documentVerifications.filter(doc => doc.status === 'pending');
+      
+      if (pendingDocs.length > 0) {
+        toast.error('Harap verifikasi semua dokumen terlebih dahulu');
+        return;
+      }
+
+      // Check if any documents need fixing
+      const docsNeedingFix = documentVerifications.filter(doc => doc.status === 'needs_fix');
+      const allApproved = docsNeedingFix.length === 0;
+
+      // Update application status based on verification results
+      const newStatus = allApproved ? 'approved' : 'revision_needed';
+      
+      if (application.type === 'usulan_mutasi') {
+        const { error } = await supabase
+          .from('usulan_mutasi')
+          .update({
+            status: newStatus,
+            catatan_reviewer: allApproved 
+              ? 'Semua dokumen telah diverifikasi dan disetujui'
+              : `${docsNeedingFix.length} dokumen perlu diperbaiki`,
+            reviewed_by: user?.id,
+            reviewed_at: new Date().toISOString()
+          })
+          .eq('id', application.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('applications')
+          .update({
+            status: newStatus
+          })
+          .eq('id', application.id);
+
+        if (error) throw error;
+
+        // Log workflow change
+        await supabase
+          .from('workflows')
+          .insert({
+            application_id: application.id,
+            from_status: application.status as any,
+            to_status: newStatus,
+            actor_id: user?.id,
+            note: allApproved 
+              ? 'Semua dokumen telah diverifikasi dan disetujui'
+              : `${docsNeedingFix.length} dokumen perlu diperbaiki`
+          });
+      }
+
+      toast.success(allApproved ? 'Usulan berhasil disetujui' : 'Usulan dikembalikan untuk perbaikan');
+      onVerificationComplete();
+      onOpenChange(false);
+
+    } catch (error) {
+      console.error('Error submitting verification:', error);
+      toast.error('Gagal menyimpan hasil verifikasi');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="outline" className="text-yellow-600 border-yellow-200"><Clock className="w-3 h-3 mr-1" />Menunggu</Badge>;
+      case 'approved':
+        return <Badge variant="outline" className="text-green-600 border-green-200"><CheckCircle className="w-3 h-3 mr-1" />Disetujui</Badge>;
+      case 'needs_fix':
+        return <Badge variant="outline" className="text-red-600 border-red-200"><XCircle className="w-3 h-3 mr-1" />Perlu Perbaikan</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+
+  const getApplicationTitle = () => {
+    if (!application) return '';
+    return application.type === 'usulan_mutasi' 
+      ? application.nomor_usulan || ''
+      : application.judul || '';
+  };
+
+  const getApplicantName = () => {
+    if (!application) return '';
+    return application.type === 'usulan_mutasi'
+      ? application.nama_pegawai || ''
+      : application.submitter_name || '';
+  };
+
+  if (!application) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-primary" />
+            Verifikasi Detail Persyaratan
+          </DialogTitle>
+          <DialogDescription>
+            {getApplicationTitle()} - {getApplicantName()}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Application Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Informasi Pengajuan</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Nama Pengaju</label>
+                  <p className="text-sm">{getApplicantName()}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Unit</label>
+                  <p className="text-sm">
+                    {application.type === 'usulan_mutasi' 
+                      ? application.unit_asal 
+                      : application.submitter_unit}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Jenis Pengajuan</label>
+                  <p className="text-sm">
+                    {application.type === 'usulan_mutasi' 
+                      ? application.jenis_mutasi 
+                      : application.jenis === 'pensiun' ? 'Pengajuan Pensiun'
+                      : application.jenis === 'mutasi' ? 'Pengajuan Mutasi'
+                      : application.jenis === 'kenaikan_pangkat' ? 'Kenaikan Pangkat'
+                      : application.jenis}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Status Saat Ini</label>
+                  <p className="text-sm">{application.status}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Separator />
+
+          {/* Document Verification */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Verifikasi Persyaratan Dokumen</h3>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <AlertCircle className="w-4 h-4" />
+                Periksa dan beri status pada setiap dokumen persyaratan
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {documentVerifications.map((verification, index) => (
+                  <Card key={verification.id} className="border-l-4 border-l-blue-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-medium">{verification.document_name}</h4>
+                            {getStatusBadge(verification.status)}
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <div>
+                              <label className="text-sm font-medium text-muted-foreground block mb-1">
+                                Status Verifikasi
+                              </label>
+                              <Select
+                                value={verification.status}
+                                onValueChange={(value) => {
+                                  if (value === 'approved') {
+                                    updateDocumentStatus(verification.id, value);
+                                  } else {
+                                    // For pending and needs_fix, we need to handle notes
+                                    setDocumentVerifications(prev => 
+                                      prev.map(doc => 
+                                        doc.id === verification.id 
+                                          ? { ...doc, status: value as any }
+                                          : doc
+                                      )
+                                    );
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="w-48">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pending">Menunggu Verifikasi</SelectItem>
+                                  <SelectItem value="approved">Sudah Sesuai</SelectItem>
+                                  <SelectItem value="needs_fix">Perlu Perbaikan</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {(verification.status === 'needs_fix' || verification.admin_notes) && (
+                              <div>
+                                <label className="text-sm font-medium text-muted-foreground block mb-1">
+                                  Catatan Verifikator
+                                </label>
+                                <Textarea
+                                  value={verification.admin_notes || ''}
+                                  onChange={(e) => {
+                                    setDocumentVerifications(prev => 
+                                      prev.map(doc => 
+                                        doc.id === verification.id 
+                                          ? { ...doc, admin_notes: e.target.value }
+                                          : doc
+                                      )
+                                    );
+                                  }}
+                                  placeholder={
+                                    verification.status === 'needs_fix' 
+                                      ? 'Jelaskan apa yang perlu diperbaiki...'
+                                      : 'Catatan tambahan (opsional)...'
+                                  }
+                                  className="min-h-[80px]"
+                                />
+                                {verification.status === 'needs_fix' && (
+                                  <Button
+                                    size="sm"
+                                    className="mt-2"
+                                    onClick={() => updateDocumentStatus(
+                                      verification.id, 
+                                      'needs_fix', 
+                                      verification.admin_notes
+                                    )}
+                                  >
+                                    Simpan Status & Catatan
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Final Action */}
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Tutup
+            </Button>
+            <Button 
+              onClick={submitFinalVerification}
+              disabled={saving || documentVerifications.some(doc => doc.status === 'pending')}
+              className="bg-primary hover:bg-primary/90"
+            >
+              {saving ? 'Menyimpan...' : 'Selesai Verifikasi'}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

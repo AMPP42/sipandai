@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import DocumentVerificationStatus from "@/components/applications/DocumentVerificationStatus";
 import { 
   Calendar, 
   Clock, 
@@ -942,7 +943,13 @@ export default function ReminderPensiun() {
                             </div>
                           )}
 
-                          <div className="flex items-center justify-between">
+                          {/* Document Verification Status */}
+                          <DocumentVerificationStatus 
+                            applicationId={app.id}
+                            applicationStatus={app.status}
+                          />
+
+                          <div className="flex items-center justify-between mt-4">
                             <div className="flex items-center gap-2">
                               <span className="text-sm text-muted-foreground">Progress:</span>
                               <Progress value={app.progress} className="w-32 h-2" />

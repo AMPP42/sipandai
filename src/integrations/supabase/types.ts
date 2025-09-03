@@ -17,6 +17,7 @@ export type Database = {
       applications: {
         Row: {
           created_at: string
+          detailed_verification_status: string | null
           documents_count: number
           estimasi: string | null
           id: string
@@ -33,6 +34,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          detailed_verification_status?: string | null
           documents_count?: number
           estimasi?: string | null
           id?: string
@@ -49,6 +51,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          detailed_verification_status?: string | null
           documents_count?: number
           estimasi?: string | null
           id?: string
@@ -92,6 +95,45 @@ export type Database = {
           entity_id?: string | null
           id?: string
           meta?: Json | null
+        }
+        Relationships: []
+      }
+      document_verifications: {
+        Row: {
+          admin_notes: string | null
+          application_id: string
+          created_at: string
+          document_name: string
+          document_type: string
+          id: string
+          status: string
+          updated_at: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          application_id: string
+          created_at?: string
+          document_name: string
+          document_type: string
+          id?: string
+          status?: string
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          application_id?: string
+          created_at?: string
+          document_name?: string
+          document_type?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: []
       }
