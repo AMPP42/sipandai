@@ -1122,6 +1122,29 @@ export default function ReminderPensiun() {
                                 Pengajuan Anda sedang menunggu verifikasi oleh Admin Pusat. Estimasi waktu verifikasi 3-5 hari kerja.
                               </p>
                             </div>
+                           )}
+
+                          {app.status === 'revision_needed' && (
+                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
+                              <div className="flex items-center gap-2 mb-1">
+                                <AlertTriangle className="w-4 h-4 text-orange-600" />
+                                <span className="text-sm font-medium text-orange-800">Perlu Revisi</span>
+                              </div>
+                              <p className="text-xs text-orange-700 mb-3">
+                                Pengajuan Anda perlu diperbaiki sesuai catatan dari Admin Pusat. Silakan edit dan ajukan ulang.
+                              </p>
+                              <Button 
+                                onClick={() => {
+                                  // Navigate to edit mode
+                                  navigate(`/apps/reminder-pensiun?edit=${app.id}`);
+                                }}
+                                size="sm"
+                                className="bg-orange-600 hover:bg-orange-700 text-white"
+                              >
+                                <FileText className="w-3 h-3 mr-1" />
+                                Edit & Ajukan Ulang
+                              </Button>
+                            </div>
                           )}
 
                           {/* Document Verification Status */}
@@ -1141,6 +1164,18 @@ export default function ReminderPensiun() {
                                 <FileText className="w-3 h-3 mr-1" />
                                 Detail
                               </Button>
+                              {app.status === 'revision_needed' && (
+                                <Button 
+                                  onClick={() => {
+                                    navigate(`/apps/reminder-pensiun?edit=${app.id}`);
+                                  }}
+                                  size="sm"
+                                  className="bg-orange-600 hover:bg-orange-700 text-white"
+                                >
+                                  <FileText className="w-3 h-3 mr-1" />
+                                  Edit
+                                </Button>
+                              )}
                               {app.status === 'approved' && (
                                 <Button variant="outline" size="sm">
                                   <Download className="w-3 h-3 mr-1" />
