@@ -774,8 +774,8 @@ export default function ReminderPensiun() {
       const message = generateReminderMessage(reminderTemplates.whatsapp, employee);
       const encodedMessage = encodeURIComponent(message);
       
-      // Create WhatsApp link
-      const whatsappUrl = `https://wa.me/${employeeNumber}?text=${encodedMessage}`;
+      // Create WhatsApp link using WhatsApp Business API format
+      const whatsappUrl = `https://api.whatsapp.com/send/?phone=${employeeNumber}&text=${encodedMessage}&type=phone_number&app_absent=0`;
       
       // Open in new window/tab
       window.open(whatsappUrl, '_blank');
