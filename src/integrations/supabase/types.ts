@@ -179,35 +179,89 @@ export type Database = {
       }
       employees: {
         Row: {
+          agama: string | null
+          alamat: string | null
           created_at: string
+          email: string | null
+          grade_kelas_jabatan: string | null
+          handphone: string | null
           id: string
           jabatan: string | null
+          jenis_kelamin: string | null
+          kriteria_asn: string | null
+          masa_kerja: string | null
           nama: string
+          nik: string | null
           nip: string | null
           pangkat: string | null
+          pendidikan_terakhir: string | null
           status: string | null
+          status_pernikahan: string | null
+          tanggal_lahir: string | null
+          tempat_lahir: string | null
+          tmt_cpns: string | null
+          tmt_jabatan_terakhir: string | null
+          tmt_pangkat_terakhir: string | null
+          tmt_pensiun: string | null
+          tmt_pns: string | null
           unit: string | null
           updated_at: string
         }
         Insert: {
+          agama?: string | null
+          alamat?: string | null
           created_at?: string
+          email?: string | null
+          grade_kelas_jabatan?: string | null
+          handphone?: string | null
           id?: string
           jabatan?: string | null
+          jenis_kelamin?: string | null
+          kriteria_asn?: string | null
+          masa_kerja?: string | null
           nama: string
+          nik?: string | null
           nip?: string | null
           pangkat?: string | null
+          pendidikan_terakhir?: string | null
           status?: string | null
+          status_pernikahan?: string | null
+          tanggal_lahir?: string | null
+          tempat_lahir?: string | null
+          tmt_cpns?: string | null
+          tmt_jabatan_terakhir?: string | null
+          tmt_pangkat_terakhir?: string | null
+          tmt_pensiun?: string | null
+          tmt_pns?: string | null
           unit?: string | null
           updated_at?: string
         }
         Update: {
+          agama?: string | null
+          alamat?: string | null
           created_at?: string
+          email?: string | null
+          grade_kelas_jabatan?: string | null
+          handphone?: string | null
           id?: string
           jabatan?: string | null
+          jenis_kelamin?: string | null
+          kriteria_asn?: string | null
+          masa_kerja?: string | null
           nama?: string
+          nik?: string | null
           nip?: string | null
           pangkat?: string | null
+          pendidikan_terakhir?: string | null
           status?: string | null
+          status_pernikahan?: string | null
+          tanggal_lahir?: string | null
+          tempat_lahir?: string | null
+          tmt_cpns?: string | null
+          tmt_jabatan_terakhir?: string | null
+          tmt_pangkat_terakhir?: string | null
+          tmt_pensiun?: string | null
+          tmt_pns?: string | null
           unit?: string | null
           updated_at?: string
         }

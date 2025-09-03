@@ -20,13 +20,23 @@ interface Employee {
   jenis_kelamin?: 'L' | 'P';
   agama?: string;
   status_pernikahan?: string;
-  tipe_pegawai?: string;
-  pangkat_golongan?: string;
-  unit_kerja?: string;
-  jabatan_terakhir?: string;
-  email?: string;
+  pendidikan_terakhir?: string;
   handphone?: string;
-  is_active?: boolean;
+  email?: string;
+  alamat?: string;
+  unit?: string; // Use 'unit' to match existing database
+  kriteria_asn?: string;
+  jabatan?: string; // Use 'jabatan' to match existing database
+  grade_kelas_jabatan?: string;
+  tmt_jabatan_terakhir?: string;
+  pangkat?: string; // Use 'pangkat' to match existing database
+  tmt_pangkat_terakhir?: string;
+  tmt_cpns?: string;
+  tmt_pns?: string;
+  tmt_pensiun?: string;
+  masa_kerja?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface EmployeeFormProps {
@@ -62,13 +72,21 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
     jenis_kelamin: 'L',
     agama: '',
     status_pernikahan: 'Belum Menikah',
-    tipe_pegawai: 'PNS',
-    pangkat_golongan: '',
-    unit_kerja: '',
-    jabatan_terakhir: '',
-    email: '',
+    pendidikan_terakhir: '',
     handphone: '',
-    is_active: true,
+    email: '',
+    alamat: '',
+    unit: '',
+    kriteria_asn: 'PNS',
+    jabatan: '',
+    grade_kelas_jabatan: '',
+    tmt_jabatan_terakhir: '',
+    pangkat: '',
+    tmt_pangkat_terakhir: '',
+    tmt_cpns: '',
+    tmt_pns: '',
+    tmt_pensiun: '',
+    masa_kerja: '',
     ...employee
   });
 
@@ -185,53 +203,108 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-          </div>
-
-          {/* Kepegawaian */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Kepegawaian</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="tipe_pegawai">Tipe Pegawai</Label>
+                <Label htmlFor="agama">Agama</Label>
                 <Select 
-                  value={formData.tipe_pegawai || 'PNS'} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, tipe_pegawai: value }))}
+                  value={formData.agama || ''} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, agama: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih agama" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Islam">Islam</SelectItem>
+                    <SelectItem value="Kristen">Kristen</SelectItem>
+                    <SelectItem value="Katolik">Katolik</SelectItem>
+                    <SelectItem value="Hindu">Hindu</SelectItem>
+                    <SelectItem value="Buddha">Buddha</SelectItem>
+                    <SelectItem value="Konghucu">Konghucu</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status_pernikahan">Status Pernikahan</Label>
+                <Select 
+                  value={formData.status_pernikahan || 'Belum Menikah'} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, status_pernikahan: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CPNS">CPNS</SelectItem>
-                    <SelectItem value="PNS">PNS</SelectItem>
-                    <SelectItem value="PPPK">PPPK</SelectItem>
-                    <SelectItem value="Honorer">Honorer</SelectItem>
+                    <SelectItem value="Belum Menikah">Belum Menikah</SelectItem>
+                    <SelectItem value="Menikah">Menikah</SelectItem>
+                    <SelectItem value="Cerai Hidup">Cerai Hidup</SelectItem>
+                    <SelectItem value="Cerai Mati">Cerai Mati</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pangkat_golongan">Pangkat/Golongan</Label>
+                <Label htmlFor="pendidikan_terakhir">Pendidikan Terakhir</Label>
                 <Select 
-                  value={formData.pangkat_golongan || ''} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, pangkat_golongan: value }))}
+                  value={formData.pendidikan_terakhir || ''} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, pendidikan_terakhir: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih pangkat/golongan" />
+                    <SelectValue placeholder="Pilih pendidikan terakhir" />
                   </SelectTrigger>
                   <SelectContent>
-                    {pangkatOptions.map((pangkat) => (
-                      <SelectItem key={pangkat.id} value={pangkat.kode}>
-                        {pangkat.kode} - {pangkat.nama_pangkat}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="SD">SD</SelectItem>
+                    <SelectItem value="SMP">SMP</SelectItem>
+                    <SelectItem value="SMA">SMA</SelectItem>
+                    <SelectItem value="D3">D3</SelectItem>
+                    <SelectItem value="S1">S1</SelectItem>
+                    <SelectItem value="S2">S2</SelectItem>
+                    <SelectItem value="S3">S3</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+          </div>
+
+          {/* Alamat & Kontak */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Alamat & Kontak</h3>
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="unit_kerja">Unit Kerja</Label>
+                <Label htmlFor="alamat">Alamat</Label>
+                <Input
+                  id="alamat"
+                  value={formData.alamat || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, alamat: e.target.value }))}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="handphone">Handphone</Label>
+                  <Input
+                    id="handphone"
+                    value={formData.handphone || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, handphone: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Kepegawaian */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Data Kepegawaian</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="unit">Unit Kerja</Label>
                 <Select 
-                  value={formData.unit_kerja || ''} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, unit_kerja: value }))}
+                  value={formData.unit || ''} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, unit: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih unit kerja" />
@@ -246,35 +319,116 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="jabatan_terakhir">Jabatan</Label>
+                <Label htmlFor="kriteria_asn">Kriteria ASN</Label>
+                <Select 
+                  value={formData.kriteria_asn || 'PNS'} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, kriteria_asn: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PNS">PNS</SelectItem>
+                    <SelectItem value="PPPK">PPPK</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="jabatan">Jabatan</Label>
                 <Input
-                  id="jabatan_terakhir"
-                  value={formData.jabatan_terakhir || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, jabatan_terakhir: e.target.value }))}
+                  id="jabatan"
+                  value={formData.jabatan || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, jabatan: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="grade_kelas_jabatan">Grade / Kelas Jabatan</Label>
+                <Input
+                  id="grade_kelas_jabatan"
+                  value={formData.grade_kelas_jabatan || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, grade_kelas_jabatan: e.target.value }))}
+                  placeholder="Contoh: Pelaksana, Administrator"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tmt_jabatan_terakhir">TMT Jabatan Terakhir</Label>
+                <Input
+                  id="tmt_jabatan_terakhir"
+                  type="date"
+                  value={formData.tmt_jabatan_terakhir || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tmt_jabatan_terakhir: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pangkat">Pangkat/Golongan</Label>
+                <Select 
+                  value={formData.pangkat || ''} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, pangkat: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih pangkat/golongan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pangkatOptions.map((pangkat) => (
+                      <SelectItem key={pangkat.id} value={pangkat.kode}>
+                        {pangkat.kode} - {pangkat.nama_pangkat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tmt_pangkat_terakhir">TMT Pangkat Terakhir</Label>
+                <Input
+                  id="tmt_pangkat_terakhir"
+                  type="date"
+                  value={formData.tmt_pangkat_terakhir || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tmt_pangkat_terakhir: e.target.value }))}
                 />
               </div>
             </div>
           </div>
 
-          {/* Kontak */}
+          {/* Data Karier */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Kontak</h3>
+            <h3 className="text-lg font-semibold">Data Karier</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="tmt_cpns">TMT CPNS</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={formData.email || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  id="tmt_cpns"
+                  type="date"
+                  value={formData.tmt_cpns || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tmt_cpns: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="handphone">Handphone</Label>
+                <Label htmlFor="tmt_pns">TMT PNS</Label>
                 <Input
-                  id="handphone"
-                  value={formData.handphone || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, handphone: e.target.value }))}
+                  id="tmt_pns"
+                  type="date"
+                  value={formData.tmt_pns || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tmt_pns: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tmt_pensiun">TMT Pensiun</Label>
+                <Input
+                  id="tmt_pensiun"
+                  type="date"
+                  value={formData.tmt_pensiun || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tmt_pensiun: e.target.value }))}
+                />
+                <p className="text-sm text-gray-500">Otomatis dihitung dari tanggal lahir + 60 tahun</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="masa_kerja">Masa Kerja</Label>
+                <Input
+                  id="masa_kerja"
+                  value={formData.masa_kerja || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, masa_kerja: e.target.value }))}
+                  placeholder="Otomatis dihitung dari TMT CPNS"
+                  disabled
                 />
               </div>
             </div>

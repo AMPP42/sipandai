@@ -21,10 +21,27 @@ interface Employee {
   id: string;
   nama: string;
   nip?: string;
-  jabatan?: string;
-  status?: string;
+  nik?: string;
+  tempat_lahir?: string;
+  tanggal_lahir?: string;
+  jenis_kelamin?: 'L' | 'P';
+  agama?: string;
+  status_pernikahan?: string;
+  pendidikan_terakhir?: string;
+  handphone?: string;
+  email?: string;
+  alamat?: string;
   unit?: string;
+  kriteria_asn?: string;
+  jabatan?: string;
+  grade_kelas_jabatan?: string;
+  tmt_jabatan_terakhir?: string;
   pangkat?: string;
+  tmt_pangkat_terakhir?: string;
+  tmt_cpns?: string;
+  tmt_pns?: string;
+  tmt_pensiun?: string;
+  masa_kerja?: string;
   created_at: string;
   updated_at: string;
 }
@@ -76,7 +93,13 @@ export default function AdminPegawai() {
       
       const { data, error } = await supabase
         .from('employees')
-        .select('id, nama, nip, jabatan, status, unit, pangkat, created_at, updated_at')
+        .select(`
+          id, nama, nip, nik, tempat_lahir, tanggal_lahir, jenis_kelamin, agama, 
+          status_pernikahan, pendidikan_terakhir, handphone, email, alamat, unit, 
+          kriteria_asn, jabatan, grade_kelas_jabatan, tmt_jabatan_terakhir, pangkat, 
+          tmt_pangkat_terakhir, tmt_cpns, tmt_pns, tmt_pensiun, masa_kerja, 
+          created_at, updated_at
+        `)
         .order('nama');
 
       if (error) throw error;
@@ -86,10 +109,27 @@ export default function AdminPegawai() {
         id: emp.id,
         nama: emp.nama,
         nip: emp.nip || undefined,
-        jabatan: emp.jabatan || undefined,
-        status: emp.status || undefined,
+        nik: emp.nik || undefined,
+        tempat_lahir: emp.tempat_lahir || undefined,
+        tanggal_lahir: emp.tanggal_lahir || undefined,
+        jenis_kelamin: (emp.jenis_kelamin === 'L' || emp.jenis_kelamin === 'P') ? emp.jenis_kelamin : undefined,
+        agama: emp.agama || undefined,
+        status_pernikahan: emp.status_pernikahan || undefined,
+        pendidikan_terakhir: emp.pendidikan_terakhir || undefined,
+        handphone: emp.handphone || undefined,
+        email: emp.email || undefined,
+        alamat: emp.alamat || undefined,
         unit: emp.unit || undefined,
+        kriteria_asn: emp.kriteria_asn || undefined,
+        jabatan: emp.jabatan || undefined,
+        grade_kelas_jabatan: emp.grade_kelas_jabatan || undefined,
+        tmt_jabatan_terakhir: emp.tmt_jabatan_terakhir || undefined,
         pangkat: emp.pangkat || undefined,
+        tmt_pangkat_terakhir: emp.tmt_pangkat_terakhir || undefined,
+        tmt_cpns: emp.tmt_cpns || undefined,
+        tmt_pns: emp.tmt_pns || undefined,
+        tmt_pensiun: emp.tmt_pensiun || undefined,
+        masa_kerja: emp.masa_kerja || undefined,
         created_at: emp.created_at,
         updated_at: emp.updated_at
       }));
@@ -119,10 +159,10 @@ export default function AdminPegawai() {
       }
 
       if (statusFilter !== 'all') {
-        if (statusFilter === 'active') {
-          filteredEmployees = filteredEmployees.filter(emp => emp.status === 'active');
-        } else if (statusFilter === 'inactive') {
-          filteredEmployees = filteredEmployees.filter(emp => emp.status === 'inactive');
+        if (statusFilter === 'PNS') {
+          filteredEmployees = filteredEmployees.filter(emp => emp.kriteria_asn === 'PNS');
+        } else if (statusFilter === 'PPPK') {
+          filteredEmployees = filteredEmployees.filter(emp => emp.kriteria_asn === 'PPPK');
         }
       }
 
@@ -130,8 +170,19 @@ export default function AdminPegawai() {
       
       // Calculate stats
       const total = filteredEmployees.length;
-      const active = filteredEmployees.filter(emp => emp.status === 'active').length;
-      const approaching_retirement = 0; // Not available in current schema
+      const active = filteredEmployees.filter(emp => emp.kriteria_asn).length;
+      
+      // Calculate approaching retirement (within 2 years)
+      const today = new Date();
+      const twoYearsFromNow = new Date(today.getFullYear() + 2, today.getMonth(), today.getDate());
+      const approaching_retirement = filteredEmployees.filter(emp => {
+        if (emp.tmt_pensiun) {
+          const retirementDate = new Date(emp.tmt_pensiun);
+          return retirementDate <= twoYearsFromNow && retirementDate > today;
+        }
+        return false;
+      }).length;
+      
       const units = new Set(filteredEmployees.map(emp => emp.unit).filter(Boolean)).size;
       
       setStats({ total, active, approaching_retirement, units });
@@ -194,11 +245,13 @@ export default function AdminPegawai() {
   };
 
   const getStatusBadge = (employee: Employee) => {
-    if (employee.status === 'inactive') {
-      return <Badge className="bg-gray-100 text-gray-700">Tidak Aktif</Badge>;
+    if (employee.kriteria_asn === 'PNS') {
+      return <Badge className="bg-green-100 text-green-700">PNS</Badge>;
+    } else if (employee.kriteria_asn === 'PPPK') {
+      return <Badge className="bg-blue-100 text-blue-700">PPPK</Badge>;
     }
     
-    return <Badge className="bg-green-100 text-green-700">Aktif</Badge>;
+    return <Badge className="bg-gray-100 text-gray-700">-</Badge>;
   };
 
   if (showForm) {
@@ -260,7 +313,7 @@ export default function AdminPegawai() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pegawai Aktif</p>
+                <p className="text-sm font-medium text-gray-600">PNS & PPPK</p>
                 <p className="text-3xl font-bold text-green-600 mt-2">{stats.active.toLocaleString()}</p>
               </div>
               <Users className="w-8 h-8 text-green-600" />
@@ -331,10 +384,12 @@ export default function AdminPegawai() {
                 <TableRow>
                   <TableHead>Nama</TableHead>
                   <TableHead>NIP</TableHead>
+                  <TableHead>NIK</TableHead>
                   <TableHead>Unit Kerja</TableHead>
                   <TableHead>Jabatan</TableHead>
                   <TableHead>Pangkat</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Kriteria ASN</TableHead>
+                  <TableHead>TMT Pensiun</TableHead>
                   <TableHead>Aksi</TableHead>
                 </TableRow>
               </TableHeader>
@@ -343,10 +398,14 @@ export default function AdminPegawai() {
                   <TableRow key={employee.id}>
                     <TableCell className="font-medium">{employee.nama}</TableCell>
                     <TableCell>{employee.nip || '-'}</TableCell>
+                    <TableCell>{employee.nik || '-'}</TableCell>
                     <TableCell>{employee.unit || '-'}</TableCell>
                     <TableCell>{employee.jabatan || '-'}</TableCell>
                     <TableCell>{employee.pangkat || '-'}</TableCell>
                     <TableCell>{getStatusBadge(employee)}</TableCell>
+                    <TableCell>
+                      {employee.tmt_pensiun ? new Date(employee.tmt_pensiun).toLocaleDateString('id-ID') : '-'}
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button 
