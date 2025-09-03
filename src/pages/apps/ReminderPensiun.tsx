@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Calendar, 
   Clock, 
@@ -15,7 +17,9 @@ import {
   AlertTriangle,
   CheckCircle,
   Download,
-  Search
+  Search,
+  Send,
+  Upload
 } from "lucide-react";
 
 interface PensiunData {
@@ -43,6 +47,9 @@ interface ChecklistItem {
 export default function ReminderPensiun() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState<PensiunData | null>(null);
+  const [retirementCategory, setRetirementCategory] = useState("");
+  const [documents, setDocuments] = useState<{ [key: string]: string }>({});
 
   // Mock data for demonstration
   const pensiunData: PensiunData[] = [
@@ -177,6 +184,159 @@ export default function ReminderPensiun() {
     pegawai.nip.includes(searchTerm)
   );
 
+  const retirementCategories = {
+    "pensiun_reguler": {
+      label: "Pensiun Reguler",
+      documents: [
+        "Surat Permohonan Pensiun dari Ybs (tanpa kop unit kerja)",
+        "Daftar Susunan Keluarga - pastikan jumlah anak sama dengan di DPCPP",
+        "Bila anak sudah berkeluarga, tetap dimasukkan saja untuk data",
+        "Kartu Pegawai (KARPEG)",
+        "Optional - Akte / Surat Nikah",
+        "Akte Kelahiran Anak (apabila masih ada anak yang menjadi tanggungan)",
+        "SK Pengangkatan sebagai CPNS",
+        "SK Pengangkatan CPNS menjadi PNS",
+        "SK Kenaikan Pangkat terakhir",
+        "Kenaikan Gaji Berkala Terakhir",
+        "Penilaian Prestasi Kerja (SKP) 2 Tahun Terakhir",
+        "Surat Pernyataan Tidak Pernah Dijatuhi Hukuman Disiplin Sedang/Berat dalam 1 Tahun Terakhir",
+        "Surat Pernyataan Tidak Sedang Menjalani Proses Pidana",
+        "Foto Pegawai ybs",
+        "Data Perorangan Calon Penerima Pensiun (DPCPP) - pastikan jumlah anak sama dengan di Daftar Susunan Keluarga",
+        "Surat Keterangan Kematian (Bila ada suami/istri yang sudah meninggal dunia)",
+        "KTP",
+        "NPWP",
+        "Buku Tabungan (lembar yang terdapat nomor rekening)",
+        "Surat Keterangan Sekolah / Kuliah (bila terdapat anak yang masih menjadi tanggungan)"
+      ]
+    },
+    "pensiun_janda_duda": {
+      label: "Pensiun Janda/Duda (PNS Meninggal)",
+      documents: [
+        "Surat Permohonan Pensiun dari Janda / Duda Ybs (tanpa kop)",
+        "Daftar Susunan Keluarga (Dokumen Asli)",
+        "Kartu Pegawai (KARPEG) almarhum/ah",
+        "Surat Nikah",
+        "Akte Kelahiran Anak",
+        "SK Pengangkatan sebagai CPNS almarhum/ah",
+        "SK Pengangkatan CPNS menjadi PNS almarhum/ah",
+        "SK Kenaikan Pangkat almarhum/ah",
+        "Gaji Berkala Terakhir almarhum/ah",
+        "Penilaian Prestasi Kerja 2 Tahun Terakhir almarhum/ah",
+        "Surat Pernyataan Tidak Pernah Dijatuhi Hukuman Disiplin Sedang/Berat dalam 1 Tahun Terakhir almarhum/ah",
+        "Surat Pernyataan Tidak Sedang Menjalani Proses Pidana almarhum/ah",
+        "Data Perorangan Calon Penerima Pensiun (DPCPP)",
+        "Foto Janda / Duda ybs",
+        "Surat Keterangan Kematian yang Sah (harus dari Dukcapil)",
+        "Surat Keterangan Janda / Duda dari Kelurahan",
+        "Kartu Istri (KARIS) utk pensiun janda atau Kartu Suami (KARSU) untuk pensiun duda",
+        "KTP janda/duda/KK",
+        "NPWP janda/duda",
+        "Buku Tabungan janda/duda",
+        "Surat Keterangan Sekolah / Kuliah (bila terdapat anak yang masih menjadi tanggungan)"
+      ]
+    },
+    "pensiun_anak": {
+      label: "Pensiun Anak (PNS dan pasangan meninggal dunia, anak berusia dibawah 25 tahun dan belum berumah tangga)",
+      documents: [
+        "Surat Permohonan Pensiun dari Anak (ttd anak, tanpa kop)",
+        "Akte Anak",
+        "Daftar Susunan Keluarga",
+        "Kartu Pegawai (KARPEG)",
+        "Surat Nikah",
+        "SK Pengangkatan sebagai CPNS",
+        "SK Pengangkatan CPNS menjadi PNS",
+        "SK Kenaikan Pangkat",
+        "Gaji Berkala Terakhir",
+        "Penilaian Prestasi Kerja 2 Tahun Terakhir",
+        "Surat Pernyataan Tidak Pernah Dijatuhi Hukuman Disiplin Sedang/Berat dalam 1 Tahun Terakhir",
+        "Surat Pernyataan Tidak Sedang Menjalani Proses Pidana",
+        "Data Perorangan Calon Penerima Pensiun (DPCPP) (ttd anak)",
+        "Foto Anak",
+        "Surat Keterangan Kematian yang Sah"
+      ]
+    },
+    "masa_persiapan_pensiun": {
+      label: "Masa Persiapan Pensiun (3 bulan s.d 1 tahun sebelum TMT Pensiun)",
+      documents: [
+        "Surat Permohonan Pensiun dari Ybs (tanpa kop)",
+        "Kartu Pegawai (KARPEG)",
+        "Surat Nikah",
+        "SK Pengangkatan sebagai CPNS",
+        "SK Pengangkatan CPNS menjadi PNS",
+        "SK Kenaikan Pangkat",
+        "Gaji Berkala Terakhir",
+        "Penilaian Prestasi Kerja 2 Tahun Terakhir",
+        "Surat Pernyataan Tidak Pernah Dijatuhi Hukuman Disiplin Sedang/Berat dalam 1 Tahun Terakhir",
+        "Foto Pegawai ybs",
+        "Surat Pernyataan Tidak Sedang Menjalani Proses Pidana"
+      ]
+    },
+    "pensiun_dini": {
+      label: "Pensiun Dini (Usia harus berusia 50 Tahun Dengan masa kerja 20 tahun)",
+      documents: [
+        "Surat Permohonan Pensiun dari Ybs (tanpa kop)",
+        "Daftar Susunan Keluarga (ttd Lurah dan Camat)",
+        "Kartu Pegawai (KARPEG)",
+        "Akte / Surat Nikah",
+        "Akte Kelahiran Anak",
+        "SK Pengangkatan sebagai CPNS",
+        "SK Pengangkatan CPNS menjadi PNS",
+        "SK Kenaikan Pangkat terakhir",
+        "Kenaikan Gaji Berkala Terakhir",
+        "Penilaian Prestasi Kerja 2 Tahun Terakhir",
+        "Surat Pernyataan Tidak Pernah Dijatuhi Hukuman Disiplin Sedang/Berat dalam 1 Tahun Terakhir",
+        "Data Perorangan Calon Penerima Pensiun (DPCPP)",
+        "Foto Pegawai ybs",
+        "Surat Pernyataan Tidak Sedang Menjalani Proses Pidana"
+      ]
+    },
+    "pensiun_anumerta": {
+      label: "Pensiun Anumerta (Meninggal saat menjalankan tugas)",
+      documents: [
+        "SK pangkat terakhir",
+        "KGB terakhir",
+        "KARPEG",
+        "Berita Acara tentang kejadian yang mengakibatkan ybs meninggal dunia",
+        "Visum et repertum",
+        "surat perintah penugasan/surat keterangan yang menyatakan ybs meninggal karena dinas",
+        "Laporan dari pimpinan unit kerja yang menyatakan bahwa ybs meninggal krn dinas",
+        "KP Anumerta sementara",
+        "Foto Diri Terbaru",
+        "Surat Nikah",
+        "Akte Anak"
+      ]
+    },
+    "karsu_karis": {
+      label: "Karsu/Karis",
+      documents: [
+        "Laporan Perkawinan Pertama / Kedua dari ybs",
+        "Surat Keterangan Kematian jika perkawinan sebelumnya pasangan meninggal dunia",
+        "Surat Izin Cerai dari Kementerian jika perkawinan sebelumnya mengalami Perceraian",
+        "Daftar Susunan Keluarga",
+        "Surat Nikah / Akte Perkawinan",
+        "Pas foto pasangan terbaru ukuran 2x3"
+      ]
+    }
+  };
+
+  const handleSelectEmployee = (pegawai: PensiunData) => {
+    setSelectedEmployee(pegawai);
+    setActiveTab("pengajuan");
+  };
+
+  const handleDocumentChange = (index: number, value: string) => {
+    setDocuments(prev => ({
+      ...prev,
+      [`doc_${index}`]: value
+    }));
+  };
+
+  const handleSubmitPengajuan = () => {
+    // Handle submission logic here
+    alert("Pengajuan pensiun berhasil disubmit!");
+  };
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -203,7 +363,7 @@ export default function ReminderPensiun() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Dashboard Countdown
@@ -211,6 +371,10 @@ export default function ReminderPensiun() {
             <TabsTrigger value="checklist" className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4" />
               Checklist Persiapan
+            </TabsTrigger>
+            <TabsTrigger value="pengajuan" className="flex items-center gap-2">
+              <Send className="w-4 h-4" />
+              Pengajuan Pensiun
             </TabsTrigger>
             <TabsTrigger value="reminder" className="flex items-center gap-2">
               <Bell className="w-4 h-4" />
@@ -348,7 +512,7 @@ export default function ReminderPensiun() {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right space-y-2">
                         <div className="text-2xl font-bold text-primary mb-1">
                           {formatSisaWaktu(pegawai.sisaHari)}
                         </div>
@@ -356,9 +520,17 @@ export default function ReminderPensiun() {
                           value={Math.max(0, 100 - (pegawai.sisaHari / 730) * 100)} 
                           className="w-24 h-2"
                         />
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-muted-foreground mb-2">
                           Progress ke pensiun
                         </p>
+                        <Button 
+                          size="sm"
+                          onClick={() => handleSelectEmployee(pegawai)}
+                          className="w-full"
+                        >
+                          <Send className="w-3 h-3 mr-1" />
+                          Ajukan Usulan Pensiun
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -437,6 +609,164 @@ export default function ReminderPensiun() {
                     ))}
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: Pengajuan Pensiun */}
+          <TabsContent value="pengajuan" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Pengajuan Usulan Pensiun</CardTitle>
+                <CardDescription>
+                  Form pengajuan usulan pensiun dengan kategori dan dokumen persyaratan
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Employee Selection */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="employee-select">Pilih Pegawai</Label>
+                    <Select onValueChange={(value) => {
+                      const employee = pensiunData.find(p => p.id === value);
+                      if (employee) setSelectedEmployee(employee);
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih pegawai yang akan diusulkan pensiun" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {pensiunData.map((pegawai) => (
+                          <SelectItem key={pegawai.id} value={pegawai.id}>
+                            {pegawai.nama} - {pegawai.nip}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Selected Employee Info */}
+                  {selectedEmployee && (
+                    <Card className="bg-blue-50 border-blue-200">
+                      <CardContent className="p-4">
+                        <h4 className="font-semibold text-blue-900 mb-2">Data Pegawai Terpilih</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <p className="text-blue-600">Nama</p>
+                            <p className="font-medium text-blue-900">{selectedEmployee.nama}</p>
+                          </div>
+                          <div>
+                            <p className="text-blue-600">NIP</p>
+                            <p className="font-mono text-blue-900">{selectedEmployee.nip}</p>
+                          </div>
+                          <div>
+                            <p className="text-blue-600">Unit Kerja</p>
+                            <p className="font-medium text-blue-900">{selectedEmployee.unitKerja}</p>
+                          </div>
+                          <div>
+                            <p className="text-blue-600">TMT Pensiun</p>
+                            <p className="font-medium text-blue-900">
+                              {new Date(selectedEmployee.tanggalPensiun).toLocaleDateString('id-ID')}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+
+                {/* Retirement Category Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="category-select">Kategori Pensiun</Label>
+                  <Select value={retirementCategory} onValueChange={setRetirementCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih kategori pensiun" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(retirementCategories).map(([key, category]) => (
+                        <SelectItem key={key} value={key}>
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Document Requirements */}
+                {retirementCategory && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">
+                        Dokumen Persyaratan - {retirementCategories[retirementCategory as keyof typeof retirementCategories].label}
+                      </CardTitle>
+                      <CardDescription>
+                        Silakan upload link Google Drive untuk setiap dokumen yang diperlukan
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {retirementCategories[retirementCategory as keyof typeof retirementCategories].documents.map((doc, index) => (
+                          <div key={index} className="space-y-2">
+                            <Label htmlFor={`doc-${index}`} className="text-sm font-medium">
+                              {index + 1}. {doc}
+                            </Label>
+                            <div className="flex gap-2">
+                              <Input
+                                id={`doc-${index}`}
+                                placeholder="Masukkan link Google Drive dokumen..."
+                                value={documents[`doc_${index}`] || ""}
+                                onChange={(e) => handleDocumentChange(index, e.target.value)}
+                              />
+                              <Button variant="outline" size="icon">
+                                <Upload className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Additional Notes */}
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Catatan Tambahan (Opsional)</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Masukkan catatan atau keterangan tambahan jika diperlukan..."
+                    rows={4}
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex justify-end gap-4">
+                  <Button variant="outline" onClick={() => setActiveTab("dashboard")}>
+                    Kembali
+                  </Button>
+                  <Button 
+                    onClick={handleSubmitPengajuan}
+                    disabled={!selectedEmployee || !retirementCategory}
+                    className="min-w-32"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    Submit Pengajuan
+                  </Button>
+                </div>
+
+                {/* Information Card */}
+                <Card className="bg-amber-50 border-amber-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold text-amber-900 mb-1">Informasi Penting</h4>
+                        <p className="text-sm text-amber-800">
+                          Pastikan semua dokumen yang diupload sudah sesuai dengan persyaratan dan dapat diakses melalui link Google Drive yang diberikan. 
+                          Dokumen yang tidak lengkap atau tidak dapat diakses akan menyebabkan pengajuan dikembalikan untuk perbaikan.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </CardContent>
             </Card>
           </TabsContent>
