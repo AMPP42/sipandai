@@ -767,9 +767,9 @@ export default function ReminderPensiun() {
               <CheckCircle className="w-4 h-4" />
               Status Usulan
             </TabsTrigger>
-            <TabsTrigger value="documents" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Generate Dokumen
+            <TabsTrigger value="reminder" className="flex items-center gap-2">
+              <Bell className="w-4 h-4" />
+              Reminder Pensiun
             </TabsTrigger>
           </TabsList>
 
@@ -1437,52 +1437,176 @@ export default function ReminderPensiun() {
             </Card>
           </TabsContent>
 
-          {/* Tab: Generate Documents */}
-          <TabsContent value="documents" className="space-y-6">
+          {/* Tab: Reminder Pensiun */}
+          <TabsContent value="reminder" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Generate Surat Keterangan</CardTitle>
+                <CardTitle>Reminder Pensiun Otomatis</CardTitle>
                 <CardDescription>
-                  Generate berbagai surat keterangan terkait persiapan pensiun
+                  Kirim notifikasi otomatis ke pegawai yang mendekati masa pensiun via WhatsApp, SMS, dan Email
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card className="p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <FileText className="w-6 h-6 text-primary" />
+              <CardContent className="space-y-6">
+                {/* Filter Pegawai Mendekati Pensiun */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="p-4 bg-red-50 border-red-200">
+                    <div className="flex items-center gap-3 mb-2">
+                      <AlertTriangle className="w-6 h-6 text-red-600" />
                       <div>
-                        <h4 className="font-semibold">Surat Keterangan Masa Kerja</h4>
-                        <p className="text-sm text-muted-foreground">Generate surat keterangan masa kerja pegawai</p>
+                        <h4 className="font-semibold text-red-900">Urgen (≤3 bulan)</h4>
+                        <p className="text-sm text-red-700">{pensiunData.filter(p => p.sisaHari <= 90).length} pegawai</p>
                       </div>
                     </div>
-                    <Button className="w-full" disabled>
-                      <Download className="w-4 h-4 mr-2" />
-                      Generate Surat
-                    </Button>
                   </Card>
 
-                  <Card className="p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <FileText className="w-6 h-6 text-primary" />
+                  <Card className="p-4 bg-yellow-50 border-yellow-200">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Clock className="w-6 h-6 text-yellow-600" />
                       <div>
-                        <h4 className="font-semibold">Surat Keterangan Pensiun</h4>
-                        <p className="text-sm text-muted-foreground">Generate surat keterangan untuk proses pensiun</p>
+                        <h4 className="font-semibold text-yellow-900">Perlu Perhatian (≤1 tahun)</h4>
+                        <p className="text-sm text-yellow-700">{pensiunData.filter(p => p.sisaHari <= 365 && p.sisaHari > 90).length} pegawai</p>
                       </div>
                     </div>
-                    <Button className="w-full" disabled>
-                      <Download className="w-4 h-4 mr-2" />
-                      Generate Surat
-                    </Button>
+                  </Card>
+
+                  <Card className="p-4 bg-blue-50 border-blue-200">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Bell className="w-6 h-6 text-blue-600" />
+                      <div>
+                        <h4 className="font-semibold text-blue-900">Siap Reminder</h4>
+                        <p className="text-sm text-blue-700">{pensiunData.filter(p => p.sisaHari <= 365).length} pegawai</p>
+                      </div>
+                    </div>
                   </Card>
                 </div>
 
-                <div className="mt-6 p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    <strong>Catatan:</strong> Fitur generate dokumen akan terintegrasi dengan template surat resmi dan 
-                    data pegawai dari database untuk menghasilkan surat yang akurat dan sesuai format.
-                  </p>
+                {/* Daftar Pegawai untuk Reminder */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Pilih Pegawai untuk Dikirim Reminder</CardTitle>
+                    <CardDescription>
+                      Centang pegawai yang akan dikirim notifikasi reminder pensiun
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {pensiunData.filter(p => p.sisaHari <= 365).map((pegawai) => (
+                        <div key={pegawai.id} className={`p-4 border rounded-lg ${pegawai.sisaHari <= 90 ? 'border-red-200 bg-red-50' : 'border-yellow-200 bg-yellow-50'}`}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                id={`reminder-${pegawai.id}`}
+                                className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary"
+                              />
+                              <div>
+                                <h4 className="font-semibold">{pegawai.nama}</h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {pegawai.nip} • {pegawai.unitKerja} • {pegawai.jabatan}
+                                </p>
+                                <p className="text-sm font-medium text-primary">
+                                  Sisa waktu: {formatSisaWaktu(pegawai.sisaHari)}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              {pegawai.sisaHari <= 90 && (
+                                <Badge className="bg-red-100 text-red-700 mb-2">URGEN</Badge>
+                              )}
+                              <div className="text-xs text-muted-foreground">
+                                <p>📧 Email: Tersedia</p>
+                                <p>📱 HP: Tersedia</p>
+                                <p>💬 WhatsApp: Tersedia</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Template Notifikasi */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Template Notifikasi</CardTitle>
+                    <CardDescription>
+                      Pilih template dan metode pengiriman notifikasi
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>
+                          <input type="checkbox" className="mr-2" defaultChecked />
+                          📧 Email
+                        </Label>
+                        <Textarea 
+                          placeholder="Template email notifikasi pensiun..."
+                          className="h-24"
+                          defaultValue="Yth. {nama_pegawai}, Kami informasikan bahwa masa pensiun Anda akan tiba pada {tanggal_pensiun}. Mohon segera melengkapi persyaratan pensiun."
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>
+                          <input type="checkbox" className="mr-2" defaultChecked />
+                          📱 SMS
+                        </Label>
+                        <Textarea 
+                          placeholder="Template SMS notifikasi pensiun..."
+                          className="h-24"
+                          defaultValue="Hai {nama_pegawai}, masa pensiun Anda tinggal {sisa_hari} hari lagi. Segera lengkapi persyaratan pensiun. Info: {kontak_admin}"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>
+                          <input type="checkbox" className="mr-2" defaultChecked />
+                          💬 WhatsApp
+                        </Label>
+                        <Textarea 
+                          placeholder="Template WhatsApp notifikasi pensiun..."
+                          className="h-24"
+                          defaultValue="Halo {nama_pegawai}, ini adalah reminder bahwa masa pensiun Anda akan tiba pada {tanggal_pensiun}. Silakan hubungi admin untuk informasi persyaratan."
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Action Buttons */}
+                <div className="flex justify-between items-center">
+                  <div className="text-sm text-muted-foreground">
+                    <p>💡 <strong>Tips:</strong> Gunakan variabel {`{nama_pegawai}, {tanggal_pensiun}, {sisa_hari}, {kontak_admin}`} dalam template</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button variant="outline">
+                      <Clock className="w-4 h-4 mr-2" />
+                      Jadwalkan Otomatis
+                    </Button>
+                    <Button>
+                      <Send className="w-4 h-4 mr-2" />
+                      Kirim Reminder Sekarang
+                    </Button>
+                  </div>
                 </div>
+
+                {/* Info Card */}
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Bell className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold text-blue-900 mb-1">Fitur Reminder Otomatis</h4>
+                        <p className="text-sm text-blue-800">
+                          Sistem akan otomatis mengirim reminder kepada pegawai yang mendekati masa pensiun berdasarkan jadwal yang telah ditentukan. 
+                          Notifikasi akan dikirim melalui email, SMS, dan WhatsApp sesuai data kontak yang tersedia di database.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </CardContent>
             </Card>
           </TabsContent>
