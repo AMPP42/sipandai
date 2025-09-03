@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { DatePicker } from '@/components/ui/date-picker';
 import { X, Save, UserPlus } from 'lucide-react';
 
 interface Employee {
@@ -181,11 +182,13 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tanggal_lahir">Tanggal Lahir</Label>
-                <Input
-                  id="tanggal_lahir"
-                  type="date"
-                  value={formData.tanggal_lahir || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tanggal_lahir: e.target.value }))}
+                <DatePicker
+                  date={formData.tanggal_lahir ? new Date(formData.tanggal_lahir) : undefined}
+                  onSelect={(date) => setFormData(prev => ({ 
+                    ...prev, 
+                    tanggal_lahir: date ? date.toISOString().split('T')[0] : '' 
+                  }))}
+                  placeholder="Pilih tanggal lahir"
                 />
               </div>
               <div className="space-y-2">
@@ -302,21 +305,12 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="unit">Unit Kerja</Label>
-                <Select 
-                  value={formData.unit || ''} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, unit: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih unit kerja" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {unitOptions.map((unit) => (
-                      <SelectItem key={unit.id} value={unit.nama_unit}>
-                        {unit.nama_unit}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="unit"
+                  value={formData.unit || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
+                  placeholder="Masukkan nama unit kerja"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="kriteria_asn">Kriteria ASN</Label>
@@ -352,11 +346,13 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tmt_jabatan_terakhir">TMT Jabatan Terakhir</Label>
-                <Input
-                  id="tmt_jabatan_terakhir"
-                  type="date"
-                  value={formData.tmt_jabatan_terakhir || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tmt_jabatan_terakhir: e.target.value }))}
+                <DatePicker
+                  date={formData.tmt_jabatan_terakhir ? new Date(formData.tmt_jabatan_terakhir) : undefined}
+                  onSelect={(date) => setFormData(prev => ({ 
+                    ...prev, 
+                    tmt_jabatan_terakhir: date ? date.toISOString().split('T')[0] : '' 
+                  }))}
+                  placeholder="Pilih TMT jabatan terakhir"
                 />
               </div>
               <div className="space-y-2">
@@ -379,11 +375,13 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tmt_pangkat_terakhir">TMT Pangkat Terakhir</Label>
-                <Input
-                  id="tmt_pangkat_terakhir"
-                  type="date"
-                  value={formData.tmt_pangkat_terakhir || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tmt_pangkat_terakhir: e.target.value }))}
+                <DatePicker
+                  date={formData.tmt_pangkat_terakhir ? new Date(formData.tmt_pangkat_terakhir) : undefined}
+                  onSelect={(date) => setFormData(prev => ({ 
+                    ...prev, 
+                    tmt_pangkat_terakhir: date ? date.toISOString().split('T')[0] : '' 
+                  }))}
+                  placeholder="Pilih TMT pangkat terakhir"
                 />
               </div>
             </div>
@@ -395,29 +393,36 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="tmt_cpns">TMT CPNS</Label>
-                <Input
-                  id="tmt_cpns"
-                  type="date"
-                  value={formData.tmt_cpns || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tmt_cpns: e.target.value }))}
+                <DatePicker
+                  date={formData.tmt_cpns ? new Date(formData.tmt_cpns) : undefined}
+                  onSelect={(date) => setFormData(prev => ({ 
+                    ...prev, 
+                    tmt_cpns: date ? date.toISOString().split('T')[0] : '' 
+                  }))}
+                  placeholder="Pilih TMT CPNS"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tmt_pns">TMT PNS</Label>
-                <Input
-                  id="tmt_pns"
-                  type="date"
-                  value={formData.tmt_pns || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tmt_pns: e.target.value }))}
+                <DatePicker
+                  date={formData.tmt_pns ? new Date(formData.tmt_pns) : undefined}
+                  onSelect={(date) => setFormData(prev => ({ 
+                    ...prev, 
+                    tmt_pns: date ? date.toISOString().split('T')[0] : '' 
+                  }))}
+                  placeholder="Pilih TMT PNS"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tmt_pensiun">TMT Pensiun</Label>
-                <Input
-                  id="tmt_pensiun"
-                  type="date"
-                  value={formData.tmt_pensiun || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tmt_pensiun: e.target.value }))}
+                <DatePicker
+                  date={formData.tmt_pensiun ? new Date(formData.tmt_pensiun) : undefined}
+                  onSelect={(date) => setFormData(prev => ({ 
+                    ...prev, 
+                    tmt_pensiun: date ? date.toISOString().split('T')[0] : '' 
+                  }))}
+                  placeholder="Pilih TMT pensiun"
+                  disabled
                 />
                 <p className="text-sm text-gray-500">Otomatis dihitung dari tanggal lahir + 60 tahun</p>
               </div>
