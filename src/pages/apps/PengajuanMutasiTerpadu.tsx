@@ -116,7 +116,7 @@ export default function PengajuanMutasiTerpadu() {
       const { data, error } = await supabase
         .from('positions')
         .select('*')
-        .eq('status', 'dibutuhkan')
+        .gt('gap', 0)
         .order('unit', { ascending: true });
       
       if (error) throw error;

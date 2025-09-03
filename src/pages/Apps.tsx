@@ -29,7 +29,7 @@ export default function Apps() {
       features: ['Form pengajuan online', 'Upload dokumen Google Drive', 'Tracking status real-time', 'Notifikasi otomatis'],
       stats: { total: 23, pending: 5, approved: 15 },
       available: true,
-      route: '/apps/pengajuan-mutasi'
+      route: '/apps/pengajuan-mutasi-terpadu'
     },
     {
       id: 'pangkat',
