@@ -312,9 +312,7 @@ export default function AdminUsers() {
                       value={newUser.unit}
                       onChange={(e) => setNewUser({...newUser, unit: e.target.value})}
                       placeholder="Nama unit kerja"
-                      disabled
                     />
-                    <p className="text-xs text-gray-500 mt-1">Fitur pembuatan user memerlukan implementasi server-side</p>
                   </div>
                 </div>
                 <DialogFooter>
