@@ -89,15 +89,19 @@ export default function DetailMutasiTerpadu() {
     if (id) {
       loadApplication();
     }
-    
-    // Check if we're in edit mode
-    const urlParams = new URLSearchParams(location.search);
-    const editMode = urlParams.get('edit');
-    if (editMode) {
-      setIsEditing(true);
-      loadApplicationForEdit();
+  }, [id]);
+
+  useEffect(() => {
+    if (application) {
+      // Check if we're in edit mode or if status is revision_needed
+      const urlParams = new URLSearchParams(location.search);
+      const editMode = urlParams.get('edit');
+      if (editMode || application.status === 'revision_needed') {
+        setIsEditing(true);
+        loadApplicationForEdit();
+      }
     }
-  }, [id, location.search]);
+  }, [application, location.search]);
 
   const loadApplication = async () => {
     try {
@@ -147,11 +151,11 @@ export default function DetailMutasiTerpadu() {
 
       if (verificationError) throw verificationError;
 
-      // Populate documents
+      // Populate documents - preserve existing document links
       const loadedDocuments: { [key: string]: string } = {};
       documentsData?.forEach(doc => {
-        if (doc.document_index !== null) {
-          loadedDocuments[`doc_${doc.document_index}`] = doc.drive_link || '';
+        if (doc.document_index !== null && doc.drive_link) {
+          loadedDocuments[`doc_${doc.document_index}`] = doc.drive_link;
         }
       });
       setDocuments(loadedDocuments);
@@ -170,6 +174,9 @@ export default function DetailMutasiTerpadu() {
         }
       });
       setDocumentVerificationStatus(verificationStatus);
+
+      console.log('Loaded documents for edit:', loadedDocuments);
+      console.log('Loaded verification status:', verificationStatus);
 
       toast({
         title: "Data Dimuat",
@@ -427,6 +434,12 @@ export default function DetailMutasiTerpadu() {
         </div>
         <div className="flex items-center gap-2">
           {getStatusBadge(application.status, application.keterangan)}
+          {application.status === 'revision_needed' && !isEditing && (
+            <Button onClick={() => setIsEditing(true)} variant="outline">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Edit Usulan
+            </Button>
+          )}
           {canSubmit && (
             <Button onClick={handleSubmitApplication} disabled={isSubmitting}>
               {isSubmitting ? (
