@@ -96,6 +96,8 @@ export default function ReminderPensiun() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingApplicationId, setEditingApplicationId] = useState<string | null>(null);
   const [documentVerificationStatus, setDocumentVerificationStatus] = useState<DocumentVerificationStatus>({});
+  const [fixedDocuments, setFixedDocuments] = useState<Set<string>>(new Set());
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const location = useLocation();
@@ -537,6 +539,14 @@ export default function ReminderPensiun() {
     }));
   };
 
+  const handleMarkDocumentFixed = (docKey: string) => {
+    setFixedDocuments(prev => new Set([...prev, docKey]));
+    toast({
+      title: "Dokumen Ditandai Diperbaiki",
+      description: "Dokumen telah ditandai sebagai diperbaiki. Pastikan link sudah diperbarui."
+    });
+  };
+
   const handleSubmitPengajuan = async () => {
     if (!selectedEmployee || !retirementCategory) {
       toast({
@@ -568,6 +578,7 @@ export default function ReminderPensiun() {
     }
 
     try {
+      setIsSubmitting(true);
       if (isEditing && editingApplicationId) {
         // Update existing application
         const { error: updateError } = await supabase
@@ -686,6 +697,8 @@ export default function ReminderPensiun() {
         description: isEditing ? "Gagal mengirim ulang usulan pensiun" : "Gagal mengajukan usulan pensiun",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -999,7 +1012,7 @@ export default function ReminderPensiun() {
                     <Card className="bg-orange-50 border-orange-200">
                       <CardContent className="p-4">
                         <h4 className="font-semibold text-orange-900 mb-2">Ringkasan Status Verifikasi</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                           <div className="flex items-center gap-2">
                             <Badge className="bg-green-100 text-green-700">✓ Disetujui</Badge>
                             <span className="text-green-800">
@@ -1013,6 +1026,12 @@ export default function ReminderPensiun() {
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
+                            <Badge className="bg-blue-100 text-blue-700">✓ Diperbaiki</Badge>
+                            <span className="text-blue-800">
+                              {fixedDocuments.size} dokumen
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
                             <Badge className="bg-yellow-100 text-yellow-700">⏳ Menunggu</Badge>
                             <span className="text-yellow-800">
                               {Object.values(documentVerificationStatus).filter(v => v.status === 'pending').length} dokumen
@@ -1022,7 +1041,7 @@ export default function ReminderPensiun() {
                         {Object.values(documentVerificationStatus).some(v => v.status === 'needs_fix') && (
                           <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg">
                             <p className="text-sm font-medium text-red-900">
-                              Fokus pada dokumen yang perlu diperbaiki. Dokumen yang sudah disetujui tidak perlu diubah.
+                              Fokus pada dokumen yang perlu diperbaiki. Pastikan untuk menekan tombol "Perbaiki" setelah mengupdate link dokumen.
                             </p>
                           </div>
                         )}
@@ -1080,6 +1099,7 @@ export default function ReminderPensiun() {
                           const verificationStatus = documentVerificationStatus[docKey];
                           const needsAttention = isEditing && verificationStatus?.status === 'needs_fix';
                           const isApproved = verificationStatus?.status === 'approved';
+                          const isFixed = fixedDocuments.has(docKey);
                           
                           // In edit mode, only show documents that need fixing or are new
                           if (isEditing && isApproved) {
@@ -1097,12 +1117,15 @@ export default function ReminderPensiun() {
                           }
                           
                           return (
-                            <div key={index} className={`space-y-2 ${needsAttention ? 'bg-red-50 border border-red-200 rounded-lg p-3' : ''}`}>
+                            <div key={index} className={`space-y-2 ${needsAttention ? 'bg-red-50 border border-red-200 rounded-lg p-3' : ''} ${isFixed ? 'bg-blue-50 border border-blue-200' : ''}`}>
                               <div className="flex items-center justify-between">
-                                <Label htmlFor={`doc-${index}`} className={`text-sm font-medium ${needsAttention ? 'text-red-800' : ''}`}>
+                                <Label htmlFor={`doc-${index}`} className={`text-sm font-medium ${needsAttention ? 'text-red-800' : isFixed ? 'text-blue-800' : ''}`}>
                                   {index + 1}. {doc}
                                 </Label>
-                                {verificationStatus && getVerificationStatusBadge(verificationStatus.status)}
+                                <div className="flex items-center gap-2">
+                                  {verificationStatus && getVerificationStatusBadge(verificationStatus.status)}
+                                  {isFixed && <Badge className="bg-blue-100 text-blue-700">✓ Diperbaiki</Badge>}
+                                </div>
                               </div>
                               
                               {verificationStatus?.admin_notes && (
@@ -1118,12 +1141,28 @@ export default function ReminderPensiun() {
                                   placeholder="Masukkan link Google Drive dokumen..."
                                   value={documents[docKey] || ""}
                                   onChange={(e) => handleDocumentChange(index, e.target.value)}
-                                  className={needsAttention ? 'border-red-300 focus:border-red-500' : ''}
+                                  className={needsAttention ? 'border-red-300 focus:border-red-500' : isFixed ? 'border-blue-300 focus:border-blue-500' : ''}
                                 />
                                 <Button variant="outline" size="icon">
                                   <Upload className="w-4 h-4" />
                                 </Button>
+                                {needsAttention && !isFixed && documents[docKey] && (
+                                  <Button 
+                                    onClick={() => handleMarkDocumentFixed(docKey)}
+                                    size="sm"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
+                                  >
+                                    Perbaiki
+                                  </Button>
+                                )}
                               </div>
+                              
+                              {isFixed && (
+                                <div className="bg-blue-50 border border-blue-200 rounded p-2">
+                                  <p className="text-xs font-medium text-blue-800">✓ Dokumen telah diperbaiki</p>
+                                  <p className="text-xs text-blue-700">Dokumen ini telah ditandai sebagai diperbaiki dan siap untuk direview ulang.</p>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -1153,11 +1192,20 @@ export default function ReminderPensiun() {
                   </Button>
                   <Button 
                     onClick={handleSubmitPengajuan}
-                    disabled={!selectedEmployee || !retirementCategory}
+                    disabled={!selectedEmployee || !retirementCategory || isSubmitting}
                     className="min-w-32"
                   >
-                    <Send className="w-4 h-4 mr-2" />
-                    Submit Pengajuan
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {isEditing ? 'Mengirim Perbaikan...' : 'Mengirim...'}
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        {isEditing ? 'Submit Perbaikan' : 'Submit Pengajuan'}
+                      </>
+                    )}
                   </Button>
                 </div>
 
