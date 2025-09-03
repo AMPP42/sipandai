@@ -131,7 +131,7 @@ export default function AdminFormasi() {
     }
 
     try {
-      const { gap, status } = calculateGapAndStatus(newPosition.existing, newPosition.kebutuhan);
+      console.log('Creating position with data:', newPosition); // Debug log
       
       const { error } = await supabase
         .from('positions')
@@ -139,12 +139,14 @@ export default function AdminFormasi() {
           unit: newPosition.unit.trim(),
           jabatan: newPosition.jabatan.trim(),
           existing: newPosition.existing,
-          kebutuhan: newPosition.kebutuhan,
-          gap,
-          status
+          kebutuhan: newPosition.kebutuhan
+          // Note: gap and status are generated/computed columns, don't insert them
         }]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Insert error:', error); // Debug log
+        throw error;
+      }
 
       toast({
         title: "Berhasil",
@@ -173,21 +175,23 @@ export default function AdminFormasi() {
     if (!editingPosition) return;
 
     try {
-      const { gap, status } = calculateGapAndStatus(editingPosition.existing, editingPosition.kebutuhan);
+      console.log('Updating position with data:', editingPosition); // Debug log
       
       const { error } = await supabase
         .from('positions')
         .update({
-          unit: editingPosition.unit,
-          jabatan: editingPosition.jabatan,
+          unit: editingPosition.unit.trim(),
+          jabatan: editingPosition.jabatan.trim(),
           existing: editingPosition.existing,
-          kebutuhan: editingPosition.kebutuhan,
-          gap,
-          status
+          kebutuhan: editingPosition.kebutuhan
+          // Note: gap and status are generated/computed columns, don't update them
         })
         .eq('id', editingPosition.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Update error:', error); // Debug log
+        throw error;
+      }
 
       toast({
         title: "Berhasil",
