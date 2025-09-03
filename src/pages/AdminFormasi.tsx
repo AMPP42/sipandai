@@ -119,14 +119,23 @@ export default function AdminFormasi() {
   };
 
   const createPosition = async () => {
+    if (!newPosition.unit.trim() || !newPosition.jabatan.trim()) {
+      toast({
+        title: "Error",
+        description: "Unit kerja dan jabatan harus diisi",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       const { gap, status } = calculateGapAndStatus(newPosition.existing, newPosition.kebutuhan);
       
       const { error } = await supabase
         .from('positions')
         .insert([{
-          unit: newPosition.unit,
-          jabatan: newPosition.jabatan,
+          unit: newPosition.unit.trim(),
+          jabatan: newPosition.jabatan.trim(),
           existing: newPosition.existing,
           kebutuhan: newPosition.kebutuhan,
           gap,
@@ -273,7 +282,7 @@ export default function AdminFormasi() {
                   Tambah Formasi
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                   <DialogTitle>Tambah Formasi Baru</DialogTitle>
                   <DialogDescription>
@@ -324,7 +333,10 @@ export default function AdminFormasi() {
                   <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                     Batal
                   </Button>
-                  <Button onClick={createPosition}>
+                  <Button 
+                    onClick={createPosition}
+                    disabled={!newPosition.unit || !newPosition.jabatan}
+                  >
                     Tambah Formasi
                   </Button>
                 </DialogFooter>
