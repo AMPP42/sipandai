@@ -416,6 +416,17 @@ export default function ReminderPensiun() {
       return;
     }
 
+    // Check if at least one document is provided
+    const documentEntries = Object.entries(documents).filter(([key, link]) => link.trim() !== '');
+    if (documentEntries.length === 0) {
+      toast({
+        title: "Error", 
+        description: "Harap upload minimal satu dokumen persyaratan",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!user?.id) {
       toast({
         title: "Error",

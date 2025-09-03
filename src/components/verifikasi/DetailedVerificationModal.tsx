@@ -64,50 +64,7 @@ interface Props {
   onVerificationComplete: () => void;
 }
 
-// Define required documents for each application type
-const getRequiredDocuments = (application: ApplicationItem) => {
-  if (application.type === 'usulan_mutasi') {
-    return [
-      { type: 'identity', name: 'Kartu Pegawai' },
-      { type: 'family', name: 'Kartu Keluarga' },
-      { type: 'position', name: 'SK Pangkat Terakhir' },
-      { type: 'education', name: 'Ijazah Pendidikan' },
-      { type: 'performance', name: 'SKP/Penilaian Kinerja' }
-    ];
-  }
-  
-  switch (application.jenis) {
-    case 'pensiun':
-      return [
-        { type: 'identity', name: 'Kartu Pegawai' },
-        { type: 'family', name: 'Kartu Keluarga' },
-        { type: 'pension_request', name: 'Surat Permohonan Pensiun' },
-        { type: 'position', name: 'SK Pangkat Terakhir' },
-        { type: 'health', name: 'Surat Keterangan Sehat' }
-      ];
-    case 'mutasi':
-      return [
-        { type: 'identity', name: 'Kartu Pegawai' },
-        { type: 'family', name: 'Kartu Keluarga' },
-        { type: 'transfer_request', name: 'Surat Permohonan Mutasi' },
-        { type: 'position', name: 'SK Pangkat Terakhir' },
-        { type: 'performance', name: 'SKP/Penilaian Kinerja' }
-      ];
-    case 'kenaikan_pangkat':
-      return [
-        { type: 'identity', name: 'Kartu Pegawai' },
-        { type: 'education', name: 'Ijazah Pendidikan' },
-        { type: 'position', name: 'SK Pangkat Terakhir' },
-        { type: 'performance', name: 'SKP/Penilaian Kinerja' },
-        { type: 'training', name: 'Sertifikat Diklat' }
-      ];
-    default:
-      return [
-        { type: 'identity', name: 'Kartu Pegawai' },
-        { type: 'supporting', name: 'Dokumen Pendukung' }
-      ];
-  }
-};
+// This function is no longer used - we load actual documents from database
 
 export default function DetailedVerificationModal({ open, onOpenChange, application, onVerificationComplete }: Props) {
   const { user } = useAuth();
@@ -161,7 +118,12 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
   };
 
   const initializeDocumentVerifications = async (documents: ActualDocument[]) => {
-    if (!application || !documents || documents.length === 0) return;
+    if (!application || !documents || documents.length === 0) {
+      console.log('Cannot initialize - no application or documents:', { application: !!application, documentsCount: documents?.length });
+      return;
+    }
+
+    console.log('Initializing verifications for documents:', documents);
 
     const initialVerifications = documents.map(doc => ({
       application_id: application.id,
@@ -178,7 +140,12 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
         .insert(initialVerifications)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error inserting verifications:', error);
+        throw error;
+      }
+      
+      console.log('Successfully created verifications:', data);
       setDocumentVerifications((data || []) as DocumentVerification[]);
     } catch (error) {
       console.error('Error initializing document verifications:', error);
@@ -360,8 +327,12 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Status Saat Ini</label>
-                  <p className="text-sm">{application.status}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Kategori</label>
+                  <p className="text-sm">{application.keterangan || 'Tidak ada keterangan'}</p>
+                </div>
+                <div className="col-span-2">
+                  <label className="text-sm font-medium text-muted-foreground">Total Dokumen Diupload</label>
+                  <p className="text-sm">{actualDocuments.length} dokumen</p>
                 </div>
               </div>
             </CardContent>
@@ -382,6 +353,24 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
             {loading ? (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : documentVerifications.length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Belum Ada Dokumen</h3>
+                <p className="text-muted-foreground">
+                  {actualDocuments.length === 0 
+                    ? 'Pengajuan ini belum memiliki dokumen yang diupload.'
+                    : `Ditemukan ${actualDocuments.length} dokumen, tetapi belum ada verifikasi yang dibuat.`}
+                </p>
+                {actualDocuments.length > 0 && (
+                  <Button 
+                    className="mt-4" 
+                    onClick={() => initializeDocumentVerifications(actualDocuments)}
+                  >
+                    Inisialisasi Verifikasi
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
