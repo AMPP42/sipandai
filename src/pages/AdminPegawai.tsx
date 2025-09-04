@@ -11,11 +11,16 @@ import {
   UserPlus, 
   Edit,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Upload
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import EmployeeForm from '@/components/pegawai/EmployeeForm';
 import EmployeeSearchFilters from '@/components/pegawai/EmployeeSearchFilters';
+import ExcelUpload from '@/components/pegawai/ExcelUpload';
 
 interface Employee {
   id: string;
@@ -52,7 +57,14 @@ export default function AdminPegawai() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [showExcelUpload, setShowExcelUpload] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const itemsPerPage = 50;
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -85,13 +97,14 @@ export default function AdminPegawai() {
 
   useEffect(() => {
     loadEmployees();
-  }, [searchTerm, unitFilter, pangkatFilter, statusFilter]);
+  }, [searchTerm, unitFilter, pangkatFilter, statusFilter, currentPage]);
 
   const loadEmployees = async () => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
+      // Build base query
+      let baseQuery = supabase
         .from('employees')
         .select(`
           id, nama, nip, nik, tempat_lahir, tanggal_lahir, jenis_kelamin, agama, 
@@ -99,8 +112,36 @@ export default function AdminPegawai() {
           kriteria_asn, jabatan, grade_kelas_jabatan, tmt_jabatan_terakhir, pangkat, 
           tmt_pangkat_terakhir, tmt_cpns, tmt_pns, tmt_pensiun, masa_kerja, 
           created_at, updated_at
-        `)
-        .order('nama');
+        `);
+
+      // Apply filters
+      if (searchTerm) {
+        baseQuery = baseQuery.or(`nama.ilike.%${searchTerm}%,nip.ilike.%${searchTerm}%,unit.ilike.%${searchTerm}%`);
+      }
+
+      if (unitFilter !== 'all') {
+        baseQuery = baseQuery.eq('unit', unitFilter);
+      }
+
+      if (pangkatFilter !== 'all') {
+        baseQuery = baseQuery.eq('pangkat', pangkatFilter);
+      }
+
+      if (statusFilter !== 'all') {
+        baseQuery = baseQuery.eq('kriteria_asn', statusFilter);
+      }
+
+      // Get total count for pagination  
+      const { count } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true });
+      setTotalCount(count || 0);
+      setTotalPages(Math.ceil((count || 0) / itemsPerPage));
+
+      // Get paginated data
+      const { data, error } = await baseQuery
+        .order('nama')
+        .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1);
 
       if (error) throw error;
 
@@ -134,63 +175,58 @@ export default function AdminPegawai() {
         updated_at: emp.updated_at
       }));
 
-      // Apply filters on the mapped data
-      let filteredEmployees = mappedEmployees;
-
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        filteredEmployees = filteredEmployees.filter(emp =>
-          emp.nama.toLowerCase().includes(term) ||
-          (emp.nip && emp.nip.toLowerCase().includes(term)) ||
-          (emp.unit && emp.unit.toLowerCase().includes(term))
-        );
-      }
-
-      if (unitFilter !== 'all') {
-        filteredEmployees = filteredEmployees.filter(emp => 
-          emp.unit === unitFilter
-        );
-      }
-
-      if (pangkatFilter !== 'all') {
-        filteredEmployees = filteredEmployees.filter(emp => 
-          emp.pangkat === pangkatFilter
-        );
-      }
-
-      if (statusFilter !== 'all') {
-        if (statusFilter === 'PNS') {
-          filteredEmployees = filteredEmployees.filter(emp => emp.kriteria_asn === 'PNS');
-        } else if (statusFilter === 'PPPK') {
-          filteredEmployees = filteredEmployees.filter(emp => emp.kriteria_asn === 'PPPK');
-        }
-      }
-
-      setEmployees(filteredEmployees);
+      setEmployees(mappedEmployees);
       
-      // Calculate stats
-      const total = filteredEmployees.length;
-      const active = filteredEmployees.filter(emp => emp.kriteria_asn).length;
-      
-      // Calculate approaching retirement (within 2 years)
-      const today = new Date();
-      const twoYearsFromNow = new Date(today.getFullYear() + 2, today.getMonth(), today.getDate());
-      const approaching_retirement = filteredEmployees.filter(emp => {
-        if (emp.tmt_pensiun) {
-          const retirementDate = new Date(emp.tmt_pensiun);
-          return retirementDate <= twoYearsFromNow && retirementDate > today;
-        }
-        return false;
-      }).length;
-      
-      const units = new Set(filteredEmployees.map(emp => emp.unit).filter(Boolean)).size;
-      
-      setStats({ total, active, approaching_retirement, units });
+      // Load stats separately for accurate counts across all data
+      await loadStats();
 
     } catch (error: any) {
       setError(error.message || 'Terjadi kesalahan saat memuat data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      // Get total count
+      const { count: totalCount } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true });
+
+      // Get active count
+      const { count: activeCount } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true })
+        .not('kriteria_asn', 'is', null);
+
+      // Get approaching retirement count
+      const today = new Date();
+      const twoYearsFromNow = new Date(today.getFullYear() + 2, today.getMonth(), today.getDate());
+      const { count: retirementCount } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true })
+        .not('tmt_pensiun', 'is', null)
+        .lte('tmt_pensiun', twoYearsFromNow.toISOString().split('T')[0])
+        .gt('tmt_pensiun', today.toISOString().split('T')[0]);
+
+      // Get unique units count
+      const { data: unitData } = await supabase
+        .from('employees')
+        .select('unit')
+        .not('unit', 'is', null);
+      
+      const uniqueUnits = new Set(unitData?.map(emp => emp.unit)).size;
+
+      setStats({
+        total: totalCount || 0,
+        active: activeCount || 0,
+        approaching_retirement: retirementCount || 0,
+        units: uniqueUnits
+      });
+
+    } catch (error: any) {
+      console.error('Error loading stats:', error);
     }
   };
 
@@ -221,6 +257,7 @@ export default function AdminPegawai() {
   const handleFormSave = () => {
     setShowForm(false);
     setEditingEmployee(null);
+    setCurrentPage(1); // Reset to first page
     loadEmployees();
   };
 
@@ -234,7 +271,13 @@ export default function AdminPegawai() {
   };
 
   const handleImport = () => {
-    alert('Fitur import akan segera tersedia');
+    setShowExcelUpload(true);
+  };
+
+  const handleUploadComplete = () => {
+    setShowExcelUpload(false);
+    setCurrentPage(1); // Reset to first page
+    loadEmployees();
   };
 
   const clearFilters = () => {
@@ -242,6 +285,7 @@ export default function AdminPegawai() {
     setUnitFilter('all');
     setPangkatFilter('all');
     setStatusFilter('all');
+    setCurrentPage(1); // Reset to first page
   };
 
   const getStatusBadge = (employee: Employee) => {
@@ -266,6 +310,17 @@ export default function AdminPegawai() {
     );
   }
 
+  if (showExcelUpload) {
+    return (
+      <div className="p-6 animate-fade-in">
+        <ExcelUpload
+          onUploadComplete={handleUploadComplete}
+          onClose={() => setShowExcelUpload(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6 animate-fade-in">
       {/* Header */}
@@ -282,10 +337,16 @@ export default function AdminPegawai() {
               Kelola data master pegawai dan informasi kepegawaian
             </p>
           </div>
-          <Button onClick={() => setShowForm(true)} className="btn-primary">
-            <UserPlus className="w-4 h-4 mr-2" />
-            Tambah Pegawai
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowExcelUpload(true)} variant="outline">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Excel
+            </Button>
+            <Button onClick={() => setShowForm(true)} className="btn-primary">
+              <UserPlus className="w-4 h-4 mr-2" />
+              Tambah Pegawai
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -366,7 +427,7 @@ export default function AdminPegawai() {
         <CardHeader>
           <CardTitle>Daftar Pegawai</CardTitle>
           <CardDescription>
-            Data lengkap pegawai dan informasi kepegawaian
+            Data lengkap pegawai dan informasi kepegawaian (Halaman {currentPage} dari {totalPages}, Total: {totalCount.toLocaleString()} pegawai)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -428,6 +489,54 @@ export default function AdminPegawai() {
                 ))}
               </TableBody>
             </Table>
+          )}
+
+          {/* Pagination */}
+          {!loading && employees.length > 0 && totalPages > 1 && (
+            <div className="mt-6 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(pageNum)}
+                          isActive={currentPage === pageNum}
+                          className="cursor-pointer"
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
           )}
         </CardContent>
       </Card>
