@@ -700,34 +700,27 @@ export default function ReminderPensiun() {
         }
       }
 
+      // Clear edit state and form data first
+      setIsEditing(false);
+      setEditingApplicationId(null);
+      setDocumentVerificationStatus({});
+      setFixedDocuments(new Set());
+      setSelectedEmployee(null);
+      setRetirementCategory("");
+      setDocuments({});
+      
+      // Refresh applications data
+      await fetchApplications();
+      
+      // Switch to status tab immediately
+      setActiveTab("status");
+      
       toast({
         title: "Berhasil",
         description: isEditing 
-          ? `Perbaikan usulan pensiun untuk ${selectedEmployee.nama} berhasil dikirim ulang!`
-          : `Pengajuan pensiun untuk ${selectedEmployee.nama} berhasil disubmit dan sedang menunggu verifikasi!`,
+          ? `Perbaikan usulan pensiun untuk ${selectedEmployee.nama} berhasil dikirim ulang dan dapat dilihat di tab Status Usulan!`
+          : `Pengajuan pensiun untuk ${selectedEmployee.nama} berhasil disubmit dan dapat dilihat di tab Status Usulan!`,
       });
-      
-      // Navigate back to status page or refresh
-      if (isEditing) {
-        // Clear edit state
-        setIsEditing(false);
-        setEditingApplicationId(null);
-        setDocumentVerificationStatus({});
-        setFixedDocuments(new Set());
-        setSelectedEmployee(null);
-        setRetirementCategory("");
-        setDocuments({});
-        
-        // Navigate to status tab and refresh applications
-        await fetchApplications();
-        setActiveTab("status");
-      } else {
-        await fetchApplications();
-        setSelectedEmployee(null);
-        setRetirementCategory("");
-        setDocuments({});
-        setActiveTab("status");
-      }
     } catch (error) {
       console.error('Error submitting retirement application:', error);
       toast({
