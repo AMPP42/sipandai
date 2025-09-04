@@ -114,6 +114,11 @@ export default function AdminPegawai() {
           created_at, updated_at
         `);
 
+      // For admin_unit, filter by their unit only
+      if (user?.role === 'admin_unit' && user?.unit) {
+        baseQuery = baseQuery.eq('unit', user.unit);
+      }
+
       // Apply filters
       if (searchTerm) {
         baseQuery = baseQuery.or(`nama.ilike.%${searchTerm}%,nip.ilike.%${searchTerm}%,unit.ilike.%${searchTerm}%`);
@@ -131,10 +136,31 @@ export default function AdminPegawai() {
         baseQuery = baseQuery.eq('kriteria_asn', statusFilter);
       }
 
-      // Get total count for pagination  
-      const { count } = await supabase
+      // Get total count for pagination with same filters
+      let countQuery = supabase
         .from('employees')
         .select('*', { count: 'exact', head: true });
+      
+      // Apply same unit filter for admin_unit
+      if (user?.role === 'admin_unit' && user?.unit) {
+        countQuery = countQuery.eq('unit', user.unit);
+      }
+      
+      // Apply same filters as main query
+      if (searchTerm) {
+        countQuery = countQuery.or(`nama.ilike.%${searchTerm}%,nip.ilike.%${searchTerm}%,unit.ilike.%${searchTerm}%`);
+      }
+      if (unitFilter !== 'all') {
+        countQuery = countQuery.eq('unit', unitFilter);
+      }
+      if (pangkatFilter !== 'all') {
+        countQuery = countQuery.eq('pangkat', pangkatFilter);
+      }
+      if (statusFilter !== 'all') {
+        countQuery = countQuery.eq('kriteria_asn', statusFilter);
+      }
+      
+      const { count } = await countQuery;
       setTotalCount(count || 0);
       setTotalPages(Math.ceil((count || 0) / itemsPerPage));
 
@@ -190,31 +216,47 @@ export default function AdminPegawai() {
   const loadStats = async () => {
     try {
       // Get total count
-      const { count: totalCount } = await supabase
+      let totalQuery = supabase
         .from('employees')
         .select('*', { count: 'exact', head: true });
+      if (user?.role === 'admin_unit' && user?.unit) {
+        totalQuery = totalQuery.eq('unit', user.unit);
+      }
+      const { count: totalCount } = await totalQuery;
 
       // Get active count
-      const { count: activeCount } = await supabase
+      let activeQuery = supabase
         .from('employees')
         .select('*', { count: 'exact', head: true })
         .not('kriteria_asn', 'is', null);
+      if (user?.role === 'admin_unit' && user?.unit) {
+        activeQuery = activeQuery.eq('unit', user.unit);
+      }
+      const { count: activeCount } = await activeQuery;
 
       // Get approaching retirement count
       const today = new Date();
       const twoYearsFromNow = new Date(today.getFullYear() + 2, today.getMonth(), today.getDate());
-      const { count: retirementCount } = await supabase
+      let retirementQuery = supabase
         .from('employees')
         .select('*', { count: 'exact', head: true })
         .not('tmt_pensiun', 'is', null)
         .lte('tmt_pensiun', twoYearsFromNow.toISOString().split('T')[0])
         .gt('tmt_pensiun', today.toISOString().split('T')[0]);
+      if (user?.role === 'admin_unit' && user?.unit) {
+        retirementQuery = retirementQuery.eq('unit', user.unit);
+      }
+      const { count: retirementCount } = await retirementQuery;
 
       // Get unique units count
-      const { data: unitData } = await supabase
+      let unitQuery = supabase
         .from('employees')
         .select('unit')
         .not('unit', 'is', null);
+      if (user?.role === 'admin_unit' && user?.unit) {
+        unitQuery = unitQuery.eq('unit', user.unit);
+      }
+      const { data: unitData } = await unitQuery;
       
       const uniqueUnits = new Set(unitData?.map(emp => emp.unit)).size;
 

@@ -85,11 +85,15 @@ export function AppSidebar() {
         { title: "Portal Aplikasi", url: "/apps", icon: FileText },
       ];
     } else {
+      // admin_unit role - only show database pegawai and portal aplikasi
       return [
         ...commonItems,
+        { 
+          title: "Database Pegawai", 
+          url: "/panel-admin?tab=database-pegawai", 
+          icon: Database
+        },
         { title: "Portal Aplikasi", url: "/apps", icon: FileText },
-        { title: "Usulan Mutasi", url: "/usulan-mutasi", icon: GitBranch },
-        { title: "Status Usulan", url: "/status", icon: Clock },
       ];
     }
   };
