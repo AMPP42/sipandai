@@ -334,7 +334,7 @@ export default function KenaikanPangkat() {
                 {/* Pilih Pegawai */}
                 <div className="space-y-2">
                   <Label htmlFor="pegawai-pengajuan">Pilih Pegawai</Label>
-                  <Select>
+                  <Select value={selectedPegawai} onValueChange={setSelectedPegawai}>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih pegawai yang akan diusulkan kenaikan pangkat" />
                     </SelectTrigger>
@@ -347,6 +347,38 @@ export default function KenaikanPangkat() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Employee Summary Card */}
+                {selectedPegawai && (
+                  <Card className="bg-muted/50">
+                    <CardContent className="p-4">
+                      {(() => {
+                        const pegawai = pangkatData.find(p => p.id === selectedPegawai);
+                        if (!pegawai) return null;
+
+                        return (
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Nama Pegawai</p>
+                              <p className="font-semibold">{pegawai.nama}</p>
+                              <p className="text-sm text-muted-foreground">NIP: {pegawai.nip}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Pangkat Saat Ini</p>
+                              <p className="font-semibold">{pegawai.pangkatSekarang}</p>
+                              <p className="text-sm text-muted-foreground">Golongan {pegawai.golonganSekarang}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Pangkat Tujuan</p>
+                              <p className="font-semibold text-primary">{pegawai.pangkatTujuan}</p>
+                              <p className="text-sm text-muted-foreground">Golongan {pegawai.golonganTujuan}</p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Kategori Kenaikan Pangkat */}
                 <div className="space-y-2">
