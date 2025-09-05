@@ -7,17 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { 
-  TrendingUp, 
-  CheckCircle, 
-  AlertTriangle, 
-  Calendar,
-  User,
-  FileText,
-  Calculator,
-  Clock
-} from "lucide-react";
-
+import { TrendingUp, CheckCircle, AlertTriangle, Calendar, User, FileText, Calculator, Clock } from "lucide-react";
 interface PangkatData {
   id: string;
   nama: string;
@@ -26,78 +16,115 @@ interface PangkatData {
   golonganSekarang: string;
   pangkatTujuan: string;
   golonganTujuan: string;
-  masaKerja: { tahun: number; bulan: number };
+  masaKerja: {
+    tahun: number;
+    bulan: number;
+  };
   syaratTerpenuhi: boolean;
   statusPengajuan: 'eligible' | 'not_eligible' | 'submitted' | 'approved' | 'rejected';
   tanggalTerakhirNaik: string;
 }
-
 export default function KenaikanPangkat() {
   const [activeTab, setActiveTab] = useState("check");
   const [selectedPegawai, setSelectedPegawai] = useState("");
   const [selectedKategori, setSelectedKategori] = useState("");
 
   // Mock data for demonstration
-  const pangkatData: PangkatData[] = [
-    {
-      id: "1",
-      nama: "Dr. Ahmad Fauzi, S.H., M.H.",
-      nip: "196508121990031001",
-      pangkatSekarang: "Pembina",
-      golonganSekarang: "IV/a",
-      pangkatTujuan: "Pembina Tingkat I",
-      golonganTujuan: "IV/b",
-      masaKerja: { tahun: 15, bulan: 6 },
-      syaratTerpenuhi: true,
-      statusPengajuan: "eligible",
-      tanggalTerakhirNaik: "2020-04-01"
+  const pangkatData: PangkatData[] = [{
+    id: "1",
+    nama: "Dr. Ahmad Fauzi, S.H., M.H.",
+    nip: "196508121990031001",
+    pangkatSekarang: "Pembina",
+    golonganSekarang: "IV/a",
+    pangkatTujuan: "Pembina Tingkat I",
+    golonganTujuan: "IV/b",
+    masaKerja: {
+      tahun: 15,
+      bulan: 6
     },
-    {
-      id: "2",
-      nama: "Siti Nurhaliza, S.E., M.M.",
-      nip: "197203101995032002",
-      pangkatSekarang: "Penata Muda Tingkat I",
-      golonganSekarang: "III/b",
-      pangkatTujuan: "Penata",
-      golonganTujuan: "III/c",
-      masaKerja: { tahun: 8, bulan: 3 },
-      syaratTerpenuhi: false,
-      statusPengajuan: "not_eligible",
-      tanggalTerakhirNaik: "2022-01-01"
-    }
-  ];
-
-  const persyaratanPangkat = [
-    { nama: "Masa Kerja Minimal", deskripsi: "4 tahun dalam pangkat terakhir", completed: true },
-    { nama: "Pendidikan Minimum", deskripsi: "Sesuai dengan pangkat yang diajukan", completed: true },
-    { nama: "DP3/SKP", deskripsi: "Nilai minimal Baik selama 2 tahun terakhir", completed: true },
-    { nama: "Diklat Struktural", deskripsi: "Sesuai jenjang jabatan", completed: false },
-    { nama: "Tidak Ada Hukuman Disiplin", deskripsi: "Dalam 1 tahun terakhir", completed: true },
-    { nama: "Tes Kompetensi", deskripsi: "Lulus tes kompetensi jabatan", completed: false }
-  ];
-
+    syaratTerpenuhi: true,
+    statusPengajuan: "eligible",
+    tanggalTerakhirNaik: "2020-04-01"
+  }, {
+    id: "2",
+    nama: "Siti Nurhaliza, S.E., M.M.",
+    nip: "197203101995032002",
+    pangkatSekarang: "Penata Muda Tingkat I",
+    golonganSekarang: "III/b",
+    pangkatTujuan: "Penata",
+    golonganTujuan: "III/c",
+    masaKerja: {
+      tahun: 8,
+      bulan: 3
+    },
+    syaratTerpenuhi: false,
+    statusPengajuan: "not_eligible",
+    tanggalTerakhirNaik: "2022-01-01"
+  }];
+  const persyaratanPangkat = [{
+    nama: "Masa Kerja Minimal",
+    deskripsi: "4 tahun dalam pangkat terakhir",
+    completed: true
+  }, {
+    nama: "Pendidikan Minimum",
+    deskripsi: "Sesuai dengan pangkat yang diajukan",
+    completed: true
+  }, {
+    nama: "DP3/SKP",
+    deskripsi: "Nilai minimal Baik selama 2 tahun terakhir",
+    completed: true
+  }, {
+    nama: "Diklat Struktural",
+    deskripsi: "Sesuai jenjang jabatan",
+    completed: false
+  }, {
+    nama: "Tidak Ada Hukuman Disiplin",
+    deskripsi: "Dalam 1 tahun terakhir",
+    completed: true
+  }, {
+    nama: "Tes Kompetensi",
+    deskripsi: "Lulus tes kompetensi jabatan",
+    completed: false
+  }];
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      eligible: { label: "Memenuhi Syarat", className: "bg-green-100 text-green-700" },
-      not_eligible: { label: "Belum Memenuhi Syarat", className: "bg-red-100 text-red-700" },
-      submitted: { label: "Sedang Diproses", className: "bg-blue-100 text-blue-700" },
-      approved: { label: "Disetujui", className: "bg-green-100 text-green-700" },
-      rejected: { label: "Ditolak", className: "bg-red-100 text-red-700" }
+      eligible: {
+        label: "Memenuhi Syarat",
+        className: "bg-green-100 text-green-700"
+      },
+      not_eligible: {
+        label: "Belum Memenuhi Syarat",
+        className: "bg-red-100 text-red-700"
+      },
+      submitted: {
+        label: "Sedang Diproses",
+        className: "bg-blue-100 text-blue-700"
+      },
+      approved: {
+        label: "Disetujui",
+        className: "bg-green-100 text-green-700"
+      },
+      rejected: {
+        label: "Ditolak",
+        className: "bg-red-100 text-red-700"
+      }
     };
-    
     const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.not_eligible;
     return <Badge className={statusInfo.className}>{statusInfo.label}</Badge>;
   };
-
-  const hitungProgressMasaKerja = (masaKerja: { tahun: number; bulan: number }) => {
+  const hitungProgressMasaKerja = (masaKerja: {
+    tahun: number;
+    bulan: number;
+  }) => {
     const totalBulan = masaKerja.tahun * 12 + masaKerja.bulan;
     const minimalBulan = 4 * 12; // 4 tahun = 48 bulan
-    const progress = Math.min((totalBulan / minimalBulan) * 100, 100);
+    const progress = Math.min(totalBulan / minimalBulan * 100, 100);
     return Math.round(progress);
   };
-
   const getKategoriName = (kategori: string) => {
-    const kategoriMap: { [key: string]: string } = {
+    const kategoriMap: {
+      [key: string]: string;
+    } = {
       reguler: "Kenaikan Pangkat Reguler (Jabatan Pelaksana)",
       fungsional: "Kenaikan Pangkat Jabatan Fungsional",
       struktural: "Kenaikan Pangkat Jabatan Struktural",
@@ -107,81 +134,109 @@ export default function KenaikanPangkat() {
     };
     return kategoriMap[kategori] || kategori;
   };
-
   const getDocumentRequirements = (kategori: string) => {
-    const documents: { [key: string]: Array<{ nama: string; catatan?: string }> } = {
-      reguler: [
-        { 
-          nama: "SKP 2 tahun terakhir", 
-          catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'" 
-        },
-        { nama: "SK Jabatan terakhir" },
-        { nama: "SK Pangkat terakhir" },
-        { nama: "Kartu Pegawai" },
-        { nama: "Ijazah + Transkrip nilai terakhir" }
-      ],
-      fungsional: [
-        { nama: "PAK tahun 2022 hingga saat ini", catatan: "Wajib 3 lembar di setiap tahun" },
-        { 
-          nama: "SKP 2 tahun terakhir", 
-          catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'" 
-        },
-        { nama: "SK Jabatan terakhir", catatan: "Wajib disertai sertifikat uji kompetensi bagi pegawai yang naik jabatan" },
-        { nama: "SK Pangkat terakhir" },
-        { nama: "Kartu Pegawai" },
-        { nama: "Ijazah + transkrip nilai terakhir" }
-      ],
-      struktural: [
-        { 
-          nama: "SKP 2 tahun terakhir", 
-          catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'" 
-        },
-        { nama: "SK Jabatan terakhir" },
-        { nama: "SK Pangkat terakhir" },
-        { nama: "Kartu Pegawai" },
-        { nama: "Ijazah + Transkrip Nilai terakhir" },
-        { nama: "Surat Pernyataan Pelantikan" },
-        { nama: "Surat Pernyataan Melaksanakan Tugas" },
-        { nama: "Surat Pernyataan Pelantikan" },
-        { nama: "Khusus untuk Pejabat Struktural Eselon III yang pendidikan terakhirnya S1 dan pangkat terakhirnya dilakulukan, wajib lulus diklat PIM III" }
-      ],
-      pertama_kali: [
-        { nama: "SK CPNS" },
-        { nama: "SK PNS" }
-      ],
-      penyesuaian_ijazah: [
-        { nama: "Surat Tanda Lulus Ujian Penyesuaian Kenaikan Pangkat" },
-        { nama: "Ijazah + Transkrip Nilai terakhir yang telah dilegalisir" },
-        { nama: "Uraian Tugas" },
-        { 
-          nama: "SKP 2 tahun terakhir", 
-          catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'" 
-        },
-        { nama: "SK Jabatan terakhir" },
-        { nama: "SK Pangkat terakhir" },
-        { nama: "Kartu Pegawai" },
-        { nama: "Ijazah + Transkrip Nilai terakhir" }
-      ],
-      iid_ke_iiia: [
-        { nama: "Surat Tanda Lulus Ujian Dinas" },
-        { 
-          nama: "SKP 2 tahun terakhir", 
-          catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'" 
-        },
-        { nama: "PAK tahun 2022 hingga saat ini", catatan: "Khusus untuk jabatan fungsional; Wajib 3 lembar di setiap tahun" },
-        { nama: "SK Jabatan", catatan: "Khusus untuk jabatan fungsional" },
-        { nama: "Berita Acara Pengambilan Sumpah Jabatan PNS", catatan: "Khusus untuk jabatan fungsional" },
-        { nama: "SK Pangkat terakhir" },
-        { nama: "Kartu Pegawai" },
-        { nama: "Ijazah + Transkrip Nilai terakhir" }
-      ]
+    const documents: {
+      [key: string]: Array<{
+        nama: string;
+        catatan?: string;
+      }>;
+    } = {
+      reguler: [{
+        nama: "SKP 2 tahun terakhir",
+        catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'"
+      }, {
+        nama: "SK Jabatan terakhir"
+      }, {
+        nama: "SK Pangkat terakhir"
+      }, {
+        nama: "Kartu Pegawai"
+      }, {
+        nama: "Ijazah + Transkrip nilai terakhir"
+      }],
+      fungsional: [{
+        nama: "PAK tahun 2022 hingga saat ini",
+        catatan: "Wajib 3 lembar di setiap tahun"
+      }, {
+        nama: "SKP 2 tahun terakhir",
+        catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'"
+      }, {
+        nama: "SK Jabatan terakhir",
+        catatan: "Wajib disertai sertifikat uji kompetensi bagi pegawai yang naik jabatan"
+      }, {
+        nama: "SK Pangkat terakhir"
+      }, {
+        nama: "Kartu Pegawai"
+      }, {
+        nama: "Ijazah + transkrip nilai terakhir"
+      }],
+      struktural: [{
+        nama: "SKP 2 tahun terakhir",
+        catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'"
+      }, {
+        nama: "SK Jabatan terakhir"
+      }, {
+        nama: "SK Pangkat terakhir"
+      }, {
+        nama: "Kartu Pegawai"
+      }, {
+        nama: "Ijazah + Transkrip Nilai terakhir"
+      }, {
+        nama: "Surat Pernyataan Pelantikan"
+      }, {
+        nama: "Surat Pernyataan Melaksanakan Tugas"
+      }, {
+        nama: "Surat Pernyataan Pelantikan"
+      }, {
+        nama: "Khusus untuk Pejabat Struktural Eselon III yang pendidikan terakhirnya S1 dan pangkat terakhirnya dilakulukan, wajib lulus diklat PIM III"
+      }],
+      pertama_kali: [{
+        nama: "SK CPNS"
+      }, {
+        nama: "SK PNS"
+      }],
+      penyesuaian_ijazah: [{
+        nama: "Surat Tanda Lulus Ujian Penyesuaian Kenaikan Pangkat"
+      }, {
+        nama: "Ijazah + Transkrip Nilai terakhir yang telah dilegalisir"
+      }, {
+        nama: "Uraian Tugas"
+      }, {
+        nama: "SKP 2 tahun terakhir",
+        catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'"
+      }, {
+        nama: "SK Jabatan terakhir"
+      }, {
+        nama: "SK Pangkat terakhir"
+      }, {
+        nama: "Kartu Pegawai"
+      }, {
+        nama: "Ijazah + Transkrip Nilai terakhir"
+      }],
+      iid_ke_iiia: [{
+        nama: "Surat Tanda Lulus Ujian Dinas"
+      }, {
+        nama: "SKP 2 tahun terakhir",
+        catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'"
+      }, {
+        nama: "PAK tahun 2022 hingga saat ini",
+        catatan: "Khusus untuk jabatan fungsional; Wajib 3 lembar di setiap tahun"
+      }, {
+        nama: "SK Jabatan",
+        catatan: "Khusus untuk jabatan fungsional"
+      }, {
+        nama: "Berita Acara Pengambilan Sumpah Jabatan PNS",
+        catatan: "Khusus untuk jabatan fungsional"
+      }, {
+        nama: "SK Pangkat terakhir"
+      }, {
+        nama: "Kartu Pegawai"
+      }, {
+        nama: "Ijazah + Transkrip Nilai terakhir"
+      }]
     };
-    
     return documents[kategori] || [];
   };
-
-  return (
-    <div className="min-h-screen bg-background p-6">
+  return <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -242,23 +297,18 @@ export default function KenaikanPangkat() {
                       <SelectValue placeholder="Pilih pegawai dari database" />
                     </SelectTrigger>
                     <SelectContent>
-                      {pangkatData.map((pegawai) => (
-                        <SelectItem key={pegawai.id} value={pegawai.id}>
+                      {pangkatData.map(pegawai => <SelectItem key={pegawai.id} value={pegawai.id}>
                           {pegawai.nama} - {pegawai.nip}
-                        </SelectItem>
-                      ))}
+                        </SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {selectedPegawai && (
-                  <div className="space-y-6">
+                {selectedPegawai && <div className="space-y-6">
                     {(() => {
-                      const pegawai = pangkatData.find(p => p.id === selectedPegawai);
-                      if (!pegawai) return null;
-
-                      return (
-                        <>
+                  const pegawai = pangkatData.find(p => p.id === selectedPegawai);
+                  if (!pegawai) return null;
+                  return <>
                           {/* Data Pegawai */}
                           <Card className="bg-muted/50">
                             <CardContent className="p-4">
@@ -354,54 +404,34 @@ export default function KenaikanPangkat() {
                             </CardHeader>
                             <CardContent>
                               <div className="space-y-3">
-                                {persyaratanPangkat.map((syarat, index) => (
-                                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg border">
-                                    {syarat.completed ? (
-                                      <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
-                                    ) : (
-                                      <AlertTriangle className="w-5 h-5 text-yellow-500 mt-0.5" />
-                                    )}
+                                {persyaratanPangkat.map((syarat, index) => <div key={index} className="flex items-start gap-3 p-3 rounded-lg border">
+                                    {syarat.completed ? <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" /> : <AlertTriangle className="w-5 h-5 text-yellow-500 mt-0.5" />}
                                     <div className="flex-1">
                                       <p className="font-medium text-sm">{syarat.nama}</p>
                                       <p className="text-xs text-muted-foreground">{syarat.deskripsi}</p>
                                     </div>
-                                    <Badge 
-                                      className={syarat.completed ? 
-                                        "bg-green-100 text-green-700" : 
-                                        "bg-yellow-100 text-yellow-700"
-                                      }
-                                    >
+                                    <Badge className={syarat.completed ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}>
                                       {syarat.completed ? "Terpenuhi" : "Belum"}
                                     </Badge>
-                                  </div>
-                                ))}
+                                  </div>)}
                               </div>
                               
                               <div className="mt-6 p-4 bg-muted rounded-lg">
                                 <div className="flex items-center gap-2 mb-2">
-                                  {pegawai.syaratTerpenuhi ? (
-                                    <CheckCircle className="w-5 h-5 text-green-500" />
-                                  ) : (
-                                    <AlertTriangle className="w-5 h-5 text-yellow-500" />
-                                  )}
+                                  {pegawai.syaratTerpenuhi ? <CheckCircle className="w-5 h-5 text-green-500" /> : <AlertTriangle className="w-5 h-5 text-yellow-500" />}
                                   <span className="font-semibold">
                                     {pegawai.syaratTerpenuhi ? "Memenuhi Syarat" : "Belum Memenuhi Syarat"}
                                   </span>
                                 </div>
                                 <p className="text-sm text-muted-foreground">
-                                  {pegawai.syaratTerpenuhi ? 
-                                    "Pegawai ini memenuhi semua persyaratan untuk kenaikan pangkat dan dapat mengajukan permohonan." :
-                                    "Pegawai ini belum memenuhi beberapa persyaratan. Lengkapi persyaratan yang kurang sebelum mengajukan."
-                                  }
+                                  {pegawai.syaratTerpenuhi ? "Pegawai ini memenuhi semua persyaratan untuk kenaikan pangkat dan dapat mengajukan permohonan." : "Pegawai ini belum memenuhi beberapa persyaratan. Lengkapi persyaratan yang kurang sebelum mengajukan."}
                                 </p>
                               </div>
                             </CardContent>
                           </Card>
-                        </>
-                      );
-                    })()}
-                  </div>
-                )}
+                        </>;
+                })()}
+                  </div>}
               </CardContent>
             </Card>
           </TabsContent>
@@ -424,25 +454,20 @@ export default function KenaikanPangkat() {
                       <SelectValue placeholder="Pilih pegawai yang akan diusulkan kenaikan pangkat" />
                     </SelectTrigger>
                     <SelectContent>
-                      {pangkatData.map((pegawai) => (
-                        <SelectItem key={pegawai.id} value={pegawai.id}>
+                      {pangkatData.map(pegawai => <SelectItem key={pegawai.id} value={pegawai.id}>
                           {pegawai.nama} - {pegawai.nip}
-                        </SelectItem>
-                      ))}
+                        </SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
 
                 {/* Employee Summary Card */}
-                {selectedPegawai && (
-                  <Card className="bg-muted/50">
+                {selectedPegawai && <Card className="bg-muted/50">
                     <CardContent className="p-4">
                       {(() => {
-                        const pegawai = pangkatData.find(p => p.id === selectedPegawai);
-                        if (!pegawai) return null;
-
-                        return (
-                          <div className="space-y-4">
+                    const pegawai = pangkatData.find(p => p.id === selectedPegawai);
+                    if (!pegawai) return null;
+                    return <div className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               <div>
                                 <p className="text-sm text-muted-foreground">Nama Pegawai</p>
@@ -472,22 +497,16 @@ export default function KenaikanPangkat() {
                                   <span className="text-sm text-muted-foreground">
                                     {pegawai.masaKerja.tahun} tahun {pegawai.masaKerja.bulan} bulan
                                   </span>
-                                  <span className="text-sm font-medium">
-                                    {hitungProgressMasaKerja(pegawai.masaKerja)}% dari syarat minimum
-                                  </span>
+                                  
                                 </div>
-                                <Progress value={hitungProgressMasaKerja(pegawai.masaKerja)} className="h-2" />
-                                <p className="text-xs text-muted-foreground">
-                                  Minimum 4 tahun masa kerja dalam pangkat untuk kenaikan pangkat
-                                </p>
+                                
+                                
                               </div>
                             </div>
-                          </div>
-                        );
-                      })()}
+                          </div>;
+                  })()}
                     </CardContent>
-                  </Card>
-                )}
+                  </Card>}
 
                 {/* Kategori Kenaikan Pangkat */}
                 <div className="space-y-2">
@@ -508,8 +527,7 @@ export default function KenaikanPangkat() {
                 </div>
 
                 {/* Document Requirements Section */}
-                {selectedKategori && (
-                  <Card>
+                {selectedKategori && <Card>
                     <CardHeader>
                       <CardTitle>Dokumen Persyaratan - {getKategoriName(selectedKategori)}</CardTitle>
                       <CardDescription>
@@ -517,40 +535,27 @@ export default function KenaikanPangkat() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {getDocumentRequirements(selectedKategori).map((doc, index) => (
-                        <div key={index} className="space-y-2">
+                      {getDocumentRequirements(selectedKategori).map((doc, index) => <div key={index} className="space-y-2">
                           <Label htmlFor={`doc-${index}`}>
                             {index + 1}. {doc.nama}
-                            {doc.catatan && (
-                              <span className="text-sm text-muted-foreground block mt-1">
+                            {doc.catatan && <span className="text-sm text-muted-foreground block mt-1">
                                 Catatan: {doc.catatan}
-                              </span>
-                            )}
+                              </span>}
                           </Label>
                           <div className="flex gap-2">
-                            <Input
-                              id={`doc-${index}`}
-                              placeholder="Masukkan link Google Drive dokumen..."
-                              className="flex-1"
-                            />
+                            <Input id={`doc-${index}`} placeholder="Masukkan link Google Drive dokumen..." className="flex-1" />
                             <Button variant="outline" size="sm" className="px-3">
                               <FileText className="w-4 h-4" />
                             </Button>
                           </div>
-                        </div>
-                      ))}
+                        </div>)}
                     </CardContent>
-                  </Card>
-                )}
+                  </Card>}
 
                 {/* Catatan Tambahan */}
                 <div className="space-y-2">
                   <Label htmlFor="catatan-tambahan">Catatan Tambahan (Opsional)</Label>
-                  <textarea
-                    id="catatan-tambahan"
-                    className="w-full min-h-[100px] px-3 py-2 border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none rounded-md"
-                    placeholder="Masukkan catatan atau keterangan tambahan jika diperlukan..."
-                  />
+                  <textarea id="catatan-tambahan" className="w-full min-h-[100px] px-3 py-2 border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none rounded-md" placeholder="Masukkan catatan atau keterangan tambahan jika diperlukan..." />
                 </div>
 
                 {/* Informasi Penting */}
@@ -624,6 +629,5 @@ export default function KenaikanPangkat() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
-  );
+    </div>;
 }
