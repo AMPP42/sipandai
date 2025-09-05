@@ -173,7 +173,7 @@ export default function KenaikanPangkat() {
         { nama: "Berita Acara Pengambilan Sumpah Jabatan PNS", catatan: "Khusus untuk jabatan fungsional" },
         { nama: "SK Pangkat terakhir" },
         { nama: "Kartu Pegawai" },
-        { nama: "Ijazah + Transkrip nilai terakhir" }
+        { nama: "Ijazah + Transkrip Nilai terakhir" }
       ]
     };
     
