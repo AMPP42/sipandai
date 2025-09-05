@@ -325,20 +325,78 @@ export default function KenaikanPangkat() {
           <TabsContent value="submit" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Ajukan Kenaikan Pangkat</CardTitle>
+                <CardTitle>Pengajuan Usulan Kenaikan Pangkat</CardTitle>
                 <CardDescription>
-                  Ajukan permohonan kenaikan pangkat untuk pegawai yang memenuhi syarat
+                  Form pengajuan usulan kenaikan pangkat dengan kategori dan dokumen persyaratan
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <TrendingUp className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Fitur Segera Hadir</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Form pengajuan kenaikan pangkat akan tersedia setelah implementasi validasi persyaratan selesai.
-                  </p>
-                  <Button disabled>
-                    Ajukan Kenaikan Pangkat
+              <CardContent className="space-y-6">
+                {/* Pilih Pegawai */}
+                <div className="space-y-2">
+                  <Label htmlFor="pegawai-pengajuan">Pilih Pegawai</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih pegawai yang akan diusulkan kenaikan pangkat" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pangkatData.map((pegawai) => (
+                        <SelectItem key={pegawai.id} value={pegawai.id}>
+                          {pegawai.nama} - {pegawai.nip}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Kategori Kenaikan Pangkat */}
+                <div className="space-y-2">
+                  <Label htmlFor="kategori-pangkat">Jenis/Kategori Kenaikan Pangkat</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih kategori kenaikan pangkat" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="reguler">Kenaikan Pangkat Reguler</SelectItem>
+                      <SelectItem value="pilihan">Kenaikan Pangkat Pilihan</SelectItem>
+                      <SelectItem value="istimewa">Kenaikan Pangkat Istimewa</SelectItem>
+                      <SelectItem value="anumerta">Kenaikan Pangkat Anumerta</SelectItem>
+                      <SelectItem value="pengabdian">Kenaikan Pangkat Pengabdian</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Catatan Tambahan */}
+                <div className="space-y-2">
+                  <Label htmlFor="catatan-tambahan">Catatan Tambahan (Opsional)</Label>
+                  <textarea
+                    id="catatan-tambahan"
+                    className="w-full min-h-[100px] px-3 py-2 border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none rounded-md"
+                    placeholder="Masukkan catatan atau keterangan tambahan jika diperlukan..."
+                  />
+                </div>
+
+                {/* Informasi Penting */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="text-sm font-medium text-yellow-800 mb-1">Informasi Penting</h4>
+                      <p className="text-sm text-yellow-700">
+                        Pastikan semua dokumen yang diunggah sesuai dengan persyaratan dan dapat diakses melalui link Google Drive yang diberikan. Dokumen yang tidak lengkap atau tidak dapat diakses akan menyebabkan pengajuan dikembalikan untuk perbaikan.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-3 pt-4">
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Lihat Status Pengajuan
+                  </Button>
+                  <Button className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" />
+                    Submit Pengajuan
                   </Button>
                 </div>
               </CardContent>
