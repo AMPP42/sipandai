@@ -544,9 +544,7 @@ export default function KenaikanPangkat() {
                           </Label>
                           <div className="flex gap-2">
                             <Input id={`doc-${index}`} placeholder="Masukkan link Google Drive dokumen..." className="flex-1" />
-                            <Button variant="outline" size="sm" className="px-3">
-                              <FileText className="w-4 h-4" />
-                            </Button>
+                            
                           </div>
                         </div>)}
                     </CardContent>
