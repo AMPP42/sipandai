@@ -35,6 +35,7 @@ interface PangkatData {
 export default function KenaikanPangkat() {
   const [activeTab, setActiveTab] = useState("check");
   const [selectedPegawai, setSelectedPegawai] = useState("");
+  const [selectedKategori, setSelectedKategori] = useState("");
 
   // Mock data for demonstration
   const pangkatData: PangkatData[] = [
@@ -93,6 +94,90 @@ export default function KenaikanPangkat() {
     const minimalBulan = 4 * 12; // 4 tahun = 48 bulan
     const progress = Math.min((totalBulan / minimalBulan) * 100, 100);
     return Math.round(progress);
+  };
+
+  const getKategoriName = (kategori: string) => {
+    const kategoriMap: { [key: string]: string } = {
+      reguler: "Kenaikan Pangkat Reguler (Jabatan Pelaksana)",
+      fungsional: "Kenaikan Pangkat Jabatan Fungsional",
+      struktural: "Kenaikan Pangkat Jabatan Struktural",
+      pertama_kali: "Kenaikan Pangkat Pertama Kali",
+      penyesuaian_ijazah: "Kenaikan Pangkat Penyesuaian Ijazah",
+      iid_ke_iiia: "Kenaikan Pangkat Golongan II/d ke III/a"
+    };
+    return kategoriMap[kategori] || kategori;
+  };
+
+  const getDocumentRequirements = (kategori: string) => {
+    const documents: { [key: string]: Array<{ nama: string; catatan?: string }> } = {
+      reguler: [
+        { 
+          nama: "SKP 2 tahun terakhir", 
+          catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'" 
+        },
+        { nama: "SK Jabatan terakhir" },
+        { nama: "SK Pangkat terakhir" },
+        { nama: "Kartu Pegawai" },
+        { nama: "Ijazah + Transkrip nilai terakhir" }
+      ],
+      fungsional: [
+        { nama: "PAK tahun 2022 hingga saat ini", catatan: "Wajib 3 lembar di setiap tahun" },
+        { 
+          nama: "SKP 2 tahun terakhir", 
+          catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'" 
+        },
+        { nama: "SK Jabatan terakhir", catatan: "Wajib disertai sertifikat uji kompetensi bagi pegawai yang naik jabatan" },
+        { nama: "SK Pangkat terakhir" },
+        { nama: "Kartu Pegawai" },
+        { nama: "Ijazah + transkrip nilai terakhir" }
+      ],
+      struktural: [
+        { 
+          nama: "SKP 2 tahun terakhir", 
+          catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'" 
+        },
+        { nama: "SK Jabatan terakhir" },
+        { nama: "SK Pangkat terakhir" },
+        { nama: "Kartu Pegawai" },
+        { nama: "Ijazah + Transkrip Nilai terakhir" },
+        { nama: "Surat Pernyataan Pelantikan" },
+        { nama: "Surat Pernyataan Melaksanakan Tugas" },
+        { nama: "Surat Pernyataan Pelantikan" },
+        { nama: "Khusus untuk Pejabat Struktural Eselon III yang pendidikan terakhirnya S1 dan pangkat terakhirnya dilakulukan, wajib lulus diklat PIM III" }
+      ],
+      pertama_kali: [
+        { nama: "SK CPNS" },
+        { nama: "SK PNS" }
+      ],
+      penyesuaian_ijazah: [
+        { nama: "Surat Tanda Lulus Ujian Penyesuaian Kenaikan Pangkat" },
+        { nama: "Ijazah + Transkrip Nilai terakhir yang telah dilegalisir" },
+        { nama: "Uraian Tugas" },
+        { 
+          nama: "SKP 2 tahun terakhir", 
+          catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'" 
+        },
+        { nama: "SK Jabatan terakhir" },
+        { nama: "SK Pangkat terakhir" },
+        { nama: "Kartu Pegawai" },
+        { nama: "Ijazah + Transkrip Nilai terakhir" }
+      ],
+      iid_ke_iiia: [
+        { nama: "Surat Tanda Lulus Ujian Dinas" },
+        { 
+          nama: "SKP 2 tahun terakhir", 
+          catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'" 
+        },
+        { nama: "PAK tahun 2022 hingga saat ini", catatan: "Khusus untuk jabatan fungsional; Wajib 3 lembar di setiap tahun" },
+        { nama: "SK Jabatan", catatan: "Khusus untuk jabatan fungsional" },
+        { nama: "Berita Acara Pengambilan Sumpah Jabatan PNS", catatan: "Khusus untuk jabatan fungsional" },
+        { nama: "SK Pangkat terakhir" },
+        { nama: "Kartu Pegawai" },
+        { nama: "Ijazah + Transkrip Nilai terakhir" }
+      ]
+    };
+    
+    return documents[kategori] || [];
   };
 
   return (
@@ -383,19 +468,56 @@ export default function KenaikanPangkat() {
                 {/* Kategori Kenaikan Pangkat */}
                 <div className="space-y-2">
                   <Label htmlFor="kategori-pangkat">Jenis/Kategori Kenaikan Pangkat</Label>
-                  <Select>
+                  <Select value={selectedKategori} onValueChange={setSelectedKategori}>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih kategori kenaikan pangkat" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="reguler">Kenaikan Pangkat Reguler</SelectItem>
-                      <SelectItem value="pilihan">Kenaikan Pangkat Pilihan</SelectItem>
-                      <SelectItem value="istimewa">Kenaikan Pangkat Istimewa</SelectItem>
-                      <SelectItem value="anumerta">Kenaikan Pangkat Anumerta</SelectItem>
-                      <SelectItem value="pengabdian">Kenaikan Pangkat Pengabdian</SelectItem>
+                      <SelectItem value="reguler">Kenaikan Pangkat Reguler (Jabatan Pelaksana)</SelectItem>
+                      <SelectItem value="fungsional">Kenaikan Pangkat Jabatan Fungsional</SelectItem>
+                      <SelectItem value="struktural">Kenaikan Pangkat Jabatan Struktural</SelectItem>
+                      <SelectItem value="pertama_kali">Kenaikan Pangkat Pertama Kali</SelectItem>
+                      <SelectItem value="penyesuaian_ijazah">Kenaikan Pangkat Penyesuaian Ijazah</SelectItem>
+                      <SelectItem value="iid_ke_iiia">Kenaikan Pangkat Golongan II/d ke III/a</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Document Requirements Section */}
+                {selectedKategori && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Dokumen Persyaratan - {getKategoriName(selectedKategori)}</CardTitle>
+                      <CardDescription>
+                        Silakan upload link Google Drive untuk setiap dokumen yang diperlukan
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {getDocumentRequirements(selectedKategori).map((doc, index) => (
+                        <div key={index} className="space-y-2">
+                          <Label htmlFor={`doc-${index}`}>
+                            {index + 1}. {doc.nama}
+                            {doc.catatan && (
+                              <span className="text-sm text-muted-foreground block mt-1">
+                                Catatan: {doc.catatan}
+                              </span>
+                            )}
+                          </Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id={`doc-${index}`}
+                              placeholder="Masukkan link Google Drive dokumen..."
+                              className="flex-1"
+                            />
+                            <Button variant="outline" size="sm" className="px-3">
+                              <FileText className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Catatan Tambahan */}
                 <div className="space-y-2">
