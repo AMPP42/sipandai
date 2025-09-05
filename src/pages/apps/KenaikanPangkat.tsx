@@ -442,21 +442,45 @@ export default function KenaikanPangkat() {
                         if (!pegawai) return null;
 
                         return (
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                              <p className="text-sm text-muted-foreground">Nama Pegawai</p>
-                              <p className="font-semibold">{pegawai.nama}</p>
-                              <p className="text-sm text-muted-foreground">NIP: {pegawai.nip}</p>
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Nama Pegawai</p>
+                                <p className="font-semibold">{pegawai.nama}</p>
+                                <p className="text-sm text-muted-foreground">NIP: {pegawai.nip}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">Pangkat Saat Ini</p>
+                                <p className="font-semibold">{pegawai.pangkatSekarang}</p>
+                                <p className="text-sm text-muted-foreground">Golongan {pegawai.golonganSekarang}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">Pangkat Tujuan</p>
+                                <p className="font-semibold text-primary">{pegawai.pangkatTujuan}</p>
+                                <p className="text-sm text-muted-foreground">Golongan {pegawai.golonganTujuan}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Pangkat Saat Ini</p>
-                              <p className="font-semibold">{pegawai.pangkatSekarang}</p>
-                              <p className="text-sm text-muted-foreground">Golongan {pegawai.golonganSekarang}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Pangkat Tujuan</p>
-                              <p className="font-semibold text-primary">{pegawai.pangkatTujuan}</p>
-                              <p className="text-sm text-muted-foreground">Golongan {pegawai.golonganTujuan}</p>
+                            
+                            {/* Masa Kerja dalam Pangkat */}
+                            <div className="border-t pt-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Calendar className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-sm font-medium">Masa Kerja dalam Pangkat</span>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm text-muted-foreground">
+                                    {pegawai.masaKerja.tahun} tahun {pegawai.masaKerja.bulan} bulan
+                                  </span>
+                                  <span className="text-sm font-medium">
+                                    {hitungProgressMasaKerja(pegawai.masaKerja)}% dari syarat minimum
+                                  </span>
+                                </div>
+                                <Progress value={hitungProgressMasaKerja(pegawai.masaKerja)} className="h-2" />
+                                <p className="text-xs text-muted-foreground">
+                                  Minimum 4 tahun masa kerja dalam pangkat untuk kenaikan pangkat
+                                </p>
+                              </div>
                             </div>
                           </div>
                         );
