@@ -287,10 +287,7 @@ export default function KenaikanPangkat() {
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="check" className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
-              Cek Kelayakan
-            </TabsTrigger>
+            
             <TabsTrigger value="submit" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Ajukan Kenaikan
@@ -299,10 +296,7 @@ export default function KenaikanPangkat() {
               <Clock className="w-4 h-4" />
               Riwayat Pangkat
             </TabsTrigger>
-            <TabsTrigger value="calculator" className="flex items-center gap-2">
-              <Calculator className="w-4 h-4" />
-              Kalkulator Masa Kerja
-            </TabsTrigger>
+            
           </TabsList>
 
           {/* Tab: Check Eligibility */}
