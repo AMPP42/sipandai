@@ -193,6 +193,24 @@ export default function KenaikanPangkat() {
         nama: "SK CPNS"
       }, {
         nama: "SK PNS"
+      }, {
+        nama: "SKP 2 tahun terakhir",
+        catatan: "Nilai minimal 'Baik'; Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'"
+      }, {
+        nama: "PAK tahun 2022 hingga saat ini",
+        catatan: "Khusus untuk jabatan fungsional; Wajib 3 lembar di setiap tahun"
+      }, {
+        nama: "SK Jabatan",
+        catatan: "Khusus untuk jabatan fungsional"
+      }, {
+        nama: "Berita Acara Pengambilan Sumpah Jabatan PNS",
+        catatan: "Khusus untuk jabatan fungsional"
+      }, {
+        nama: "SK Pangkat terakhir"
+      }, {
+        nama: "Kartu Pegawai"
+      }, {
+        nama: "Ijazah + Transkrip Nilai terakhir"
       }],
       penyesuaian_ijazah: [{
         nama: "Surat Tanda Lulus Ujian Penyesuaian Kenaikan Pangkat"
