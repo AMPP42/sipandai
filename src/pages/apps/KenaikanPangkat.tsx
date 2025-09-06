@@ -197,13 +197,7 @@ export default function KenaikanPangkat() {
         nama: "SKP 2 tahun terakhir",
         catatan: "Nilai minimal 'Baik'; Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'"
       }, {
-        nama: "PAK tahun 2022 hingga saat ini",
-        catatan: "Khusus untuk jabatan fungsional; Wajib 3 lembar di setiap tahun"
-      }, {
         nama: "SK Jabatan",
-        catatan: "Khusus untuk jabatan fungsional"
-      }, {
-        nama: "Berita Acara Pengambilan Sumpah Jabatan PNS",
         catatan: "Khusus untuk jabatan fungsional"
       }, {
         nama: "SK Pangkat terakhir"
