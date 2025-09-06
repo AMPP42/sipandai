@@ -153,6 +153,8 @@ export default function KenaikanPangkat() {
         nama: "Kartu Pegawai"
       }, {
         nama: "Ijazah + Transkrip nilai terakhir"
+      }, {
+        nama: "Nota Dinas"
       }],
       fungsional: [{
         nama: "PAK tahun 2022 hingga saat ini",
@@ -169,6 +171,8 @@ export default function KenaikanPangkat() {
         nama: "Kartu Pegawai"
       }, {
         nama: "Ijazah + transkrip nilai terakhir"
+      }, {
+        nama: "Nota Dinas"
       }],
       struktural: [{
         nama: "SKP 2 tahun terakhir",
@@ -189,6 +193,8 @@ export default function KenaikanPangkat() {
         nama: "Surat Pernyataan Pelantikan"
       }, {
         nama: "Khusus untuk Pejabat Struktural Eselon III yang pendidikan terakhirnya S1 dan pangkat terakhirnya dilakulukan, wajib lulus diklat PIM III"
+      }, {
+        nama: "Nota Dinas"
       }],
       pertama_kali: [{
         nama: "SK CPNS"
@@ -212,6 +218,8 @@ export default function KenaikanPangkat() {
         nama: "Kartu Pegawai"
       }, {
         nama: "Ijazah + Transkrip Nilai terakhir"
+      }, {
+        nama: "Nota Dinas"
       }],
       penyesuaian_ijazah: [{
         nama: "Surat Tanda Lulus Ujian Penyesuaian Kenaikan Pangkat"
@@ -230,6 +238,8 @@ export default function KenaikanPangkat() {
         nama: "Kartu Pegawai"
       }, {
         nama: "Ijazah + Transkrip Nilai terakhir"
+      }, {
+        nama: "Nota Dinas"
       }],
       iid_ke_iiia: [{
         nama: "Surat Tanda Lulus Ujian Dinas"
@@ -245,6 +255,8 @@ export default function KenaikanPangkat() {
         nama: "Kartu Pegawai"
       }, {
         nama: "Ijazah + Transkrip Nilai terakhir"
+      }, {
+        nama: "Nota Dinas"
       }]
     };
     return documents[kategori] || [];
