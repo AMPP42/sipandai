@@ -28,6 +28,7 @@ export default function KenaikanPangkat() {
   const [activeTab, setActiveTab] = useState("check");
   const [selectedPegawai, setSelectedPegawai] = useState("");
   const [selectedKategori, setSelectedKategori] = useState("");
+  const [selectedPeriode, setSelectedPeriode] = useState("");
 
   // Mock data for demonstration
   const pangkatData: PangkatData[] = [{
@@ -458,6 +459,30 @@ export default function KenaikanPangkat() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Pilih Periode */}
+                <div className="space-y-2">
+                  <Label htmlFor="periode-kenaikan">Periode Kenaikan Pangkat</Label>
+                  <Select value={selectedPeriode} onValueChange={setSelectedPeriode}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih periode kenaikan pangkat" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="januari">Januari</SelectItem>
+                      <SelectItem value="februari">Februari</SelectItem>
+                      <SelectItem value="maret">Maret</SelectItem>
+                      <SelectItem value="april">April</SelectItem>
+                      <SelectItem value="mei">Mei</SelectItem>
+                      <SelectItem value="juni">Juni</SelectItem>
+                      <SelectItem value="juli">Juli</SelectItem>
+                      <SelectItem value="agustus">Agustus</SelectItem>
+                      <SelectItem value="september">September</SelectItem>
+                      <SelectItem value="oktober">Oktober</SelectItem>
+                      <SelectItem value="november">November</SelectItem>
+                      <SelectItem value="desember">Desember</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Pilih Pegawai */}
                 <div className="space-y-2">
                   <Label htmlFor="pegawai-pengajuan">Pilih Pegawai</Label>
