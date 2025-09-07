@@ -299,9 +299,9 @@ export default function KenaikanPangkat() {
               <FileText className="w-4 h-4" />
               Ajukan Kenaikan
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Riwayat Pangkat
+            <TabsTrigger value="status" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Status Usulan
             </TabsTrigger>
             <TabsTrigger value="calculator" className="flex items-center gap-2">
               <Calculator className="w-4 h-4" />
@@ -716,21 +716,43 @@ export default function KenaikanPangkat() {
             </Card>
           </TabsContent>
 
-          {/* Tab: History */}
-          <TabsContent value="history" className="space-y-6">
+          {/* Tab: Status Usulan */}
+          <TabsContent value="status" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Riwayat Kenaikan Pangkat</CardTitle>
+                <CardTitle>Status Usulan Kenaikan Pangkat</CardTitle>
                 <CardDescription>
-                  Lihat riwayat kenaikan pangkat semua pegawai
+                  Pantau status pengajuan usulan kenaikan pangkat yang telah disubmit
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12">
-                  <Clock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Riwayat Akan Ditampilkan</h3>
+                  <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Belum Ada Pengajuan</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Anda belum memiliki pengajuan kenaikan pangkat yang disubmit.
+                  </p>
+                  <Button onClick={() => setActiveTab("submit")}>
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    Buat Pengajuan Baru
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Timeline */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Timeline Terbaru</CardTitle>
+                <CardDescription>
+                  Aktivitas terbaru terkait pengajuan kenaikan pangkat
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                   <p className="text-muted-foreground">
-                    Data riwayat kenaikan pangkat akan terintegrasi dengan database kepegawaian.
+                    Timeline akan ditampilkan setelah pengajuan dibuat
                   </p>
                 </div>
               </CardContent>
