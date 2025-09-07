@@ -7,7 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, CheckCircle, AlertTriangle, Calendar, User, FileText, Calculator, Clock } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TrendingUp, CheckCircle, AlertTriangle, Calendar, User, FileText, Calculator, Clock, Search, Plus } from "lucide-react";
 interface PangkatData {
   id: string;
   nama: string;
@@ -29,6 +31,8 @@ export default function KenaikanPangkat() {
   const [selectedPegawai, setSelectedPegawai] = useState("");
   const [selectedKategori, setSelectedKategori] = useState("");
   const [selectedPeriode, setSelectedPeriode] = useState("");
+  const [isEmployeeDialogOpen, setIsEmployeeDialogOpen] = useState(false);
+  const [searchEmployee, setSearchEmployee] = useState("");
 
   // Mock data for demonstration
   const pangkatData: PangkatData[] = [{
@@ -496,18 +500,97 @@ export default function KenaikanPangkat() {
                 </div>
 
                 {/* Pilih Pegawai */}
-                <div className="space-y-2">
-                  <Label htmlFor="pegawai-pengajuan">Pilih Pegawai</Label>
-                  <Select value={selectedPegawai} onValueChange={setSelectedPegawai}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih pegawai yang akan diusulkan kenaikan pangkat" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {pangkatData.map(pegawai => <SelectItem key={pegawai.id} value={pegawai.id}>
-                          {pegawai.nama} - {pegawai.nip}
-                        </SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-4">
+                  <Label className="text-base font-semibold">Pilih Pegawai</Label>
+                  {selectedPegawai ? (
+                    <Card className="bg-muted/50">
+                      <CardContent className="p-4">
+                        {(() => {
+                          const pegawai = pangkatData.find(p => p.id === selectedPegawai);
+                          if (!pegawai) return null;
+                          return (
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <User className="w-5 h-5 text-primary" />
+                                <div>
+                                  <p className="font-medium">{pegawai.nama}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    NIP: {pegawai.nip} | {pegawai.pangkatSekarang} ({pegawai.golonganSekarang})
+                                  </p>
+                                </div>
+                              </div>
+                              <Button variant="outline" size="sm" onClick={() => setSelectedPegawai("")}>
+                                Ubah
+                              </Button>
+                            </div>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Dialog open={isEmployeeDialogOpen} onOpenChange={setIsEmployeeDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" className="w-full">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Pilih Pegawai
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl">
+                        <DialogHeader>
+                          <DialogTitle>Pilih Pegawai</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2">
+                            <Search className="w-4 h-4" />
+                            <Input
+                              placeholder="Cari nama atau NIP..."
+                              value={searchEmployee}
+                              onChange={(e) => setSearchEmployee(e.target.value)}
+                            />
+                          </div>
+                          <div className="max-h-96 overflow-y-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Nama</TableHead>
+                                  <TableHead>NIP</TableHead>
+                                  <TableHead>Unit</TableHead>
+                                  <TableHead>Jabatan</TableHead>
+                                  <TableHead>Aksi</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {pangkatData
+                                  .filter(pegawai => 
+                                    pegawai.nama.toLowerCase().includes(searchEmployee.toLowerCase()) ||
+                                    pegawai.nip.includes(searchEmployee)
+                                  )
+                                  .map((pegawai) => (
+                                  <TableRow key={pegawai.id}>
+                                    <TableCell className="font-medium">{pegawai.nama}</TableCell>
+                                    <TableCell>{pegawai.nip}</TableCell>
+                                    <TableCell>Balai Besar Pelatihan Vokasi dan Produktivitas Bandung</TableCell>
+                                    <TableCell>Pengadministrasi Perkantoran</TableCell>
+                                    <TableCell>
+                                      <Button
+                                        size="sm"
+                                        onClick={() => {
+                                          setSelectedPegawai(pegawai.id);
+                                          setIsEmployeeDialogOpen(false);
+                                        }}
+                                      >
+                                        Pilih
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
                 </div>
 
                 {/* Employee Summary Card */}
