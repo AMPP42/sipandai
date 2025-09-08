@@ -25,6 +25,7 @@ interface ApplicationItem {
   jenis?: string;
   alasan_mutasi?: string;
   keterangan?: string;
+  estimasi?: string;
   tanggal_usulan?: string;
   tanggal_pengajuan?: string;
   status: string;
@@ -84,15 +85,39 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
 
     setLoading(true);
     try {
-      // Load actual documents first
-      const { data: documents, error: documentsError } = await supabase
-        .from('documents')
-        .select('*')
-        .eq('application_id', application.id)
-        .order('document_index');
+      let documents: ActualDocument[] = [];
+      
+      // For Kenaikan Pangkat applications, extract documents from estimasi JSON
+      if (application.jenis === 'kenaikan_pangkat' && application.estimasi) {
+        try {
+          const estimasiData = JSON.parse(application.estimasi);
+          if (estimasiData.document_links) {
+            // Create document objects from the links in estimasi
+            documents = Object.entries(estimasiData.document_links).map(([key, link], index) => ({
+              id: `${application.id}-${key}`,
+              title: getKenaikanPangkatDocumentName(key),
+              drive_link: link as string,
+              document_category: 'kenaikan_pangkat',
+              document_index: index,
+              created_at: application.created_at
+            }));
+          }
+        } catch (parseError) {
+          console.error('Error parsing estimasi JSON:', parseError);
+        }
+      } else {
+        // For other applications, load from documents table
+        const { data: documentsData, error: documentsError } = await supabase
+          .from('documents')
+          .select('*')
+          .eq('application_id', application.id)
+          .order('document_index');
 
-      if (documentsError) throw documentsError;
-      setActualDocuments((documents || []) as ActualDocument[]);
+        if (documentsError) throw documentsError;
+        documents = (documentsData || []) as ActualDocument[];
+      }
+
+      setActualDocuments(documents);
 
       // Load existing verifications
       const { data: verifications, error: verificationsError } = await supabase
@@ -115,6 +140,18 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
     } finally {
       setLoading(false);
     }
+  };
+
+  const getKenaikanPangkatDocumentName = (key: string) => {
+    const documentNames: Record<string, string> = {
+      'doc-0': 'FC. SK CPNS yang dilegalisir',
+      'doc-1': 'FC. SK PNS yang dilegalisir',
+      'doc-2': 'FC. SK Pangkat terakhir yang dilegalisir',
+      'doc-3': 'FC. SK Jabatan terakhir yang dilegalisir',
+      'doc-4': 'Surat Pernyataan Pelantikan',
+      'doc-5': 'Surat Tanda Lulus Ujian Penyesuaian Kenaikan Pangkat'
+    };
+    return documentNames[key] || `Dokumen ${key}`;
   };
 
   const initializeDocumentVerifications = async (documents: ActualDocument[]) => {
@@ -280,6 +317,21 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
       : application.submitter_name || '';
   };
 
+  const getApplicationCategory = () => {
+    if (!application) return 'Tidak ada keterangan';
+    
+    if (application.jenis === 'kenaikan_pangkat' && application.estimasi) {
+      try {
+        const estimasiData = JSON.parse(application.estimasi);
+        return estimasiData.kategori_name || estimasiData.kategori || 'Tidak ada kategori';
+      } catch {
+        return 'Tidak dapat memuat kategori';
+      }
+    }
+    
+    return application.keterangan || 'Tidak ada keterangan';
+  };
+
   if (!application) return null;
 
   return (
@@ -328,7 +380,7 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Kategori</label>
-                  <p className="text-sm">{application.keterangan || 'Tidak ada keterangan'}</p>
+                  <p className="text-sm">{getApplicationCategory()}</p>
                 </div>
                 <div className="col-span-2">
                   <label className="text-sm font-medium text-muted-foreground">Total Dokumen Diupload</label>
