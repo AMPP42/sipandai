@@ -10,6 +10,10 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TrendingUp, CheckCircle, AlertTriangle, Calendar, User, FileText, Calculator, Clock, Search, Plus } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import type { Database } from '@/integrations/supabase/types';
 interface PangkatData {
   id: string;
   nama: string;
@@ -26,13 +30,19 @@ interface PangkatData {
   statusPengajuan: 'eligible' | 'not_eligible' | 'submitted' | 'approved' | 'rejected';
   tanggalTerakhirNaik: string;
 }
+type ApplicationInsert = Database['public']['Tables']['applications']['Insert'];
+
 export default function KenaikanPangkat() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("check");
   const [selectedPegawai, setSelectedPegawai] = useState("");
   const [selectedKategori, setSelectedKategori] = useState("");
   const [selectedPeriode, setSelectedPeriode] = useState("");
   const [isEmployeeDialogOpen, setIsEmployeeDialogOpen] = useState(false);
   const [searchEmployee, setSearchEmployee] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [documentLinks, setDocumentLinks] = useState<{[key: string]: string}>({});
+  const [catatanTambahan, setCatatanTambahan] = useState("");
 
   // Mock data for demonstration
   const pangkatData: PangkatData[] = [{
@@ -265,6 +275,100 @@ export default function KenaikanPangkat() {
     };
     return documents[kategori] || [];
   };
+
+  const handleSubmitPengajuan = async () => {
+    if (!selectedPegawai || !selectedKategori || !selectedPeriode) {
+      toast({
+        title: "Error",
+        description: "Mohon lengkapi semua data yang diperlukan",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const selectedEmployee = pangkatData.find(p => p.id === selectedPegawai);
+    if (!selectedEmployee) {
+      toast({
+        title: "Error", 
+        description: "Data pegawai tidak ditemukan",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Generate application number
+      const currentYear = new Date().getFullYear();
+      const { data: existingApps } = await supabase
+        .from('applications')
+        .select('id')
+        .eq('jenis', 'kenaikan_pangkat')
+        .gte('created_at', `${currentYear}-01-01`);
+      
+      const sequence = String(existingApps?.length + 1 || 1).padStart(4, '0');
+      const nomorUsulan = `KP/${currentYear}/${sequence}`;
+
+      const applicationData: ApplicationInsert = {
+        jenis: 'kenaikan_pangkat' as const,
+        judul: `Pengajuan Kenaikan Pangkat - ${selectedEmployee.nama}`,
+        submitter_id: user?.id || '',
+        submitter_name: user?.name || '',
+        submitter_unit: user?.unit || '',
+        status: 'submitted' as const,
+        estimasi: JSON.stringify({
+          employee_id: selectedEmployee.id,
+          employee_name: selectedEmployee.nama,
+          employee_nip: selectedEmployee.nip,
+          pangkat_sekarang: selectedEmployee.pangkatSekarang,
+          golongan_sekarang: selectedEmployee.golonganSekarang,
+          pangkat_tujuan: selectedEmployee.pangkatTujuan,
+          golongan_tujuan: selectedEmployee.golonganTujuan,
+          kategori: selectedKategori,
+          kategori_name: getKategoriName(selectedKategori),
+          periode: selectedPeriode,
+          masa_kerja: selectedEmployee.masaKerja,
+          syarat_terpenuhi: selectedEmployee.syaratTerpenuhi,
+          nomor_usulan: nomorUsulan,
+          document_links: documentLinks,
+          catatan_tambahan: catatanTambahan
+        })
+      };
+
+      const { error } = await supabase
+        .from('applications')
+        .insert(applicationData);
+
+      if (error) throw error;
+
+      toast({
+        title: "Berhasil",
+        description: `Pengajuan kenaikan pangkat untuk ${selectedEmployee.nama} berhasil disubmit dan dapat dilihat di tab Status Usulan!`,
+      });
+
+      // Reset form
+      setSelectedPegawai("");
+      setSelectedKategori("");
+      setSelectedPeriode("");
+      setDocumentLinks({});
+      setCatatanTambahan("");
+      
+      // Redirect to status tab
+      setActiveTab("status");
+
+    } catch (error: any) {
+      console.error('Error submitting application:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Gagal mengajukan kenaikan pangkat",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
@@ -675,8 +779,16 @@ export default function KenaikanPangkat() {
                               </span>}
                           </Label>
                           <div className="flex gap-2">
-                            <Input id={`doc-${index}`} placeholder="Masukkan link Google Drive dokumen..." className="flex-1" />
-                            
+                            <Input 
+                              id={`doc-${index}`} 
+                              placeholder="Masukkan link Google Drive dokumen..." 
+                              className="flex-1"
+                              value={documentLinks[`doc-${index}`] || ''}
+                              onChange={(e) => setDocumentLinks(prev => ({
+                                ...prev,
+                                [`doc-${index}`]: e.target.value
+                              }))}
+                            />
                           </div>
                         </div>)}
                     </CardContent>
@@ -685,7 +797,13 @@ export default function KenaikanPangkat() {
                 {/* Catatan Tambahan */}
                 <div className="space-y-2">
                   <Label htmlFor="catatan-tambahan">Catatan Tambahan (Opsional)</Label>
-                  <textarea id="catatan-tambahan" className="w-full min-h-[100px] px-3 py-2 border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none rounded-md" placeholder="Masukkan catatan atau keterangan tambahan jika diperlukan..." />
+                  <textarea 
+                    id="catatan-tambahan" 
+                    className="w-full min-h-[100px] px-3 py-2 border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none rounded-md" 
+                    placeholder="Masukkan catatan atau keterangan tambahan jika diperlukan..."
+                    value={catatanTambahan}
+                    onChange={(e) => setCatatanTambahan(e.target.value)}
+                  />
                 </div>
 
                 {/* Informasi Penting */}
@@ -703,13 +821,21 @@ export default function KenaikanPangkat() {
 
                 {/* Action Buttons */}
                 <div className="flex justify-end space-x-3 pt-4">
-                  <Button variant="outline" className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center gap-2"
+                    onClick={() => setActiveTab("status")}
+                  >
                     <FileText className="w-4 h-4" />
                     Lihat Status Pengajuan
                   </Button>
-                  <Button className="flex items-center gap-2">
+                  <Button 
+                    className="flex items-center gap-2"
+                    onClick={handleSubmitPengajuan}
+                    disabled={loading}
+                  >
                     <TrendingUp className="w-4 h-4" />
-                    Submit Pengajuan
+                    {loading ? "Mengirim..." : "Submit Pengajuan"}
                   </Button>
                 </div>
               </CardContent>
