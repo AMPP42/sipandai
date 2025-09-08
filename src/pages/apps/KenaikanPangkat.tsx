@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,8 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Database } from '@/integrations/supabase/types';
+
+type Application = Database['public']['Tables']['applications']['Row'];
 interface PangkatData {
   id: string;
   nama: string;
@@ -43,6 +45,37 @@ export default function KenaikanPangkat() {
   const [loading, setLoading] = useState(false);
   const [documentLinks, setDocumentLinks] = useState<{[key: string]: string}>({});
   const [catatanTambahan, setCatatanTambahan] = useState("");
+  const [applications, setApplications] = useState<Application[]>([]);
+
+  useEffect(() => {
+    loadApplications();
+  }, [user?.id]);
+
+  const loadApplications = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('jenis', 'kenaikan_pangkat')
+        .eq('submitter_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setApplications(data || []);
+    } catch (error) {
+      console.error('Error loading applications:', error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat data pengajuan",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Mock data for demonstration
   const pangkatData: PangkatData[] = [{
@@ -103,24 +136,40 @@ export default function KenaikanPangkat() {
   }];
   const getStatusBadge = (status: string) => {
     const statusMap = {
+      draft: {
+        label: "Draft",
+        className: "bg-gray-100 text-gray-700"
+      },
+      submitted: {
+        label: "Menunggu Verifikasi",
+        className: "bg-yellow-100 text-yellow-700"
+      },
+      revision_needed: {
+        label: "Perbaikan",
+        className: "bg-red-100 text-red-700"
+      },
+      approved: {
+        label: "Disetujui", 
+        className: "bg-blue-100 text-blue-700"
+      },
+      completed: {
+        label: "Terbit",
+        className: "bg-green-100 text-green-700"
+      },
+      in_review: {
+        label: "Sedang Direview",
+        className: "bg-orange-100 text-orange-700"
+      },
+      rejected: {
+        label: "Ditolak",
+        className: "bg-red-100 text-red-700"
+      },
       eligible: {
         label: "Memenuhi Syarat",
         className: "bg-green-100 text-green-700"
       },
       not_eligible: {
         label: "Belum Memenuhi Syarat",
-        className: "bg-red-100 text-red-700"
-      },
-      submitted: {
-        label: "Sedang Diproses",
-        className: "bg-blue-100 text-blue-700"
-      },
-      approved: {
-        label: "Disetujui",
-        className: "bg-green-100 text-green-700"
-      },
-      rejected: {
-        label: "Ditolak",
         className: "bg-red-100 text-red-700"
       }
     };
@@ -353,6 +402,9 @@ export default function KenaikanPangkat() {
       setSelectedPeriode("");
       setDocumentLinks({});
       setCatatanTambahan("");
+      
+      // Refresh applications after successful submission
+      await loadApplications();
       
       // Redirect to status tab
       setActiveTab("status");
@@ -852,17 +904,76 @@ export default function KenaikanPangkat() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Belum Ada Pengajuan</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Anda belum memiliki pengajuan kenaikan pangkat yang disubmit.
-                  </p>
-                  <Button onClick={() => setActiveTab("submit")}>
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    Buat Pengajuan Baru
-                  </Button>
-                </div>
+                {loading ? (
+                  <div className="text-center py-12">
+                    <Clock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Memuat Data...</h3>
+                    <p className="text-muted-foreground">
+                      Sedang memuat data pengajuan kenaikan pangkat
+                    </p>
+                  </div>
+                ) : applications.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Belum Ada Pengajuan</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Anda belum memiliki pengajuan kenaikan pangkat yang disubmit.
+                    </p>
+                    <Button onClick={() => setActiveTab("submit")}>
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Buat Pengajuan Baru
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>No. Usulan</TableHead>
+                          <TableHead>Nama Pegawai</TableHead>
+                          <TableHead>Kategori</TableHead>
+                          <TableHead>Periode</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Tanggal Pengajuan</TableHead>
+                          <TableHead>Aksi</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {applications.map((app) => {
+                          const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
+                          return (
+                            <TableRow key={app.id}>
+                              <TableCell className="font-mono">
+                                {estimasiData.nomor_usulan || 'N/A'}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {estimasiData.employee_name || 'N/A'}
+                              </TableCell>
+                              <TableCell>
+                                {estimasiData.kategori_name || 'N/A'}
+                              </TableCell>
+                              <TableCell className="capitalize">
+                                {estimasiData.periode || 'N/A'}
+                              </TableCell>
+                              <TableCell>
+                                {getStatusBadge(app.status)}
+                              </TableCell>
+                              <TableCell>
+                                {new Date(app.created_at).toLocaleDateString('id-ID')}
+                              </TableCell>
+                              <TableCell>
+                                <Button variant="outline" size="sm">
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  Detail
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -875,12 +986,48 @@ export default function KenaikanPangkat() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">
-                    Timeline akan ditampilkan setelah pengajuan dibuat
-                  </p>
-                </div>
+                {applications.length > 0 ? (
+                  <div className="space-y-4">
+                    {applications.slice(0, 5).map((app) => {
+                      const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
+                      return (
+                        <div key={app.id} className="flex items-start gap-4 pb-4 border-b last:border-b-0">
+                          <div className="flex-shrink-0">
+                            {app.status === 'submitted' && <Clock className="w-5 h-5 text-yellow-500" />}
+                            {app.status === 'approved' && <CheckCircle className="w-5 h-5 text-blue-500" />}
+                            {app.status === 'completed' && <CheckCircle className="w-5 h-5 text-green-500" />}
+                            {app.status === 'revision_needed' && <AlertTriangle className="w-5 h-5 text-red-500" />}
+                            {app.status === 'in_review' && <Clock className="w-5 h-5 text-orange-500" />}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">
+                              Pengajuan kenaikan pangkat untuk {estimasiData.employee_name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(app.created_at).toLocaleDateString('id-ID', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                          <div>
+                            {getStatusBadge(app.status)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground">
+                      Timeline akan ditampilkan setelah pengajuan dibuat
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
