@@ -14,7 +14,6 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Database } from '@/integrations/supabase/types';
-import { DocumentRevisionModal } from "@/components/verifikasi/DocumentRevisionModal";
 
 type Application = Database['public']['Tables']['applications']['Row'];
 interface PangkatData {
@@ -47,8 +46,6 @@ export default function KenaikanPangkat() {
   const [documentLinks, setDocumentLinks] = useState<{[key: string]: string}>({});
   const [catatanTambahan, setCatatanTambahan] = useState("");
   const [applications, setApplications] = useState<Application[]>([]);
-  const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
-  const [selectedApplicationForRevision, setSelectedApplicationForRevision] = useState<Application | null>(null);
 
   useEffect(() => {
     loadApplications();
@@ -965,14 +962,7 @@ export default function KenaikanPangkat() {
                                 {new Date(app.created_at).toLocaleDateString('id-ID')}
                               </TableCell>
                               <TableCell>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedApplicationForRevision(app);
-                                    setIsRevisionModalOpen(true);
-                                  }}
-                                >
+                                <Button variant="outline" size="sm">
                                   <FileText className="w-4 h-4 mr-2" />
                                   Detail
                                 </Button>
@@ -1063,21 +1053,6 @@ export default function KenaikanPangkat() {
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Document Revision Modal */}
-        {selectedApplicationForRevision && (
-          <DocumentRevisionModal
-            isOpen={isRevisionModalOpen}
-            onClose={() => {
-              setIsRevisionModalOpen(false);
-              setSelectedApplicationForRevision(null);
-              loadApplications(); // Refresh applications after closing modal
-            }}
-            applicationId={selectedApplicationForRevision.id}
-            applicationNumber={selectedApplicationForRevision.nomor_usulan}
-          />
-        )}
       </div>
-    </div>
-  );
+    </div>;
 }
