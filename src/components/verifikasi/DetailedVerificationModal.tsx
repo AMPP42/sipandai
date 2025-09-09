@@ -167,7 +167,7 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
       document_type: `doc_${doc.document_index || 0}`,
       document_name: doc.title,
       status: 'pending' as const,
-      document_id: doc.id,
+      document_id: doc.id.startsWith(application.id) ? null : doc.id, // For Kenaikan Pangkat, don't use concatenated id
       document_link: doc.drive_link
     }));
 
