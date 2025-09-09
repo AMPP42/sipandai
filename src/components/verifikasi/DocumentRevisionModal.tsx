@@ -1,0 +1,307 @@
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { AlertTriangle, FileText, RefreshCw } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from '@/integrations/supabase/types';
+
+type Application = Database['public']['Tables']['applications']['Row'];
+type DocumentVerification = Database['public']['Tables']['document_verifications']['Row'];
+
+interface DocumentRevisionModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  application: Application;
+  onRevisionSubmitted: () => void;
+}
+
+export default function DocumentRevisionModal({
+  open,
+  onOpenChange,
+  application,
+  onRevisionSubmitted
+}: DocumentRevisionModalProps) {
+  const [documentVerifications, setDocumentVerifications] = useState<DocumentVerification[]>([]);
+  const [revisedDocuments, setRevisedDocuments] = useState<{[key: string]: string}>({});
+  const [revisionNotes, setRevisionNotes] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [loadingVerifications, setLoadingVerifications] = useState(false);
+
+  useEffect(() => {
+    if (open && application.id) {
+      loadDocumentVerifications();
+    }
+  }, [open, application.id]);
+
+  const loadDocumentVerifications = async () => {
+    try {
+      setLoadingVerifications(true);
+      const { data, error } = await supabase
+        .from('document_verifications')
+        .select('*')
+        .eq('application_id', application.id)
+        .order('document_name');
+
+      if (error) throw error;
+      setDocumentVerifications(data || []);
+    } catch (error) {
+      console.error('Error loading document verifications:', error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat data verifikasi dokumen",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingVerifications(false);
+    }
+  };
+
+  const handleSubmitRevision = async () => {
+    const documentsNeedingRevision = documentVerifications.filter(doc => doc.status === 'rejected');
+    const missingRevisions = documentsNeedingRevision.filter(doc => !revisedDocuments[doc.id]);
+
+    if (missingRevisions.length > 0) {
+      toast({
+        title: "Error",
+        description: "Mohon lengkapi semua dokumen yang perlu diperbaiki",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Update document verifications with new links and reset status to pending
+      for (const docId of Object.keys(revisedDocuments)) {
+        if (revisedDocuments[docId]) {
+          const { error } = await supabase
+            .from('document_verifications')
+            .update({
+              document_link: revisedDocuments[docId],
+              status: 'pending',
+              admin_notes: null,
+              verified_at: null,
+              verified_by: null
+            })
+            .eq('id', docId);
+
+          if (error) throw error;
+        }
+      }
+
+      // Update application status back to in_review
+      const { error: appError } = await supabase
+        .from('applications')
+        .update({
+          status: 'in_review',
+          keterangan: revisionNotes || null
+        })
+        .eq('id', application.id);
+
+      if (appError) throw appError;
+
+      toast({
+        title: "Berhasil",
+        description: "Dokumen perbaikan berhasil disubmit untuk verifikasi ulang"
+      });
+
+      onRevisionSubmitted();
+      onOpenChange(false);
+      
+      // Reset form
+      setRevisedDocuments({});
+      setRevisionNotes("");
+
+    } catch (error: any) {
+      console.error('Error submitting revision:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Gagal mengsubmit perbaikan dokumen",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const documentsNeedingRevision = documentVerifications.filter(doc => doc.status === 'rejected');
+  const approvedDocuments = documentVerifications.filter(doc => doc.status === 'approved');
+
+  if (application.status !== 'revision_needed') {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detail Pengajuan</DialogTitle>
+          </DialogHeader>
+          <div className="text-center py-8">
+            <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Status: {application.status}</h3>
+            <p className="text-muted-foreground">
+              Pengajuan ini sedang dalam proses atau sudah selesai diverifikasi.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-yellow-500" />
+            Perbaikan Dokumen Diperlukan
+          </DialogTitle>
+        </DialogHeader>
+
+        {loadingVerifications ? (
+          <div className="text-center py-8">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground">Memuat data verifikasi...</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Summary */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h4 className="font-medium text-yellow-800 mb-2">Ringkasan Verifikasi</h4>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-yellow-700">Total Dokumen:</span>
+                  <span className="font-medium ml-2">{documentVerifications.length}</span>
+                </div>
+                <div>
+                  <span className="text-green-700">Disetujui:</span>
+                  <span className="font-medium ml-2">{approvedDocuments.length}</span>
+                </div>
+                <div>
+                  <span className="text-red-700">Perlu Perbaikan:</span>
+                  <span className="font-medium ml-2">{documentsNeedingRevision.length}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Documents needing revision */}
+            {documentsNeedingRevision.length > 0 && (
+              <div className="space-y-4">
+                <h4 className="font-semibold text-red-700 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  Dokumen yang Perlu Diperbaiki ({documentsNeedingRevision.length})
+                </h4>
+                
+                {documentsNeedingRevision.map((doc, index) => (
+                  <div key={doc.id} className="border border-red-200 rounded-lg p-4 bg-red-50">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h5 className="font-medium text-red-800">
+                            {index + 1}. {doc.document_name}
+                          </h5>
+                          <Badge className="bg-red-100 text-red-700 mt-1">
+                            Perlu Perbaikan
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      {doc.admin_notes && (
+                        <div className="bg-white border border-red-200 rounded p-3">
+                          <p className="text-sm text-red-700">
+                            <strong>Catatan Verifikator:</strong> {doc.admin_notes}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`revision-${doc.id}`}>
+                          Link Dokumen Perbaikan <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id={`revision-${doc.id}`}
+                          placeholder="Masukkan link Google Drive dokumen yang sudah diperbaiki..."
+                          value={revisedDocuments[doc.id] || ''}
+                          onChange={(e) => setRevisedDocuments(prev => ({
+                            ...prev,
+                            [doc.id]: e.target.value
+                          }))}
+                          className="border-red-300 focus:border-red-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Approved documents */}
+            {approvedDocuments.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-green-700">
+                    Dokumen yang Disetujui ({approvedDocuments.length})
+                  </h4>
+                  <div className="grid gap-2">
+                    {approvedDocuments.map((doc, index) => (
+                      <div key={doc.id} className="flex items-center justify-between py-2 px-3 bg-green-50 border border-green-200 rounded">
+                        <span className="text-sm font-medium text-green-800">
+                          {index + 1}. {doc.document_name}
+                        </span>
+                        <Badge className="bg-green-100 text-green-700">
+                          Disetujui
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Additional notes */}
+            <div className="space-y-2">
+              <Label htmlFor="revision-notes">Catatan Tambahan (Opsional)</Label>
+              <Textarea
+                id="revision-notes"
+                placeholder="Masukkan catatan atau keterangan tambahan untuk perbaikan dokumen..."
+                value={revisionNotes}
+                onChange={(e) => setRevisionNotes(e.target.value)}
+                className="min-h-[80px]"
+              />
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Batal
+              </Button>
+              <Button 
+                onClick={handleSubmitRevision}
+                disabled={loading || documentsNeedingRevision.length === 0}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Mengirim...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-4 h-4 mr-2" />
+                    Submit Perbaikan
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -13,6 +13,7 @@ import { TrendingUp, CheckCircle, AlertTriangle, Calendar, User, FileText, Calcu
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import DocumentRevisionModal from "@/components/verifikasi/DocumentRevisionModal";
 import type { Database } from '@/integrations/supabase/types';
 
 type Application = Database['public']['Tables']['applications']['Row'];
@@ -46,6 +47,8 @@ export default function KenaikanPangkat() {
   const [documentLinks, setDocumentLinks] = useState<{[key: string]: string}>({});
   const [catatanTambahan, setCatatanTambahan] = useState("");
   const [applications, setApplications] = useState<Application[]>([]);
+  const [selectedApplicationForRevision, setSelectedApplicationForRevision] = useState<Application | null>(null);
+  const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
 
   useEffect(() => {
     loadApplications();
@@ -962,7 +965,14 @@ export default function KenaikanPangkat() {
                                 {new Date(app.created_at).toLocaleDateString('id-ID')}
                               </TableCell>
                               <TableCell>
-                                <Button variant="outline" size="sm">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedApplicationForRevision(app);
+                                    setIsRevisionModalOpen(true);
+                                  }}
+                                >
                                   <FileText className="w-4 h-4 mr-2" />
                                   Detail
                                 </Button>
@@ -1053,6 +1063,19 @@ export default function KenaikanPangkat() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Document Revision Modal */}
+        {selectedApplicationForRevision && (
+          <DocumentRevisionModal
+            open={isRevisionModalOpen}
+            onOpenChange={setIsRevisionModalOpen}
+            application={selectedApplicationForRevision}
+            onRevisionSubmitted={() => {
+              loadApplications();
+              setSelectedApplicationForRevision(null);
+            }}
+          />
+        )}
       </div>
     </div>;
 }
