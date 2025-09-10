@@ -131,35 +131,29 @@ export default function DocumentRevisionModal({
     }
   };
 
-  const documentsNeedingRevision = documentVerifications.filter(doc => doc.status === 'rejected');
+  const documentsNeedingRevision = documentVerifications.filter(doc => doc.status === 'rejected' || doc.status === 'needs_fix');
   const approvedDocuments = documentVerifications.filter(doc => doc.status === 'approved');
+  const pendingDocuments = documentVerifications.filter(doc => doc.status === 'pending');
 
-  if (application.status !== 'revision_needed') {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Detail Pengajuan</DialogTitle>
-          </DialogHeader>
-          <div className="text-center py-8">
-            <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Status: {application.status}</h3>
-            <p className="text-muted-foreground">
-              Pengajuan ini sedang dalam proses atau sudah selesai diverifikasi.
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  // Show different content based on application status
+  const showRevisionInterface = application.status === 'revision_needed' && documentsNeedingRevision.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-yellow-500" />
-            Perbaikan Dokumen Diperlukan
+            {showRevisionInterface ? (
+              <>
+                <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                Perbaikan Dokumen Diperlukan
+              </>
+            ) : (
+              <>
+                <FileText className="w-5 h-5 text-blue-500" />
+                Detail Verifikasi Dokumen
+              </>
+            )}
           </DialogTitle>
         </DialogHeader>
 
@@ -171,11 +165,13 @@ export default function DocumentRevisionModal({
         ) : (
           <div className="space-y-6">
             {/* Summary */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h4 className="font-medium text-yellow-800 mb-2">Ringkasan Verifikasi</h4>
-              <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className={`border rounded-lg p-4 ${showRevisionInterface ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200'}`}>
+              <h4 className={`font-medium mb-2 ${showRevisionInterface ? 'text-yellow-800' : 'text-blue-800'}`}>
+                Ringkasan Verifikasi
+              </h4>
+              <div className="grid grid-cols-4 gap-4 text-sm">
                 <div>
-                  <span className="text-yellow-700">Total Dokumen:</span>
+                  <span className="text-gray-700">Total Dokumen:</span>
                   <span className="font-medium ml-2">{documentVerifications.length}</span>
                 </div>
                 <div>
@@ -185,6 +181,10 @@ export default function DocumentRevisionModal({
                 <div>
                   <span className="text-red-700">Perlu Perbaikan:</span>
                   <span className="font-medium ml-2">{documentsNeedingRevision.length}</span>
+                </div>
+                <div>
+                  <span className="text-blue-700">Menunggu:</span>
+                  <span className="font-medium ml-2">{pendingDocuments.length}</span>
                 </div>
               </div>
             </div>
@@ -206,8 +206,13 @@ export default function DocumentRevisionModal({
                             {index + 1}. {doc.document_name}
                           </h5>
                           <Badge className="bg-red-100 text-red-700 mt-1">
-                            Perlu Perbaikan
+                            {doc.status === 'rejected' ? 'Ditolak' : 'Perlu Perbaikan'}
                           </Badge>
+                          {doc.document_link && (
+                            <p className="text-xs text-gray-600 mt-1">
+                              Link saat ini: <a href={doc.document_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat dokumen</a>
+                            </p>
+                          )}
                         </div>
                       </div>
                       
@@ -219,25 +224,58 @@ export default function DocumentRevisionModal({
                         </div>
                       )}
 
-                      <div className="space-y-2">
-                        <Label htmlFor={`revision-${doc.id}`}>
-                          Link Dokumen Perbaikan <span className="text-red-500">*</span>
-                        </Label>
-                        <Input
-                          id={`revision-${doc.id}`}
-                          placeholder="Masukkan link Google Drive dokumen yang sudah diperbaiki..."
-                          value={revisedDocuments[doc.id] || ''}
-                          onChange={(e) => setRevisedDocuments(prev => ({
-                            ...prev,
-                            [doc.id]: e.target.value
-                          }))}
-                          className="border-red-300 focus:border-red-500"
-                        />
-                      </div>
+                      {showRevisionInterface && (
+                        <div className="space-y-2">
+                          <Label htmlFor={`revision-${doc.id}`}>
+                            Link Dokumen Perbaikan <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            id={`revision-${doc.id}`}
+                            placeholder="Masukkan link Google Drive dokumen yang sudah diperbaiki..."
+                            value={revisedDocuments[doc.id] || ''}
+                            onChange={(e) => setRevisedDocuments(prev => ({
+                              ...prev,
+                              [doc.id]: e.target.value
+                            }))}
+                            className="border-red-300 focus:border-red-500"
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
+            )}
+
+            {/* Pending documents */}
+            {pendingDocuments.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-blue-700">
+                    Dokumen Menunggu Verifikasi ({pendingDocuments.length})
+                  </h4>
+                  <div className="grid gap-2">
+                    {pendingDocuments.map((doc, index) => (
+                      <div key={doc.id} className="flex items-center justify-between py-2 px-3 bg-blue-50 border border-blue-200 rounded">
+                        <div>
+                          <span className="text-sm font-medium text-blue-800">
+                            {index + 1}. {doc.document_name}
+                          </span>
+                          {doc.document_link && (
+                            <p className="text-xs text-gray-600">
+                              <a href={doc.document_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat dokumen</a>
+                            </p>
+                          )}
+                        </div>
+                        <Badge className="bg-blue-100 text-blue-700">
+                          Menunggu Verifikasi
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
 
             {/* Approved documents */}
@@ -249,56 +287,75 @@ export default function DocumentRevisionModal({
                     Dokumen yang Disetujui ({approvedDocuments.length})
                   </h4>
                   <div className="grid gap-2">
-                    {approvedDocuments.map((doc, index) => (
-                      <div key={doc.id} className="flex items-center justify-between py-2 px-3 bg-green-50 border border-green-200 rounded">
-                        <span className="text-sm font-medium text-green-800">
-                          {index + 1}. {doc.document_name}
-                        </span>
-                        <Badge className="bg-green-100 text-green-700">
-                          Disetujui
-                        </Badge>
-                      </div>
+                     {approvedDocuments.map((doc, index) => (
+                       <div key={doc.id} className="flex items-center justify-between py-2 px-3 bg-green-50 border border-green-200 rounded">
+                         <div>
+                           <span className="text-sm font-medium text-green-800">
+                             {index + 1}. {doc.document_name}
+                           </span>
+                           {doc.document_link && (
+                             <p className="text-xs text-gray-600">
+                               <a href={doc.document_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat dokumen</a>
+                             </p>
+                           )}
+                         </div>
+                         <Badge className="bg-green-100 text-green-700">
+                           Disetujui
+                         </Badge>
+                       </div>
                     ))}
                   </div>
                 </div>
               </>
             )}
 
-            {/* Additional notes */}
-            <div className="space-y-2">
-              <Label htmlFor="revision-notes">Catatan Tambahan (Opsional)</Label>
-              <Textarea
-                id="revision-notes"
-                placeholder="Masukkan catatan atau keterangan tambahan untuk perbaikan dokumen..."
-                value={revisionNotes}
-                onChange={(e) => setRevisionNotes(e.target.value)}
-                className="min-h-[80px]"
-              />
-            </div>
+            {/* Additional notes and action buttons - only show for revision interface */}
+            {showRevisionInterface && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="revision-notes">Catatan Tambahan (Opsional)</Label>
+                  <Textarea
+                    id="revision-notes"
+                    placeholder="Masukkan catatan atau keterangan tambahan untuk perbaikan dokumen..."
+                    value={revisionNotes}
+                    onChange={(e) => setRevisionNotes(e.target.value)}
+                    className="min-h-[80px]"
+                  />
+                </div>
 
-            {/* Action buttons */}
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Batal
-              </Button>
-              <Button 
-                onClick={handleSubmitRevision}
-                disabled={loading || documentsNeedingRevision.length === 0}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
-                {loading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Mengirim...
-                  </>
-                ) : (
-                  <>
-                    <FileText className="w-4 h-4 mr-2" />
-                    Submit Perbaikan
-                  </>
-                )}
-              </Button>
-            </div>
+                <div className="flex justify-end space-x-3 pt-4">
+                  <Button variant="outline" onClick={() => onOpenChange(false)}>
+                    Batal
+                  </Button>
+                  <Button 
+                    onClick={handleSubmitRevision}
+                    disabled={loading || documentsNeedingRevision.length === 0}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    {loading ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Mengirim...
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="w-4 h-4 mr-2" />
+                        Submit Perbaikan
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* Close button for view-only mode */}
+            {!showRevisionInterface && (
+              <div className="flex justify-end pt-4">
+                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                  Tutup
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </DialogContent>
