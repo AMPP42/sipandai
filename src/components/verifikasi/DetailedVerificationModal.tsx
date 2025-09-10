@@ -95,7 +95,7 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
             // Create document objects from the links in estimasi
             documents = Object.entries(estimasiData.document_links).map(([key, link], index) => ({
               id: `${application.id}-${key}`,
-              title: getKenaikanPangkatDocumentName(key, estimasiData.kategori),
+              title: getKenaikanPangkatDocumentName(key),
               drive_link: link as string,
               document_category: 'kenaikan_pangkat',
               document_index: index,
@@ -142,92 +142,16 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
     }
   };
 
-  const getKenaikanPangkatDocumentName = (key: string, kategori?: string) => {
-    // Get document names based on category and key index to match the application form exactly
-    const getDocumentsByCategory = (kategori: string) => {
-      const documents: Record<string, string[]> = {
-        reguler: [
-          "SKP 2 tahun terakhir",
-          "SK Jabatan terakhir", 
-          "SK Pangkat terakhir",
-          "Kartu Pegawai",
-          "Ijazah + Transkrip Nilai terakhir",
-          "Nota Dinas"
-        ],
-        fungsional: [
-          "PAK tahun 2022 hingga saat ini",
-          "SKP 2 tahun terakhir",
-          "SK Jabatan terakhir", 
-          "SK Pangkat terakhir",
-          "Kartu Pegawai",
-          "Ijazah + Transkrip Nilai terakhir",
-          "Nota Dinas"
-        ],
-        struktural: [
-          "SKP 2 tahun terakhir",
-          "SK Jabatan terakhir",
-          "SK Pangkat terakhir", 
-          "Kartu Pegawai",
-          "Ijazah + Transkrip Nilai terakhir",
-          "Surat Pernyataan Pelantikan",
-          "Surat Pernyataan Melaksanakan Tugas",
-          "Diklatsus PIM III (khusus Eselon III dengan S1 dan pangkat terakhir S1)",
-          "Nota Dinas"
-        ],
-        pertama_kali: [
-          "SK CPNS",
-          "SK PNS",
-          "SKP 2 tahun terakhir",
-          "PAK tahun 2022 hingga saat ini",
-          "SK Jabatan",
-          "Berita Acara Pengambilan Sumpah Jabatan PNS",
-          "SK Pangkat terakhir",
-          "Kartu Pegawai",
-          "Ijazah + Transkrip Nilai terakhir",
-          "Nota Dinas"
-        ],
-        penyesuaian_ijazah: [
-          "Surat Tanda Lulus Ujian Penyesuaian Kenaikan Pangkat",
-          "Ijazah + Transkrip Nilai terakhir yang telah dilegalisir",
-          "Uraian Tugas",
-          "SKP 2 tahun terakhir",
-          "SK Jabatan terakhir",
-          "SK Pangkat terakhir",
-          "Kartu Pegawai",
-          "Ijazah + Transkrip Nilai terakhir",
-          "Nota Dinas"
-        ],
-        iid_ke_iiia: [
-          "Surat Tanda Lulus Ujian Dinas",
-          "SKP 2 tahun terakhir",
-          "SK Jabatan",
-          "SK Pangkat terakhir",
-          "Kartu Pegawai",
-          "Ijazah + Transkrip Nilai terakhir",
-          "Nota Dinas"
-        ]
-      };
-      return documents[kategori] || [];
+  const getKenaikanPangkatDocumentName = (key: string) => {
+    const documentNames: Record<string, string> = {
+      'doc-0': 'FC. SK CPNS yang dilegalisir',
+      'doc-1': 'FC. SK PNS yang dilegalisir',
+      'doc-2': 'FC. SK Pangkat terakhir yang dilegalisir',
+      'doc-3': 'FC. SK Jabatan terakhir yang dilegalisir',
+      'doc-4': 'Surat Pernyataan Pelantikan',
+      'doc-5': 'Surat Tanda Lulus Ujian Penyesuaian Kenaikan Pangkat'
     };
-
-    // Extract doc index from key (e.g., 'doc-0' -> 0)
-    const docIndex = parseInt(key.replace('doc-', ''));
-    
-    if (kategori) {
-      const categoryDocs = getDocumentsByCategory(kategori);
-      return categoryDocs[docIndex] || `Dokumen ${docIndex + 1}`;
-    }
-    
-    // Fallback for legacy data without category
-    const fallbackNames: Record<string, string> = {
-      'doc-0': 'SKP 2 tahun terakhir',
-      'doc-1': 'SK Jabatan terakhir', 
-      'doc-2': 'SK Pangkat terakhir',
-      'doc-3': 'Kartu Pegawai',
-      'doc-4': 'Ijazah + Transkrip Nilai terakhir',
-      'doc-5': 'Nota Dinas'
-    };
-    return fallbackNames[key] || `Dokumen ${key}`;
+    return documentNames[key] || `Dokumen ${key}`;
   };
 
   const initializeDocumentVerifications = async (documents: ActualDocument[]) => {
