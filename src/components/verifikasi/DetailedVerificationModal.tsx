@@ -151,7 +151,7 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
           "SK Jabatan terakhir", 
           "SK Pangkat terakhir",
           "Kartu Pegawai",
-          "Ijazah + Transkrip nilai terakhir",
+          "Ijazah + Transkrip Nilai terakhir",
           "Nota Dinas"
         ],
         fungsional: [
@@ -160,7 +160,7 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
           "SK Jabatan terakhir", 
           "SK Pangkat terakhir",
           "Kartu Pegawai",
-          "Ijazah + transkrip nilai terakhir",
+          "Ijazah + Transkrip Nilai terakhir",
           "Nota Dinas"
         ],
         struktural: [
@@ -171,8 +171,7 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
           "Ijazah + Transkrip Nilai terakhir",
           "Surat Pernyataan Pelantikan",
           "Surat Pernyataan Melaksanakan Tugas",
-          "Surat Pernyataan Pelantikan",
-          "Khusus untuk Pejabat Struktural Eselon III yang pendidikan terakhirnya S1 dan pangkat terakhirnya dilakukan, wajib lulus diklat PIM III",
+          "Diklatsus PIM III (khusus Eselon III dengan S1 dan pangkat terakhir S1)",
           "Nota Dinas"
         ],
         pertama_kali: [
