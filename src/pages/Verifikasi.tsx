@@ -61,6 +61,7 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'revision'>('approve');
   const [processing, setProcessing] = useState(false);
   const [filterType, setFilterType] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const [stats, setStats] = useState({
     total: 0,
@@ -77,7 +78,7 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
 
   useEffect(() => {
     filterApplications();
-  }, [applicationList, filterType]);
+  }, [applicationList, filterType, statusFilter]);
 
   const loadApplications = async () => {
     try {
@@ -142,15 +143,38 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
       );
     }
 
-    if (filterType === 'all') {
-      setFilteredApplications(filtered);
-    } else if (filterType === 'mutasi') {
-      setFilteredApplications(filtered.filter(app => app.type === 'usulan_mutasi'));
-    } else {
-      setFilteredApplications(filtered.filter(app => 
-        app.type === 'application' && app.jenis === filterType
-      ));
+    // Filter by application type
+    if (filterType !== 'all') {
+      if (filterType === 'mutasi') {
+        filtered = filtered.filter(app => app.type === 'usulan_mutasi');
+      } else {
+        filtered = filtered.filter(app => 
+          app.type === 'application' && app.jenis === filterType
+        );
+      }
     }
+
+    // Filter by status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(app => {
+        switch (statusFilter) {
+          case 'menunggu_verifikasi':
+            return app.status === 'submitted';
+          case 'perlu_perbaikan':
+            return app.status === 'revision_needed';
+          case 'sudah_diperbaiki':
+            return app.status === 'submitted' && app.catatan_reviewer;
+          case 'diproses':
+            return app.status === 'approved';
+          case 'disetujui':
+            return app.status === 'completed';
+          default:
+            return true;
+        }
+      });
+    }
+
+    setFilteredApplications(filtered);
   };
 
   const handleReview = (application: ApplicationItem, action: 'approve' | 'reject' | 'revision') => {
@@ -452,6 +476,19 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
                   <SelectItem value="pensiun">Pengajuan Pensiun</SelectItem>
                   <SelectItem value="mutasi">Pengajuan Mutasi</SelectItem>
                   <SelectItem value="kenaikan_pangkat">Kenaikan Pangkat</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder="Filter berdasarkan status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Status</SelectItem>
+                  <SelectItem value="menunggu_verifikasi">Menunggu Verifikasi</SelectItem>
+                  <SelectItem value="perlu_perbaikan">Perlu Perbaikan</SelectItem>
+                  <SelectItem value="sudah_diperbaiki">Sudah Diperbaiki</SelectItem>
+                  <SelectItem value="diproses">Diproses</SelectItem>
+                  <SelectItem value="disetujui">Disetujui</SelectItem>
                 </SelectContent>
               </Select>
             </div>
