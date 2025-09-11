@@ -95,7 +95,7 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
             // Create document objects from the links in estimasi
             documents = Object.entries(estimasiData.document_links).map(([key, link], index) => ({
               id: `${application.id}-${key}`,
-              title: getKenaikanPangkatDocumentName(key),
+              title: getKenaikanPangkatDocumentName(key, estimasiData.kategori),
               drive_link: link as string,
               document_category: 'kenaikan_pangkat',
               document_index: index,
@@ -142,16 +142,130 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
     }
   };
 
-  const getKenaikanPangkatDocumentName = (key: string) => {
-    const documentNames: Record<string, string> = {
-      'doc-0': 'FC. SK CPNS yang dilegalisir',
-      'doc-1': 'FC. SK PNS yang dilegalisir',
-      'doc-2': 'FC. SK Pangkat terakhir yang dilegalisir',
-      'doc-3': 'FC. SK Jabatan terakhir yang dilegalisir',
-      'doc-4': 'Surat Pernyataan Pelantikan',
-      'doc-5': 'Surat Tanda Lulus Ujian Penyesuaian Kenaikan Pangkat'
+  const getKenaikanPangkatDocumentName = (key: string, kategori?: string) => {
+    if (!kategori) return `Dokumen ${key}`;
+    
+    const documents = getDocumentRequirementsForCategory(kategori);
+    const index = parseInt(key.replace('doc-', ''));
+    
+    if (index >= 0 && index < documents.length) {
+      return documents[index].nama;
+    }
+    
+    return `Dokumen ${key}`;
+  };
+
+  const getDocumentRequirementsForCategory = (kategori: string) => {
+    const documents: {
+      [key: string]: Array<{
+        nama: string;
+        catatan?: string;
+      }>;
+    } = {
+      reguler: [{
+        nama: "SKP 2 tahun terakhir"
+      }, {
+        nama: "SK Jabatan terakhir"
+      }, {
+        nama: "SK Pangkat terakhir"
+      }, {
+        nama: "Kartu Pegawai"
+      }, {
+        nama: "Ijazah + Transkrip nilai terakhir"
+      }, {
+        nama: "Nota Dinas"
+      }],
+      fungsional: [{
+        nama: "PAK tahun 2022 hingga saat ini"
+      }, {
+        nama: "SKP 2 tahun terakhir"
+      }, {
+        nama: "SK Jabatan terakhir"
+      }, {
+        nama: "SK Pangkat terakhir"
+      }, {
+        nama: "Kartu Pegawai"
+      }, {
+        nama: "Ijazah + transkrip nilai terakhir"
+      }, {
+        nama: "Nota Dinas"
+      }],
+      struktural: [{
+        nama: "SKP 2 tahun terakhir"
+      }, {
+        nama: "SK Jabatan terakhir"
+      }, {
+        nama: "SK Pangkat terakhir"
+      }, {
+        nama: "Kartu Pegawai"
+      }, {
+        nama: "Ijazah + Transkrip Nilai terakhir"
+      }, {
+        nama: "Surat Pernyataan Pelantikan"
+      }, {
+        nama: "Surat Pernyataan Melaksanakan Tugas"
+      }, {
+        nama: "Diklatsus PIM III"
+      }, {
+        nama: "Nota Dinas"
+      }],
+      pertama_kali: [{
+        nama: "SK CPNS"
+      }, {
+        nama: "SK PNS"
+      }, {
+        nama: "SKP 2 tahun terakhir"
+      }, {
+        nama: "PAK tahun 2022 hingga saat ini"
+      }, {
+        nama: "SK Jabatan"
+      }, {
+        nama: "Berita Acara Pengambilan Sumpah Jabatan PNS"
+      }, {
+        nama: "SK Pangkat terakhir"
+      }, {
+        nama: "Kartu Pegawai"
+      }, {
+        nama: "Ijazah + Transkrip Nilai terakhir"
+      }, {
+        nama: "Nota Dinas"
+      }],
+      penyesuaian_ijazah: [{
+        nama: "Surat Tanda Lulus Ujian Penyesuaian Kenaikan Pangkat"
+      }, {
+        nama: "Ijazah + Transkrip Nilai terakhir yang telah dilegalisir"
+      }, {
+        nama: "Uraian Tugas"
+      }, {
+        nama: "SKP 2 tahun terakhir"
+      }, {
+        nama: "SK Jabatan terakhir"
+      }, {
+        nama: "SK Pangkat terakhir"
+      }, {
+        nama: "Kartu Pegawai"
+      }, {
+        nama: "Ijazah + Transkrip Nilai terakhir"
+      }, {
+        nama: "Nota Dinas"
+      }],
+      iid_ke_iiia: [{
+        nama: "Surat Tanda Lulus Ujian Dinas"
+      }, {
+        nama: "SKP 2 tahun terakhir"
+      }, {
+        nama: "SK Jabatan"
+      }, {
+        nama: "SK Pangkat terakhir"
+      }, {
+        nama: "Kartu Pegawai"
+      }, {
+        nama: "Ijazah + Transkrip Nilai terakhir"
+      }, {
+        nama: "Nota Dinas"
+      }]
     };
-    return documentNames[key] || `Dokumen ${key}`;
+    return documents[kategori] || [];
   };
 
   const initializeDocumentVerifications = async (documents: ActualDocument[]) => {
