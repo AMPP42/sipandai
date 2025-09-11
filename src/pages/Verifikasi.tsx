@@ -324,9 +324,73 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
     setShowDetailedVerification(true);
   };
 
+  const handleDeleteApplication = async (application: ApplicationItem) => {
+    if (!user || user.role !== 'admin_pusat') return;
+
+    if (!confirm(`Apakah Anda yakin ingin menghapus usulan "${getApplicationTitle(application)}"?`)) {
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      if (application.type === 'usulan_mutasi') {
+        // Delete related documents first
+        const { error: docError } = await supabase
+          .from('dokumen_usulan')
+          .delete()
+          .eq('usulan_id', application.id);
+
+        if (docError) throw docError;
+
+        // Delete the usulan_mutasi
+        const { error } = await supabase
+          .from('usulan_mutasi')
+          .delete()
+          .eq('id', application.id);
+
+        if (error) throw error;
+      } else {
+        // Delete related documents and verifications first
+        const { error: docVerificationError } = await supabase
+          .from('document_verifications')
+          .delete()
+          .eq('application_id', application.id);
+
+        if (docVerificationError) throw docVerificationError;
+
+        const { error: docError } = await supabase
+          .from('documents')
+          .delete()
+          .eq('application_id', application.id);
+
+        if (docError) throw docError;
+
+        const { error: workflowError } = await supabase
+          .from('workflows')
+          .delete()
+          .eq('application_id', application.id);
+
+        if (workflowError) throw workflowError;
+
+        // Delete the application
+        const { error } = await supabase
+          .from('applications')
+          .delete()
+          .eq('id', application.id);
+
+        if (error) throw error;
+      }
+
+      loadApplications();
+    } catch (error) {
+      console.error('Error deleting application:', error);
+      alert('Gagal menghapus usulan. Silakan coba lagi.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const getActionButtons = (application: ApplicationItem) => {
-    const canReview = ['submitted', 'in_review'].includes(application.status);
-    
     return (
       <div className="flex gap-2">
         <Button 
@@ -338,36 +402,17 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
           <Eye className="w-4 h-4" />
         </Button>
         
-        {canReview && (
-          <>
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => handleReview(application, 'approve')}
-              className="text-green-600 hover:text-green-700"
-              title="Setujui Langsung"
-            >
-              <Check className="w-4 h-4" />
-            </Button>
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => handleReview(application, 'revision')}
-              className="text-orange-600 hover:text-orange-700"
-              title="Minta Revisi"
-            >
-              <MessageSquare className="w-4 h-4" />
-            </Button>
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => handleReview(application, 'reject')}
-              className="text-red-600 hover:text-red-700"
-              title="Tolak"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </>
+        {user?.role === 'admin_pusat' && (
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => handleDeleteApplication(application)}
+            className="text-red-600 hover:text-red-700"
+            title="Hapus Usulan"
+            disabled={processing}
+          >
+            <X className="w-4 h-4" />
+          </Button>
         )}
       </div>
     );
