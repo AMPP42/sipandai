@@ -184,40 +184,6 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
     setShowReviewDialog(true);
   };
 
-  const handleDelete = async (application: ApplicationItem) => {
-    if (!user || user.role !== 'admin_unit') return;
-    
-    if (!confirm('Apakah Anda yakin ingin menghapus usulan ini? Tindakan ini tidak dapat dibatalkan.')) {
-      return;
-    }
-
-    try {
-      setProcessing(true);
-      
-      if (application.type === 'usulan_mutasi') {
-        const { error } = await supabase
-          .from('usulan_mutasi')
-          .delete()
-          .eq('id', application.id);
-        
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('applications')
-          .delete()
-          .eq('id', application.id);
-        
-        if (error) throw error;
-      }
-      
-      loadApplications();
-    } catch (error) {
-      console.error('Error deleting application:', error);
-    } finally {
-      setProcessing(false);
-    }
-  };
-
   const submitReview = async () => {
     if (!selectedApplication || !user) return;
 
@@ -360,7 +326,6 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
 
   const getActionButtons = (application: ApplicationItem) => {
     const canReview = ['submitted', 'in_review'].includes(application.status);
-    const canDelete = user?.role === 'admin_unit';
     
     return (
       <div className="flex gap-2">
@@ -373,17 +338,36 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
           <Eye className="w-4 h-4" />
         </Button>
         
-        {canDelete && (
-          <Button 
-            size="sm" 
-            variant="outline"
-            onClick={() => handleDelete(application)}
-            className="text-red-600 hover:text-red-700"
-            title="Hapus Usulan"
-            disabled={processing}
-          >
-            <X className="w-4 h-4" />
-          </Button>
+        {canReview && (
+          <>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => handleReview(application, 'approve')}
+              className="text-green-600 hover:text-green-700"
+              title="Setujui Langsung"
+            >
+              <Check className="w-4 h-4" />
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => handleReview(application, 'revision')}
+              className="text-orange-600 hover:text-orange-700"
+              title="Minta Revisi"
+            >
+              <MessageSquare className="w-4 h-4" />
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => handleReview(application, 'reject')}
+              className="text-red-600 hover:text-red-700"
+              title="Tolak"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </>
         )}
       </div>
     );
