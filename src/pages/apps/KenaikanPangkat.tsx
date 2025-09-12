@@ -41,7 +41,6 @@ export default function KenaikanPangkat() {
   const [selectedPegawai, setSelectedPegawai] = useState("");
   const [selectedKategori, setSelectedKategori] = useState("");
   const [selectedPeriode, setSelectedPeriode] = useState("");
-  const [statusPeriodeFilter, setStatusPeriodeFilter] = useState("");
   const [isEmployeeDialogOpen, setIsEmployeeDialogOpen] = useState(false);
   const [searchEmployee, setSearchEmployee] = useState("");
   const [loading, setLoading] = useState(false);
@@ -907,33 +906,6 @@ export default function KenaikanPangkat() {
                   Pantau status pengajuan usulan kenaikan pangkat yang telah disubmit
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pb-4 border-b">
-                <div className="flex items-center gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="periode-filter">Filter Periode</Label>
-                    <Select value={statusPeriodeFilter} onValueChange={setStatusPeriodeFilter}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Semua periode" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">Semua periode</SelectItem>
-                        <SelectItem value="januari">Januari</SelectItem>
-                        <SelectItem value="februari">Februari</SelectItem>
-                        <SelectItem value="maret">Maret</SelectItem>
-                        <SelectItem value="april">April</SelectItem>
-                        <SelectItem value="mei">Mei</SelectItem>
-                        <SelectItem value="juni">Juni</SelectItem>
-                        <SelectItem value="juli">Juli</SelectItem>
-                        <SelectItem value="agustus">Agustus</SelectItem>
-                        <SelectItem value="september">September</SelectItem>
-                        <SelectItem value="oktober">Oktober</SelectItem>
-                        <SelectItem value="november">November</SelectItem>
-                        <SelectItem value="desember">Desember</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
               <CardContent>
                 {loading ? (
                   <div className="text-center py-12">
@@ -956,82 +928,61 @@ export default function KenaikanPangkat() {
                     </Button>
                   </div>
                 ) : (
-                  (() => {
-                    const filteredApplications = applications.filter((app) => {
-                      if (!statusPeriodeFilter) return true;
-                      const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
-                      return estimasiData.periode?.toLowerCase() === statusPeriodeFilter.toLowerCase();
-                    });
-
-                    return filteredApplications.length === 0 && statusPeriodeFilter ? (
-                      <div className="text-center py-12">
-                        <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">Tidak Ada Data</h3>
-                        <p className="text-muted-foreground mb-4">
-                          Tidak ada pengajuan pada periode {statusPeriodeFilter}.
-                        </p>
-                        <Button variant="outline" onClick={() => setStatusPeriodeFilter("")}>
-                          Lihat Semua Periode
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>No. Usulan</TableHead>
-                              <TableHead>Nama Pegawai</TableHead>
-                              <TableHead>Kategori</TableHead>
-                              <TableHead>Periode</TableHead>
-                              <TableHead>Status</TableHead>
-                              <TableHead>Tanggal Pengajuan</TableHead>
-                              <TableHead>Aksi</TableHead>
+                  <div className="space-y-4">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>No. Usulan</TableHead>
+                          <TableHead>Nama Pegawai</TableHead>
+                          <TableHead>Kategori</TableHead>
+                          <TableHead>Periode</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Tanggal Pengajuan</TableHead>
+                          <TableHead>Aksi</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {applications.map((app) => {
+                          const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
+                          return (
+                            <TableRow key={app.id}>
+                              <TableCell className="font-mono">
+                                {estimasiData.nomor_usulan || 'N/A'}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {estimasiData.employee_name || 'N/A'}
+                              </TableCell>
+                              <TableCell>
+                                {estimasiData.kategori_name || 'N/A'}
+                              </TableCell>
+                              <TableCell className="capitalize">
+                                {estimasiData.periode || 'N/A'}
+                              </TableCell>
+                              <TableCell>
+                                {getStatusBadge(app.status)}
+                              </TableCell>
+                              <TableCell>
+                                {new Date(app.created_at).toLocaleDateString('id-ID')}
+                              </TableCell>
+                              <TableCell>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedApplicationForRevision(app);
+                                    setIsRevisionModalOpen(true);
+                                  }}
+                                >
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  Detail
+                                </Button>
+                              </TableCell>
                             </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {filteredApplications.map((app) => {
-                              const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
-                              return (
-                                <TableRow key={app.id}>
-                                  <TableCell className="font-mono">
-                                    {estimasiData.nomor_usulan || 'N/A'}
-                                  </TableCell>
-                                  <TableCell className="font-medium">
-                                    {estimasiData.employee_name || 'N/A'}
-                                  </TableCell>
-                                  <TableCell>
-                                    {estimasiData.kategori_name || 'N/A'}
-                                  </TableCell>
-                                  <TableCell className="capitalize">
-                                    {estimasiData.periode || 'N/A'}
-                                  </TableCell>
-                                  <TableCell>
-                                    {getStatusBadge(app.status)}
-                                  </TableCell>
-                                  <TableCell>
-                                    {new Date(app.created_at).toLocaleDateString('id-ID')}
-                                  </TableCell>
-                                  <TableCell>
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm"
-                                      onClick={() => {
-                                        setSelectedApplicationForRevision(app);
-                                        setIsRevisionModalOpen(true);
-                                      }}
-                                    >
-                                      <FileText className="w-4 h-4 mr-2" />
-                                      Detail
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    );
-                  })()
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -1045,59 +996,48 @@ export default function KenaikanPangkat() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {(() => {
-                  const filteredApplications = applications.filter((app) => {
-                    if (!statusPeriodeFilter) return true;
-                    const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
-                    return estimasiData.periode?.toLowerCase() === statusPeriodeFilter.toLowerCase();
-                  });
-
-                  return filteredApplications.length > 0 ? (
-                    <div className="space-y-4">
-                      {filteredApplications.slice(0, 5).map((app) => {
-                        const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
-                        return (
-                          <div key={app.id} className="flex items-start gap-4 pb-4 border-b last:border-b-0">
-                            <div className="flex-shrink-0">
-                              {app.status === 'submitted' && <Clock className="w-5 h-5 text-yellow-500" />}
-                              {app.status === 'approved' && <CheckCircle className="w-5 h-5 text-blue-500" />}
-                              {app.status === 'completed' && <CheckCircle className="w-5 h-5 text-green-500" />}
-                              {app.status === 'revision_needed' && <AlertTriangle className="w-5 h-5 text-red-500" />}
-                              {app.status === 'in_review' && <Clock className="w-5 h-5 text-orange-500" />}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">
-                                Pengajuan kenaikan pangkat untuk {estimasiData.employee_name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {new Date(app.created_at).toLocaleDateString('id-ID', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })} - Periode: {estimasiData.periode || 'N/A'}
-                              </p>
-                            </div>
-                            <div>
-                              {getStatusBadge(app.status)}
-                            </div>
+                {applications.length > 0 ? (
+                  <div className="space-y-4">
+                    {applications.slice(0, 5).map((app) => {
+                      const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
+                      return (
+                        <div key={app.id} className="flex items-start gap-4 pb-4 border-b last:border-b-0">
+                          <div className="flex-shrink-0">
+                            {app.status === 'submitted' && <Clock className="w-5 h-5 text-yellow-500" />}
+                            {app.status === 'approved' && <CheckCircle className="w-5 h-5 text-blue-500" />}
+                            {app.status === 'completed' && <CheckCircle className="w-5 h-5 text-green-500" />}
+                            {app.status === 'revision_needed' && <AlertTriangle className="w-5 h-5 text-red-500" />}
+                            {app.status === 'in_review' && <Clock className="w-5 h-5 text-orange-500" />}
                           </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-muted-foreground">
-                        {statusPeriodeFilter 
-                          ? `Tidak ada aktivitas pada periode ${statusPeriodeFilter}`
-                          : "Timeline akan ditampilkan setelah pengajuan dibuat"
-                        }
-                      </p>
-                    </div>
-                  );
-                })()}
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">
+                              Pengajuan kenaikan pangkat untuk {estimasiData.employee_name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(app.created_at).toLocaleDateString('id-ID', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                          <div>
+                            {getStatusBadge(app.status)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground">
+                      Timeline akan ditampilkan setelah pengajuan dibuat
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
