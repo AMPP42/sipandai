@@ -56,7 +56,7 @@ export default function PanelAdmin() {
 
         {/* Admin Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className={`grid w-full ${user?.role === 'admin_unit' ? 'grid-cols-1' : 'grid-cols-6'}`}>
+          <TabsList className={`grid w-full ${user?.role === 'admin_unit' ? 'grid-cols-1' : 'grid-cols-5'}`}>
             <TabsTrigger value="database-pegawai" className="flex items-center gap-2">
               <Database className="w-4 h-4" />
               Database Pegawai
@@ -71,10 +71,6 @@ export default function PanelAdmin() {
                 <TabsTrigger value="verifikasi-usulan" className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4" />
                   Verifikasi Usulan
-                </TabsTrigger>
-                <TabsTrigger value="perbaikan-usulan" className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" />
-                  Perbaikan Usulan
                 </TabsTrigger>
                 <TabsTrigger value="formasi-jabatan" className="flex items-center gap-2">
                   <UserCheck className="w-4 h-4" />
@@ -137,22 +133,6 @@ export default function PanelAdmin() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="perbaikan-usulan" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5" />
-                      Perbaikan Usulan
-                    </CardTitle>
-                    <CardDescription>
-                      Usulan yang telah diperbaiki dan diajukan kembali
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Verifikasi showResubmittedOnly />
-                  </CardContent>
-                </Card>
-              </TabsContent>
 
               <TabsContent value="formasi-jabatan" className="space-y-4">
                 <Card>
