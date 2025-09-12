@@ -94,20 +94,26 @@ export default function PengajuanMutasiTerpadu() {
 
   const loadEmployees = async () => {
     try {
+      console.log('Loading employees for user:', user?.unit);
       const { data, error } = await supabase
         .from('employees')
         .select('*')
         .order('nama');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading employees:', error);
+        throw error;
+      }
+      console.log('Loaded employees:', data?.length || 0);
       setEmployees(data || []);
     } catch (error) {
       console.error('Error loading employees:', error);
       toast({
         title: "Error",
-        description: "Gagal memuat data pegawai",
+        description: `Gagal memuat data pegawai: ${error.message}`,
         variant: "destructive"
       });
+      setEmployees([]);
     }
   };
 

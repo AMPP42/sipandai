@@ -59,6 +59,7 @@ export default function KenaikanPangkat() {
     
     try {
       setLoading(true);
+      console.log('Loading applications for user:', user.id, 'unit:', user.unit);
       const { data, error } = await supabase
         .from('applications')
         .select('*')
@@ -66,13 +67,17 @@ export default function KenaikanPangkat() {
         .eq('submitter_id', user.id)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading applications:', error);
+        throw error;
+      }
+      console.log('Loaded applications:', data?.length || 0);
       setApplications(data || []);
     } catch (error) {
       console.error('Error loading applications:', error);
       toast({
         title: "Error",
-        description: "Gagal memuat data pengajuan",
+        description: `Gagal memuat data pengajuan: ${error.message}`,
         variant: "destructive"
       });
     } finally {

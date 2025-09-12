@@ -138,13 +138,18 @@ export default function ReminderPensiun() {
   const fetchEmployeeData = async () => {
     try {
       setLoading(true);
-    const { data: employees, error } = await supabase
-      .from('employees')
-      .select('id, nama, nip, tanggal_lahir, tmt_pensiun, unit, jabatan, pangkat, masa_kerja, handphone, email')
-      .not('tmt_pensiun', 'is', null)
-      .order('tmt_pensiun', { ascending: true });
+      console.log('Loading pension data for user:', user?.unit);
+      const { data: employees, error } = await supabase
+        .from('employees')
+        .select('id, nama, nip, tanggal_lahir, tmt_pensiun, unit, jabatan, pangkat, masa_kerja, handphone, email')
+        .not('tmt_pensiun', 'is', null)
+        .order('tmt_pensiun', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching employee data:', error);
+        throw error;
+      }
+      console.log('Loaded pension eligible employees:', employees?.length || 0);
 
       // Transform employee data to pension data with calculations
       const transformedData: PensiunData[] = (employees || []).map((emp: Employee) => {

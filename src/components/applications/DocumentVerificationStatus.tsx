@@ -36,16 +36,24 @@ export default function DocumentVerificationStatus({ applicationId, applicationS
   const loadDocumentVerifications = async () => {
     setLoading(true);
     try {
+      console.log('Loading document verifications for application:', applicationId);
       const { data, error } = await supabase
         .from('document_verifications')
         .select('*')
         .eq('application_id', applicationId)
         .order('document_type');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading document verifications:', error);
+        // Don't throw error to prevent stack depth issues, just set empty array
+        setDocumentVerifications([]);
+        return;
+      }
+      console.log('Loaded document verifications:', data?.length || 0);
       setDocumentVerifications((data || []) as DocumentVerification[]);
     } catch (error) {
       console.error('Error loading document verifications:', error);
+      setDocumentVerifications([]);
     } finally {
       setLoading(false);
     }
