@@ -85,38 +85,68 @@ export default function KenaikanPangkat() {
     }
   };
 
-  // Mock data for demonstration
-  const pangkatData: PangkatData[] = [{
-    id: "1",
-    nama: "Dr. Ahmad Fauzi, S.H., M.H.",
-    nip: "196508121990031001",
-    pangkatSekarang: "Pembina",
-    golonganSekarang: "IV/a",
-    pangkatTujuan: "Pembina Tingkat I",
-    golonganTujuan: "IV/b",
-    masaKerja: {
-      tahun: 15,
-      bulan: 6
-    },
-    syaratTerpenuhi: true,
-    statusPengajuan: "eligible",
-    tanggalTerakhirNaik: "2020-04-01"
-  }, {
-    id: "2",
-    nama: "Siti Nurhaliza, S.E., M.M.",
-    nip: "197203101995032002",
-    pangkatSekarang: "Penata Muda Tingkat I",
-    golonganSekarang: "III/b",
-    pangkatTujuan: "Penata",
-    golonganTujuan: "III/c",
-    masaKerja: {
-      tahun: 8,
-      bulan: 3
-    },
-    syaratTerpenuhi: false,
-    statusPengajuan: "not_eligible",
-    tanggalTerakhirNaik: "2022-01-01"
-  }];
+  // Employee data from database
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [pangkatData, setPangkatData] = useState<PangkatData[]>([]);
+
+  useEffect(() => {
+    loadEmployees();
+  }, [user?.unit]);
+
+  const loadEmployees = async () => {
+    try {
+      if (!user?.unit) {
+        console.error('User unit not found');
+        setEmployees([]);
+        setPangkatData([]);
+        return;
+      }
+
+      console.log('Loading employees for unit:', user.unit);
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('unit', user.unit)
+        .order('nama');
+      
+      if (error) {
+        console.error('Error loading employees:', error);
+        throw error;
+      }
+      
+      console.log('Loaded employees for unit', user.unit, ':', data?.length || 0);
+      setEmployees(data || []);
+      
+      // Transform employee data to pangkat data
+      const transformedData: PangkatData[] = (data || []).map((emp) => ({
+        id: emp.id,
+        nama: emp.nama,
+        nip: emp.nip || '',
+        pangkatSekarang: emp.pangkat || 'Belum Diset',
+        golonganSekarang: 'III/a', // This should be calculated from pangkat
+        pangkatTujuan: 'Belum Ditentukan',
+        golonganTujuan: 'III/b',
+        masaKerja: {
+          tahun: 4,
+          bulan: 0
+        },
+        syaratTerpenuhi: true,
+        statusPengajuan: "eligible" as const,
+        tanggalTerakhirNaik: "2020-04-01"
+      }));
+      
+      setPangkatData(transformedData);
+    } catch (error) {
+      console.error('Error loading employees:', error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat data pegawai",
+        variant: "destructive"
+      });
+      setEmployees([]);
+      setPangkatData([]);
+    }
+  };
   const persyaratanPangkat = [{
     nama: "Masa Kerja Minimal",
     deskripsi: "4 tahun dalam pangkat terakhir",
@@ -489,11 +519,11 @@ export default function KenaikanPangkat() {
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih pegawai dari database" />
                     </SelectTrigger>
-                    <SelectContent>
-                      {pangkatData.map(pegawai => <SelectItem key={pegawai.id} value={pegawai.id}>
-                          {pegawai.nama} - {pegawai.nip}
-                        </SelectItem>)}
-                    </SelectContent>
+                     <SelectContent>
+                       {employees.map(employee => <SelectItem key={employee.id} value={employee.id}>
+                           {employee.nama} - {employee.nip || 'Tanpa NIP'}
+                         </SelectItem>)}
+                     </SelectContent>
                   </Select>
                 </div>
 
@@ -723,32 +753,32 @@ export default function KenaikanPangkat() {
                                   <TableHead>Aksi</TableHead>
                                 </TableRow>
                               </TableHeader>
-                              <TableBody>
-                                {pangkatData
-                                  .filter(pegawai => 
-                                    pegawai.nama.toLowerCase().includes(searchEmployee.toLowerCase()) ||
-                                    pegawai.nip.includes(searchEmployee)
-                                  )
-                                  .map((pegawai) => (
-                                  <TableRow key={pegawai.id}>
-                                    <TableCell className="font-medium">{pegawai.nama}</TableCell>
-                                    <TableCell>{pegawai.nip}</TableCell>
-                                    <TableCell>Balai Besar Pelatihan Vokasi dan Produktivitas Bandung</TableCell>
-                                    <TableCell>Pengadministrasi Perkantoran</TableCell>
-                                    <TableCell>
-                                      <Button
-                                        size="sm"
-                                        onClick={() => {
-                                          setSelectedPegawai(pegawai.id);
-                                          setIsEmployeeDialogOpen(false);
-                                        }}
-                                      >
-                                        Pilih
-                                      </Button>
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
+                               <TableBody>
+                                 {employees
+                                   .filter(pegawai => 
+                                     pegawai.nama.toLowerCase().includes(searchEmployee.toLowerCase()) ||
+                                     (pegawai.nip && pegawai.nip.includes(searchEmployee))
+                                   )
+                                   .map((pegawai) => (
+                                   <TableRow key={pegawai.id}>
+                                     <TableCell className="font-medium">{pegawai.nama}</TableCell>
+                                     <TableCell>{pegawai.nip || '-'}</TableCell>
+                                     <TableCell>{pegawai.unit || '-'}</TableCell>
+                                     <TableCell>{pegawai.jabatan || '-'}</TableCell>
+                                     <TableCell>
+                                       <Button
+                                         size="sm"
+                                         onClick={() => {
+                                           setSelectedPegawai(pegawai.id);
+                                           setIsEmployeeDialogOpen(false);
+                                         }}
+                                       >
+                                         Pilih
+                                       </Button>
+                                     </TableCell>
+                                   </TableRow>
+                                 ))}
+                               </TableBody>
                             </Table>
                           </div>
                         </div>
@@ -760,25 +790,31 @@ export default function KenaikanPangkat() {
                 {/* Employee Summary Card */}
                 {selectedPegawai && <Card className="bg-muted/50">
                     <CardContent className="p-4">
-                      {(() => {
-                    const pegawai = pangkatData.find(p => p.id === selectedPegawai);
-                    if (!pegawai) return null;
+                       {(() => {
+                    const employee = employees.find(emp => emp.id === selectedPegawai);
+                    const pangkatInfo = pangkatData.find(p => p.id === selectedPegawai);
+                    if (!employee || !pangkatInfo) return null;
                     return <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                               <div>
                                 <p className="text-sm text-muted-foreground">Nama Pegawai</p>
-                                <p className="font-semibold">{pegawai.nama}</p>
-                                <p className="text-sm text-muted-foreground">NIP: {pegawai.nip}</p>
+                                <p className="font-semibold">{employee.nama}</p>
+                                <p className="text-sm text-muted-foreground">NIP: {employee.nip || '-'}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">Unit Kerja</p>
+                                <p className="font-semibold">{employee.unit || '-'}</p>
+                                <p className="text-sm text-muted-foreground">Jabatan: {employee.jabatan || '-'}</p>
                               </div>
                               <div>
                                 <p className="text-sm text-muted-foreground">Pangkat Saat Ini</p>
-                                <p className="font-semibold">{pegawai.pangkatSekarang}</p>
-                                <p className="text-sm text-muted-foreground">Golongan {pegawai.golonganSekarang}</p>
+                                <p className="font-semibold">{employee.pangkat || 'Belum Diset'}</p>
+                                <p className="text-sm text-muted-foreground">Golongan {pangkatInfo.golonganSekarang}</p>
                               </div>
                               <div>
                                 <p className="text-sm text-muted-foreground">Pangkat Tujuan</p>
-                                <p className="font-semibold text-primary">{pegawai.pangkatTujuan}</p>
-                                <p className="text-sm text-muted-foreground">Golongan {pegawai.golonganTujuan}</p>
+                                <p className="font-semibold text-primary">{pangkatInfo.pangkatTujuan}</p>
+                                <p className="text-sm text-muted-foreground">Golongan {pangkatInfo.golonganTujuan}</p>
                               </div>
                             </div>
                             
@@ -788,16 +824,19 @@ export default function KenaikanPangkat() {
                                 <Calendar className="w-4 h-4 text-muted-foreground" />
                                 <span className="text-sm font-medium">Masa Kerja dalam Pangkat</span>
                               </div>
-                              <div className="space-y-2">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm text-muted-foreground">
-                                    {pegawai.masaKerja.tahun} tahun {pegawai.masaKerja.bulan} bulan
-                                  </span>
-                                  
-                                </div>
-                                
-                                
-                              </div>
+                               <div className="space-y-2">
+                                 <div className="flex justify-between items-center">
+                                   <span className="text-sm text-muted-foreground">
+                                     {pangkatInfo.masaKerja.tahun} tahun {pangkatInfo.masaKerja.bulan} bulan
+                                   </span>
+                                   <span className="text-sm font-medium">
+                                     Masa kerja: {employee.masa_kerja || 'Belum dihitung'}
+                                   </span>
+                                 </div>
+                                 <p className="text-xs text-muted-foreground">
+                                   Minimum 4 tahun masa kerja dalam pangkat untuk kenaikan pangkat
+                                 </p>
+                               </div>
                             </div>
                           </div>;
                   })()}

@@ -139,9 +139,17 @@ export default function ReminderPensiun() {
     try {
       setLoading(true);
       console.log('Loading pension data for user:', user?.unit);
+      
+      if (!user?.unit) {
+        console.error('User unit not found');
+        setPensiunData([]);
+        return;
+      }
+
       const { data: employees, error } = await supabase
         .from('employees')
         .select('id, nama, nip, tanggal_lahir, tmt_pensiun, unit, jabatan, pangkat, masa_kerja, handphone, email')
+        .eq('unit', user.unit)
         .not('tmt_pensiun', 'is', null)
         .order('tmt_pensiun', { ascending: true });
 
