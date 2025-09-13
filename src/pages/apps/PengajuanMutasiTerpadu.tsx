@@ -191,7 +191,7 @@ export default function PengajuanMutasiTerpadu() {
         submitter_id: user?.id || '',
         submitter_name: user?.name || '',
         submitter_unit: user?.unit || '',
-        status: 'draft' as const,
+        status: 'submitted' as const,
         estimasi: JSON.stringify({
           employee_id: selectedEmployee.id,
           employee_name: selectedEmployee.nama,

@@ -20,6 +20,10 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import DocumentRevisionModal from '@/components/verifikasi/DocumentRevisionModal';
+import RevisionSubmissionModal from '@/components/verifikasi/RevisionSubmissionModal';
+import DocumentVerificationStatus from '@/components/applications/DocumentVerificationStatus';
+import type { Database } from '@/integrations/supabase/types';
 
 interface Application {
   id: string;
@@ -27,12 +31,16 @@ interface Application {
   judul?: string;
   submitter_name?: string;
   submitter_unit?: string;
+  submitter_id: string;
   tanggal_pengajuan?: string;
   created_at: string;
+  updated_at: string;
   status: string;
   keterangan?: string;
   estimasi?: string;
   progress: number;
+  documents_count: number;
+  detailed_verification_status: string;
 }
 
 export default function StatusUsulan() {
@@ -40,6 +48,7 @@ export default function StatusUsulan() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [applications, setApplications] = useState<Application[]>([]);
+  const [rawApplications, setRawApplications] = useState<Database['public']['Tables']['applications']['Row'][]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     total: 0,
@@ -47,6 +56,10 @@ export default function StatusUsulan() {
     approved: 0,
     revision: 0
   });
+  const [selectedApplicationForRevision, setSelectedApplicationForRevision] = useState<Database['public']['Tables']['applications']['Row'] | null>(null);
+  const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
+  const [selectedApplicationForResubmit, setSelectedApplicationForResubmit] = useState<Database['public']['Tables']['applications']['Row'] | null>(null);
+  const [isResubmitModalOpen, setIsResubmitModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -69,18 +82,25 @@ export default function StatusUsulan() {
 
       if (error) throw error;
 
+      // Store raw data for revision modal
+      setRawApplications(applicationsData || []);
+
       const mappedData: Application[] = (applicationsData || []).map(app => ({
         id: app.id,
         jenis: getApplicationTypeName(app.jenis),
         judul: app.judul,
         submitter_name: app.submitter_name,
         submitter_unit: app.submitter_unit,
+        submitter_id: app.submitter_id,
         tanggal_pengajuan: app.tanggal_pengajuan,
         created_at: app.created_at,
+        updated_at: app.updated_at,
         status: app.status,
         keterangan: getStatusDescription(app.status),
         estimasi: getEstimation(app.status),
-        progress: getProgress(app.status)
+        progress: getProgress(app.status),
+        documents_count: app.documents_count,
+        detailed_verification_status: app.detailed_verification_status || 'not_started'
       }));
 
       setApplications(mappedData);
@@ -110,6 +130,7 @@ export default function StatusUsulan() {
       case 'pensiun':
         return 'Pengajuan Pensiun';
       case 'mutasi':
+      case 'mutasi_terpadu':
         return 'Pengajuan Mutasi';
       case 'kenaikan_pangkat':
         return 'Kenaikan Pangkat';
@@ -217,6 +238,10 @@ export default function StatusUsulan() {
     // Navigate to edit based on application type
     if (application.jenis === 'Pengajuan Pensiun') {
       navigate(`/apps/reminder-pensiun?edit=${application.id}`);
+    } else if (application.jenis === 'Kenaikan Pangkat') {
+      navigate(`/apps/kenaikan-pangkat?edit=${application.id}`);
+    } else if (application.jenis === 'Pengajuan Mutasi') {
+      navigate(`/apps/pengajuan-mutasi-terpadu?edit=${application.id}`);
     }
     // Add other application types as needed
   };
@@ -254,12 +279,28 @@ export default function StatusUsulan() {
 
   const getActionButtons = (application: Application) => {
     const canEdit = application.status === 'revision_needed';
+    const canViewRevision = application.status === 'revision_needed';
     
     return (
       <div className="flex gap-2">
         <Button size="sm" variant="outline" title="Lihat Detail">
           <Eye className="w-4 h-4" />
         </Button>
+        
+        {canViewRevision && (
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => {
+              setSelectedApplicationForRevision(rawApplications.find(app => app.id === application.id) || null);
+              setIsRevisionModalOpen(true);
+            }}
+            className="text-orange-600 hover:text-orange-700"
+            title="Lihat Detail Revisi"
+          >
+            <AlertCircle className="w-4 h-4" />
+          </Button>
+        )}
         
         {canEdit && (
           <Button 
@@ -392,7 +433,15 @@ export default function StatusUsulan() {
                 applications.map((application) => (
                   <TableRow key={application.id}>
                     <TableCell className="font-medium">{application.id.slice(0, 8)}</TableCell>
-                    <TableCell>{application.jenis}</TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div>{application.jenis}</div>
+                        <DocumentVerificationStatus 
+                          applicationId={application.id} 
+                          applicationStatus={application.status} 
+                        />
+                      </div>
+                    </TableCell>
                     <TableCell>
                       {application.tanggal_pengajuan 
                         ? new Date(application.tanggal_pengajuan).toLocaleDateString('id-ID')
@@ -465,6 +514,34 @@ export default function StatusUsulan() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Document Revision Modal */}
+      {selectedApplicationForRevision && (
+        <DocumentRevisionModal
+          open={isRevisionModalOpen}
+          onOpenChange={setIsRevisionModalOpen}
+          application={selectedApplicationForRevision}
+          onRevisionSubmitted={() => {
+            setIsRevisionModalOpen(false);
+            setSelectedApplicationForRevision(null);
+            loadApplications();
+          }}
+        />
+      )}
+
+      {/* Revision Submission Modal */}
+      {selectedApplicationForResubmit && (
+        <RevisionSubmissionModal
+          open={isResubmitModalOpen}
+          onOpenChange={setIsResubmitModalOpen}
+          application={selectedApplicationForResubmit!}
+          onRevisionSubmitted={() => {
+            setIsResubmitModalOpen(false);
+            setSelectedApplicationForResubmit(null);
+            loadApplications();
+          }}
+        />
+      )}
     </div>
   );
 }
