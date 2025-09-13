@@ -95,24 +95,16 @@ export default function PengajuanMutasiTerpadu() {
   const loadEmployees = async () => {
     try {
       console.log('Loading employees for user:', user?.unit);
-      
-      if (!user?.unit) {
-        console.error('User unit not found');
-        setEmployees([]);
-        return;
-      }
-
       const { data, error } = await supabase
         .from('employees')
         .select('*')
-        .eq('unit', user.unit)
         .order('nama');
       
       if (error) {
         console.error('Error loading employees:', error);
         throw error;
       }
-      console.log('Loaded employees for unit', user.unit, ':', data?.length || 0);
+      console.log('Loaded employees:', data?.length || 0);
       setEmployees(data || []);
     } catch (error) {
       console.error('Error loading employees:', error);
