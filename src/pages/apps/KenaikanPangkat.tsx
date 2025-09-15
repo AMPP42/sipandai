@@ -922,7 +922,7 @@ export default function KenaikanPangkat() {
                           <SelectValue placeholder="Semua periode" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Semua periode</SelectItem>
+                          <SelectItem value="all">Semua periode</SelectItem>
                           <SelectItem value="januari">Januari</SelectItem>
                           <SelectItem value="februari">Februari</SelectItem>
                           <SelectItem value="maret">Maret</SelectItem>
@@ -977,7 +977,7 @@ export default function KenaikanPangkat() {
                       <TableBody>
                         {applications
                           .filter((app) => {
-                            if (!filterPeriode) return true;
+                            if (!filterPeriode || filterPeriode === "all") return true;
                             const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
                             return estimasiData.periode?.toLowerCase() === filterPeriode.toLowerCase();
                           })
