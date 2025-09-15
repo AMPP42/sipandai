@@ -73,7 +73,7 @@ export default function UsulanMutasi() {
       case 'dalam_review':
         return <Badge className="bg-yellow-100 text-yellow-700">Dalam Review</Badge>;
       case 'disetujui':
-        return <Badge className="bg-green-100 text-green-700">Disetujui</Badge>;
+        return <Badge className="bg-blue-100 text-blue-700">Diproses</Badge>;
       case 'ditolak':
         return <Badge className="bg-red-100 text-red-700">Ditolak</Badge>;
       default:

@@ -203,11 +203,11 @@ export default function StatusUsulan() {
       case 'submitted':
         return <Badge className="bg-blue-100 text-blue-700">Menunggu Verifikasi</Badge>;
       case 'in_review':
-        return <Badge className="bg-yellow-100 text-yellow-700">Sedang Review</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-700">Sudah Diperbaiki</Badge>;
       case 'revision_needed':
-        return <Badge className="bg-orange-100 text-orange-700">Perlu Revisi</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-700">Perlu Perbaikan</Badge>;
       case 'approved':
-        return <Badge className="bg-green-100 text-green-700">Disetujui</Badge>;
+        return <Badge className="bg-blue-100 text-blue-700">Diproses</Badge>;
       case 'rejected':
         return <Badge className="bg-red-100 text-red-700">Ditolak</Badge>;
       default:

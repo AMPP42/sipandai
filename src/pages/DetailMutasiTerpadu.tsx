@@ -383,9 +383,9 @@ export default function DetailMutasiTerpadu() {
       draft: { label: "Draft", className: "bg-gray-100 text-gray-700" },
       submitted: { label: "Menunggu Verifikasi", className: "bg-yellow-100 text-yellow-700" },
       in_review: { label: "Sedang Ditinjau", className: "bg-blue-100 text-blue-700" },
-      approved: { label: "Disetujui", className: "bg-green-100 text-green-700" },
+      approved: { label: "Diproses", className: "bg-blue-100 text-blue-700" },
       rejected: { label: "Ditolak", className: "bg-red-100 text-red-700" },
-      revision_needed: { label: "Perlu Revisi", className: "bg-orange-100 text-orange-700" }
+      revision_needed: { label: "Perlu Perbaikan", className: "bg-yellow-100 text-yellow-700" }
     };
     
     const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.draft;
@@ -395,7 +395,7 @@ export default function DetailMutasiTerpadu() {
   const getVerificationStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
-        return <Badge className="bg-green-100 text-green-700">✓ Disetujui</Badge>;
+        return <Badge className="bg-blue-100 text-blue-700">✓ Diproses</Badge>;
       case 'needs_fix':
         return <Badge className="bg-red-100 text-red-700">✗ Perlu Diperbaiki</Badge>;
       case 'pending':
@@ -505,7 +505,7 @@ export default function DetailMutasiTerpadu() {
             <h4 className="font-semibold text-orange-900 mb-2">Ringkasan Status Verifikasi</h4>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <Badge className="bg-green-100 text-green-700">✓ Disetujui</Badge>
+                <Badge className="bg-blue-100 text-blue-700">✓ Diproses</Badge>
                 <span className="text-green-800">
                   {Object.values(documentVerificationStatus).filter(v => v.status === 'approved').length} dokumen
                 </span>

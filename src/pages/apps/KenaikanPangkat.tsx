@@ -154,11 +154,11 @@ export default function KenaikanPangkat() {
         className: "bg-yellow-100 text-yellow-700"
       },
       revision_needed: {
-        label: "Perbaikan",
-        className: "bg-red-100 text-red-700"
+        label: "Perlu Perbaikan",
+        className: "bg-yellow-100 text-yellow-700"
       },
       approved: {
-        label: "Disetujui", 
+        label: "Diproses", 
         className: "bg-blue-100 text-blue-700"
       },
       completed: {
@@ -166,8 +166,8 @@ export default function KenaikanPangkat() {
         className: "bg-green-100 text-green-700"
       },
       in_review: {
-        label: "Sedang Direview",
-        className: "bg-orange-100 text-orange-700"
+        label: "Sudah Diperbaiki",
+        className: "bg-yellow-100 text-yellow-700"
       },
       rejected: {
         label: "Ditolak",
