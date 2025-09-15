@@ -137,7 +137,6 @@ export default function DocumentRevisionModal({
 
   // Show different content based on application status
   const showRevisionInterface = application.status === 'revision_needed' && documentsNeedingRevision.length > 0;
-  const hasDocuments = documentVerifications.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -163,12 +162,12 @@ export default function DocumentRevisionModal({
             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground">Memuat data verifikasi...</p>
           </div>
-        ) : hasDocuments ? (
+        ) : (
           <div className="space-y-6">
             {/* Summary */}
             <div className={`border rounded-lg p-4 ${showRevisionInterface ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200'}`}>
               <h4 className={`font-medium mb-2 ${showRevisionInterface ? 'text-yellow-800' : 'text-blue-800'}`}>
-                Ringkasan Verifikasi Dokumen
+                Ringkasan Verifikasi
               </h4>
               <div className="grid grid-cols-4 gap-4 text-sm">
                 <div>
@@ -177,15 +176,15 @@ export default function DocumentRevisionModal({
                 </div>
                 <div>
                   <span className="text-green-700">Disetujui:</span>
-                  <span className="font-medium ml-2 text-green-600">{approvedDocuments.length}</span>
+                  <span className="font-medium ml-2">{approvedDocuments.length}</span>
                 </div>
                 <div>
                   <span className="text-red-700">Perlu Perbaikan:</span>
-                  <span className="font-medium ml-2 text-red-600">{documentsNeedingRevision.length}</span>
+                  <span className="font-medium ml-2">{documentsNeedingRevision.length}</span>
                 </div>
                 <div>
                   <span className="text-blue-700">Menunggu:</span>
-                  <span className="font-medium ml-2 text-blue-600">{pendingDocuments.length}</span>
+                  <span className="font-medium ml-2">{pendingDocuments.length}</span>
                 </div>
               </div>
             </div>
@@ -357,11 +356,6 @@ export default function DocumentRevisionModal({
                 </Button>
               </div>
             )}
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">Belum ada dokumen yang diverifikasi untuk usulan ini.</p>
           </div>
         )}
       </DialogContent>
