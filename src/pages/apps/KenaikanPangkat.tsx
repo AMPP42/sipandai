@@ -151,7 +151,7 @@ export default function KenaikanPangkat() {
       },
       submitted: {
         label: "Menunggu Verifikasi",
-        className: "bg-yellow-100 text-yellow-700"
+        className: "bg-gray-100 text-gray-700"
       },
       revision_needed: {
         label: "Perlu Perbaikan",
@@ -167,7 +167,7 @@ export default function KenaikanPangkat() {
       },
       in_review: {
         label: "Sudah Diperbaiki",
-        className: "bg-yellow-100 text-yellow-700"
+        className: "bg-orange-100 text-orange-700"
       },
       rejected: {
         label: "Ditolak",

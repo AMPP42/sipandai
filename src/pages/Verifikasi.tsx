@@ -267,9 +267,9 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
       case 'draft':
         return <Badge className="bg-gray-100 text-gray-700">Draft</Badge>;
       case 'submitted':
-        return <Badge className="bg-blue-100 text-blue-700">Menunggu Verifikasi</Badge>;
+        return <Badge className="bg-gray-100 text-gray-700">Menunggu Verifikasi</Badge>;
       case 'in_review':
-        return <Badge className="bg-yellow-100 text-yellow-700">Sudah Diperbaiki</Badge>;
+        return <Badge className="bg-orange-100 text-orange-700">Sudah Diperbaiki</Badge>;
       case 'revision_needed':
         return <Badge className="bg-yellow-100 text-yellow-700">Perlu Perbaikan</Badge>;
       case 'approved':

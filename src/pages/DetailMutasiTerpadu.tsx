@@ -381,8 +381,8 @@ export default function DetailMutasiTerpadu() {
     
     const statusMap = {
       draft: { label: "Draft", className: "bg-gray-100 text-gray-700" },
-      submitted: { label: "Menunggu Verifikasi", className: "bg-yellow-100 text-yellow-700" },
-      in_review: { label: "Sedang Ditinjau", className: "bg-blue-100 text-blue-700" },
+      submitted: { label: "Menunggu Verifikasi", className: "bg-gray-100 text-gray-700" },
+      in_review: { label: "Sudah Diperbaiki", className: "bg-orange-100 text-orange-700" },
       approved: { label: "Diproses", className: "bg-blue-100 text-blue-700" },
       rejected: { label: "Ditolak", className: "bg-red-100 text-red-700" },
       revision_needed: { label: "Perlu Perbaikan", className: "bg-yellow-100 text-yellow-700" }
