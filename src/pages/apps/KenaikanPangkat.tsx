@@ -49,6 +49,7 @@ export default function KenaikanPangkat() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [selectedApplicationForRevision, setSelectedApplicationForRevision] = useState<Application | null>(null);
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
+  const [filterPeriode, setFilterPeriode] = useState("");
 
   useEffect(() => {
     loadApplications();
@@ -912,6 +913,33 @@ export default function KenaikanPangkat() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <Label htmlFor="filter-periode">Filter berdasarkan Periode</Label>
+                      <Select value={filterPeriode} onValueChange={setFilterPeriode}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Semua periode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Semua periode</SelectItem>
+                          <SelectItem value="januari">Januari</SelectItem>
+                          <SelectItem value="februari">Februari</SelectItem>
+                          <SelectItem value="maret">Maret</SelectItem>
+                          <SelectItem value="april">April</SelectItem>
+                          <SelectItem value="mei">Mei</SelectItem>
+                          <SelectItem value="juni">Juni</SelectItem>
+                          <SelectItem value="juli">Juli</SelectItem>
+                          <SelectItem value="agustus">Agustus</SelectItem>
+                          <SelectItem value="september">September</SelectItem>
+                          <SelectItem value="oktober">Oktober</SelectItem>
+                          <SelectItem value="november">November</SelectItem>
+                          <SelectItem value="desember">Desember</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
                 {loading ? (
                   <div className="text-center py-12">
                     <Clock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -947,7 +975,13 @@ export default function KenaikanPangkat() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {applications.map((app) => {
+                        {applications
+                          .filter((app) => {
+                            if (!filterPeriode) return true;
+                            const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
+                            return estimasiData.periode?.toLowerCase() === filterPeriode.toLowerCase();
+                          })
+                          .map((app) => {
                           const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
                           return (
                             <TableRow key={app.id}>
