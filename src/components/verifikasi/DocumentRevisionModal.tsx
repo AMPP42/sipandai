@@ -175,15 +175,15 @@ export default function DocumentRevisionModal({
                   <span className="font-medium ml-2">{documentVerifications.length}</span>
                 </div>
                 <div>
-                  <span className="text-green-700">Disetujui:</span>
+                  <span className="text-blue-700">Disetujui:</span>
                   <span className="font-medium ml-2">{approvedDocuments.length}</span>
                 </div>
                 <div>
-                  <span className="text-red-700">Perlu Perbaikan:</span>
+                  <span className="text-yellow-700">Perlu Perbaikan:</span>
                   <span className="font-medium ml-2">{documentsNeedingRevision.length}</span>
                 </div>
                 <div>
-                  <span className="text-blue-700">Menunggu:</span>
+                  <span className="text-gray-700">Menunggu Verifikasi:</span>
                   <span className="font-medium ml-2">{pendingDocuments.length}</span>
                 </div>
               </div>
@@ -192,21 +192,21 @@ export default function DocumentRevisionModal({
             {/* Documents needing revision */}
             {documentsNeedingRevision.length > 0 && (
               <div className="space-y-4">
-                <h4 className="font-semibold text-red-700 flex items-center gap-2">
+                <h4 className="font-semibold text-yellow-700 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4" />
                   Dokumen yang Perlu Diperbaiki ({documentsNeedingRevision.length})
                 </h4>
                 
                 {documentsNeedingRevision.map((doc, index) => (
-                  <div key={doc.id} className="border border-red-200 rounded-lg p-4 bg-red-50">
+                  <div key={doc.id} className="border border-yellow-200 rounded-lg p-4 bg-yellow-50">
                     <div className="space-y-3">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h5 className="font-medium text-red-800">
+                          <h5 className="font-medium text-yellow-800">
                             {index + 1}. {doc.document_name}
                           </h5>
-                          <Badge className="bg-red-100 text-red-700 mt-1">
-                            {doc.status === 'rejected' ? 'Ditolak' : 'Perlu Perbaikan'}
+                          <Badge className="bg-yellow-100 text-yellow-700 mt-1">
+                            Perlu Perbaikan
                           </Badge>
                           {doc.document_link && (
                             <p className="text-xs text-gray-600 mt-1">
@@ -217,8 +217,8 @@ export default function DocumentRevisionModal({
                       </div>
                       
                       {doc.admin_notes && (
-                        <div className="bg-white border border-red-200 rounded p-3">
-                          <p className="text-sm text-red-700">
+                        <div className="bg-white border border-yellow-200 rounded p-3">
+                          <p className="text-sm text-yellow-700">
                             <strong>Catatan Verifikator:</strong> {doc.admin_notes}
                           </p>
                         </div>
@@ -237,7 +237,7 @@ export default function DocumentRevisionModal({
                               ...prev,
                               [doc.id]: e.target.value
                             }))}
-                            className="border-red-300 focus:border-red-500"
+                            className="border-yellow-300 focus:border-yellow-500"
                           />
                         </div>
                       )}
@@ -252,23 +252,23 @@ export default function DocumentRevisionModal({
               <>
                 <Separator />
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-blue-700">
+                  <h4 className="font-semibold text-gray-700">
                     Dokumen Menunggu Verifikasi ({pendingDocuments.length})
                   </h4>
                   <div className="grid gap-2">
                     {pendingDocuments.map((doc, index) => (
-                      <div key={doc.id} className="flex items-center justify-between py-2 px-3 bg-blue-50 border border-blue-200 rounded">
+                      <div key={doc.id} className="flex items-center justify-between py-2 px-3 bg-gray-50 border border-gray-200 rounded">
                         <div>
-                          <span className="text-sm font-medium text-blue-800">
-                            {index + 1}. {doc.document_name}
-                          </span>
+                            <span className="text-sm font-medium text-gray-800">
+                              {index + 1}. {doc.document_name}
+                            </span>
                           {doc.document_link && (
                             <p className="text-xs text-gray-600">
                               <a href={doc.document_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat dokumen</a>
                             </p>
                           )}
                         </div>
-                        <Badge className="bg-blue-100 text-blue-700">
+                        <Badge className="bg-gray-100 text-gray-700">
                           Menunggu Verifikasi
                         </Badge>
                       </div>
@@ -283,25 +283,25 @@ export default function DocumentRevisionModal({
               <>
                 <Separator />
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-green-700">
+                  <h4 className="font-semibold text-blue-700">
                     Dokumen yang Disetujui ({approvedDocuments.length})
                   </h4>
                   <div className="grid gap-2">
                      {approvedDocuments.map((doc, index) => (
-                       <div key={doc.id} className="flex items-center justify-between py-2 px-3 bg-green-50 border border-green-200 rounded">
+                       <div key={doc.id} className="flex items-center justify-between py-2 px-3 bg-blue-50 border border-blue-200 rounded">
                          <div>
-                           <span className="text-sm font-medium text-green-800">
-                             {index + 1}. {doc.document_name}
-                           </span>
+                            <span className="text-sm font-medium text-blue-800">
+                              {index + 1}. {doc.document_name}
+                            </span>
                            {doc.document_link && (
                              <p className="text-xs text-gray-600">
                                <a href={doc.document_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat dokumen</a>
                              </p>
                            )}
                          </div>
-                         <Badge className="bg-green-100 text-green-700">
-                           Disetujui
-                         </Badge>
+                          <Badge className="bg-blue-100 text-blue-700">
+                            Disetujui
+                          </Badge>
                        </div>
                     ))}
                   </div>
