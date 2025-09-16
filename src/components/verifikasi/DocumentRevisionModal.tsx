@@ -134,8 +134,6 @@ export default function DocumentRevisionModal({
   const documentsNeedingRevision = documentVerifications.filter(doc => doc.status === 'rejected' || doc.status === 'needs_fix');
   const approvedDocuments = documentVerifications.filter(doc => doc.status === 'approved');
   const pendingDocuments = documentVerifications.filter(doc => doc.status === 'pending');
-  const processedDocuments = documentVerifications.filter(doc => doc.status === 'processed');
-  const repairedDocuments = documentVerifications.filter(doc => doc.status === 'revised');
 
   // Show different content based on application status
   const showRevisionInterface = application.status === 'revision_needed' && documentsNeedingRevision.length > 0;
@@ -171,32 +169,22 @@ export default function DocumentRevisionModal({
               <h4 className={`font-medium mb-2 ${showRevisionInterface ? 'text-yellow-800' : 'text-blue-800'}`}>
                 Ringkasan Verifikasi
               </h4>
-              <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-4 gap-4 text-sm">
                 <div>
                   <span className="text-gray-700">Total Dokumen:</span>
                   <span className="font-medium ml-2">{documentVerifications.length}</span>
                 </div>
                 <div>
-                  <span className="text-gray-700">Menunggu Verifikasi:</span>
-                  <span className="font-medium ml-2">{pendingDocuments.length}</span>
+                  <span className="text-blue-700">Disetujui:</span>
+                  <span className="font-medium ml-2">{approvedDocuments.length}</span>
                 </div>
                 <div>
                   <span className="text-yellow-700">Perlu Perbaikan:</span>
                   <span className="font-medium ml-2">{documentsNeedingRevision.length}</span>
                 </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4 text-sm mt-2">
                 <div>
-                  <span className="text-orange-700">Sudah Diperbaiki:</span>
-                  <span className="font-medium ml-2">{repairedDocuments.length}</span>
-                </div>
-                <div>
-                  <span className="text-green-700">Diproses:</span>
-                  <span className="font-medium ml-2">{processedDocuments.length}</span>
-                </div>
-                <div>
-                  <span className="text-blue-700">Disetujui:</span>
-                  <span className="font-medium ml-2">{approvedDocuments.length}</span>
+                  <span className="text-gray-700">Menunggu Verifikasi:</span>
+                  <span className="font-medium ml-2">{pendingDocuments.length}</span>
                 </div>
               </div>
             </div>
@@ -284,68 +272,6 @@ export default function DocumentRevisionModal({
                           Menunggu Verifikasi
                         </Badge>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Repaired documents */}
-            {repairedDocuments.length > 0 && (
-              <>
-                <Separator />
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-orange-700">
-                    Dokumen Sudah Diperbaiki ({repairedDocuments.length})
-                  </h4>
-                  <div className="grid gap-2">
-                     {repairedDocuments.map((doc, index) => (
-                       <div key={doc.id} className="flex items-center justify-between py-2 px-3 bg-orange-50 border border-orange-200 rounded">
-                         <div>
-                            <span className="text-sm font-medium text-orange-800">
-                              {index + 1}. {doc.document_name}
-                            </span>
-                           {doc.document_link && (
-                             <p className="text-xs text-gray-600">
-                               <a href={doc.document_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat dokumen</a>
-                             </p>
-                           )}
-                         </div>
-                          <Badge className="bg-orange-100 text-orange-700">
-                            Sudah Diperbaiki
-                          </Badge>
-                       </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Processed documents */}
-            {processedDocuments.length > 0 && (
-              <>
-                <Separator />
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-green-700">
-                    Dokumen Diproses ({processedDocuments.length})
-                  </h4>
-                  <div className="grid gap-2">
-                     {processedDocuments.map((doc, index) => (
-                       <div key={doc.id} className="flex items-center justify-between py-2 px-3 bg-green-50 border border-green-200 rounded">
-                         <div>
-                            <span className="text-sm font-medium text-green-800">
-                              {index + 1}. {doc.document_name}
-                            </span>
-                           {doc.document_link && (
-                             <p className="text-xs text-gray-600">
-                               <a href={doc.document_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat dokumen</a>
-                             </p>
-                           )}
-                         </div>
-                          <Badge className="bg-green-100 text-green-700">
-                            Diproses
-                          </Badge>
-                       </div>
                     ))}
                   </div>
                 </div>
