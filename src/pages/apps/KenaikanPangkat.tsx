@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TrendingUp, CheckCircle, AlertTriangle, Calendar, User, FileText, Calculator, Clock, Search, Plus } from "lucide-react";
+import { TrendingUp, CheckCircle, AlertTriangle, Calendar, User, FileText, Clock, Search, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,7 +37,7 @@ type ApplicationInsert = Database['public']['Tables']['applications']['Insert'];
 
 export default function KenaikanPangkat() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("check");
+  const [activeTab, setActiveTab] = useState("submit");
   const [selectedPegawai, setSelectedPegawai] = useState("");
   const [selectedKategori, setSelectedKategori] = useState("");
   const [selectedPeriode, setSelectedPeriode] = useState("");
@@ -455,11 +455,7 @@ export default function KenaikanPangkat() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="check" className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
-              Cek Kelayakan
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="submit" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Ajukan Kenaikan
@@ -467,10 +463,6 @@ export default function KenaikanPangkat() {
             <TabsTrigger value="status" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Status Usulan
-            </TabsTrigger>
-            <TabsTrigger value="calculator" className="flex items-center gap-2">
-              <Calculator className="w-4 h-4" />
-              Kalkulator Masa Kerja
             </TabsTrigger>
           </TabsList>
 
@@ -1081,26 +1073,6 @@ export default function KenaikanPangkat() {
             </Card>
           </TabsContent>
 
-          {/* Tab: Calculator */}
-          <TabsContent value="calculator" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Kalkulator Masa Kerja</CardTitle>
-                <CardDescription>
-                  Hitung otomatis masa kerja pegawai untuk keperluan kenaikan pangkat
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Calculator className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Kalkulator Segera Hadir</h3>
-                  <p className="text-muted-foreground">
-                    Tool kalkulasi masa kerja otomatis akan terintegrasi dengan data kepegawaian.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
 
         {/* Document Revision Modal */}
