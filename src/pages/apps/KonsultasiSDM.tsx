@@ -182,7 +182,7 @@ export default function KonsultasiSDM() {
             </TabsTrigger>
             <TabsTrigger value="faq" className="flex items-center gap-2">
               <HelpCircle className="w-4 h-4" />
-              FAQ
+              FAQ & Panduan
             </TabsTrigger>
             <TabsTrigger value="live-chat" className="flex items-center gap-2">
               <Phone className="w-4 h-4" />
