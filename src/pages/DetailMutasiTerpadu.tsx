@@ -209,82 +209,6 @@ export default function DetailMutasiTerpadu() {
     });
   };
 
-  const handleSaveDraft = async () => {
-    if (!application || !application.employee_data) return;
-
-    if (!user?.id) {
-      toast({
-        title: "Error",
-        description: "User tidak terautentikasi",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      
-      // Update application as draft
-      const { error: updateError } = await supabase
-        .from('applications')
-        .update({
-          keterangan: `Draft - Kategori: Mutasi Terpadu${additionalNotes ? ` - ${additionalNotes}` : ''}`,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
-
-      if (updateError) throw updateError;
-
-      // Delete existing documents
-      const { error: deleteDocsError } = await supabase
-        .from('documents')
-        .delete()
-        .eq('application_id', id);
-
-      if (deleteDocsError) throw deleteDocsError;
-
-      // Insert new documents
-      const documentInserts = Object.entries(documents)
-        .filter(([key, link]) => link.trim() !== '')
-        .map(([key, link]) => {
-          const index = parseInt(key.replace('doc_', ''));
-          const documentName = DOCUMENT_REQUIREMENTS[index];
-          
-          return {
-            application_id: id,
-            title: documentName,
-            drive_link: link.trim(),
-            created_by: user.id,
-            document_category: 'mutasi_terpadu',
-            document_index: index
-          };
-        });
-
-      if (documentInserts.length > 0) {
-        const { error: documentsError } = await supabase
-          .from('documents')
-          .insert(documentInserts);
-
-        if (documentsError) throw documentsError;
-      }
-
-      toast({
-        title: "Berhasil",
-        description: `Draft pengajuan mutasi untuk ${application.employee_data.employee_name} berhasil disimpan!`,
-      });
-
-    } catch (error: any) {
-      console.error('Error saving draft:', error);
-      toast({
-        title: "Error",
-        description: "Gagal menyimpan draft",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleSubmitApplication = async () => {
     if (!application || !application.employee_data) return;
 
@@ -534,38 +458,20 @@ export default function DetailMutasiTerpadu() {
               Edit Usulan
             </Button>
           )}
-          {canEdit && (
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleSaveDraft} 
-                disabled={isSubmitting}
-                variant="outline"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Menyimpan...
-                  </>
-                ) : (
-                  'Simpan Draft'
-                )}
-              </Button>
-              {canSubmit && (
-                <Button onClick={handleSubmitApplication} disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {isEditing ? 'Mengirim Perbaikan...' : 'Mengirim...'}
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      {isEditing ? 'Submit Perbaikan' : 'Submit Pengajuan'}
-                    </>
-                  )}
-                </Button>
+          {canSubmit && (
+            <Button onClick={handleSubmitApplication} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {isEditing ? 'Mengirim Perbaikan...' : 'Mengirim...'}
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  {isEditing ? 'Submit Perbaikan' : 'Submit Pengajuan'}
+                </>
               )}
-            </div>
+            </Button>
           )}
         </div>
       </div>
