@@ -225,14 +225,9 @@ export default function KonsultasiSDM() {
                             <SelectValue placeholder="Pilih kategori konsultasi" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="kepangkatan">Kepangkatan</SelectItem>
-                            <SelectItem value="mutasi">Mutasi & Promosi</SelectItem>
-                            <SelectItem value="cuti">Cuti & Izin</SelectItem>
-                            <SelectItem value="gaji">Gaji & Tunjangan</SelectItem>
-                            <SelectItem value="pensiun">Persiapan Pensiun</SelectItem>
-                            <SelectItem value="disiplin">Hukuman Disiplin</SelectItem>
-                            <SelectItem value="diklat">Diklat & Pengembangan</SelectItem>
-                            <SelectItem value="lainnya">Lainnya</SelectItem>
+                            <SelectItem value="mutasi">Mutasi</SelectItem>
+                            <SelectItem value="kenaikan-pangkat">Kenaikan Pangkat</SelectItem>
+                            <SelectItem value="pensiun">Pensiun</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -248,9 +243,8 @@ export default function KonsultasiSDM() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="rendah">Rendah - Tidak mendesak</SelectItem>
-                            <SelectItem value="sedang">Sedang - Perlu jawaban dalam beberapa hari</SelectItem>
-                            <SelectItem value="tinggi">Tinggi - Perlu jawaban segera</SelectItem>
-                            <SelectItem value="urgent">Urgent - Sangat mendesak</SelectItem>
+                            <SelectItem value="sedang">Sedang - Perlu jawaban dalam 3 hari</SelectItem>
+                            <SelectItem value="tinggi">Tinggi - Mendesak dan butuh jawaban segera</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
