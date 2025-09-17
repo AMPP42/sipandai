@@ -162,10 +162,10 @@ export default function KonsultasiSDM() {
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
               <MessageSquare className="w-8 h-8 text-primary" />
-              Konsultasi & Bimbingan SDM
+              Panduan Layanan Kepegawaian
             </h1>
             <p className="text-muted-foreground mt-2">
-              Ticketing system, live chat, dan knowledge base untuk konsultasi kepegawaian
+              Ticketing system, layanan konsultasi, dan panduan layanan kepegawaian
             </p>
           </div>
           <div className="flex gap-2">
