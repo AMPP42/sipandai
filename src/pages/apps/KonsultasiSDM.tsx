@@ -81,11 +81,60 @@ export default function KonsultasiSDM() {
     notHelpful: 1
   }, {
     id: "3",
-    pertanyaan: "Bagaimana cara mengurus mutasi antar unit?",
-    jawaban: "Proses mutasi antar unit: 1) Ajukan permohonan mutasi ke atasan, 2) Dapatkan rekomendasi dari unit asal dan tujuan, 3) Serahkan berkas ke Biro Kepegawaian, 4) Tunggu proses verifikasi dan persetujuan dari pimpinan.",
+    pertanyaan: "Alur dan Prosedur Pengajuan Mutasi",
+    jawaban: "1. Pegawai mengajukan permohonan mutasi ke TU dengan sepengetahuan Kepala Unit asal.\n2. TU unit asal memeriksa ketersediaan formasi (pegawai berkoordinasi dengan unit tujuan).\n3. Kepala Unit asal mengajukan Nota Dinas permohonan mutasi ke Sesditjen.\n4. Jika disetujui, pegawai melengkapi berkas ke TU.\n5. TU mengirimkan berkas ke SDMA Setditjen.\n6. SDMA memeriksa berkas, lalu mengajukan surat bebas temuan ke Inspektorat Jenderal dan surat bezetting yang ditandatangani Sesditjen.\n7. SDMA mengajukan berkas lengkap ke Biro.\n8. Menunggu persetujuan mutasi.\n   • Jika ditolak → berkas dikembalikan ke TU unit asal beserta dengan alasan\n   • Jika disetujui tetapi ada kekurangan → pegawai wajib melengkapi terlebih dahulu.",
     kategori: "Mutasi",
-    helpful: 18,
+    helpful: 35,
+    notHelpful: 1
+  }, {
+    id: "4",
+    pertanyaan: "Persyaratan yang Dibutuhkan untuk Mutasi",
+    jawaban: "• Surat Pernyataan Lolos Butuh dari PPK Instansi Asal (Asli)\n• Surat Keterangan Tidak Sedang Menjalani Hukuman Disiplin (Asli)\n• Surat Keterangan Tidak Sedang Menjalani Tugas Belajar/Ikatan Dinas (Asli)\n• Surat Keterangan Tidak Mempunyai Hutang Piutang dengan Pihak Bank (Asli)\n• Surat Pernyataan Bebas Temuan yang Diterbitkan oleh ITJEN (Asli)\n• ANJAB dan ABK yang ditandatangani oleh PPK Instansi Asal (Bila Pindah Antar Kementerian)\n• SK CPNS (Fotokopi legalisir)\n• SK PNS (Fotokopi legalisir)\n• SK Pangkat Terakhir (Fotokopi legalisir)\n• SK Jabatan Terakhir (Fotokopi legalisir)\n• KARPEG (Fotokopi legalisir)\n• Ijazah dan Transkrip Nilai Universitas (Fotokopi legalisir)\n• SKP 2 tahun terakhir (Fotokopi legalisir)\n• Surat permohonan mutasi dari ybs\n• Daftar Riwayat Hidup (DRH) sesuai Keputusan Kepala BKN Nomor 11 Tahun 2002",
+    kategori: "Mutasi",
+    helpful: 42,
     notHelpful: 0
+  }, {
+    id: "5",
+    pertanyaan: "Siapa saja yang bisa mengajukan mutasi?",
+    jawaban: "Semua PNS yang memenuhi syarat administrasi dan kebutuhan formasi dapat mengajukan mutasi dengan persetujuan atasan dan Kepala Unit asal.",
+    kategori: "Mutasi",
+    helpful: 28,
+    notHelpful: 2
+  }, {
+    id: "6",
+    pertanyaan: "Apakah mutasi bisa dilakukan tanpa ketersediaan formasi di unit tujuan?",
+    jawaban: "Tidak. Mutasi hanya dapat dilakukan jika ada formasi di unit tujuan.",
+    kategori: "Mutasi",
+    helpful: 31,
+    notHelpful: 1
+  }, {
+    id: "7",
+    pertanyaan: "Berapa lama proses mutasi pegawai?",
+    jawaban: "Waktu bervariasi. Namun, rata-rata 1-3 bulan, tergantung kelengkapan berkas, proses verifikasi, dan persetujuan dari pejabat berwenang.",
+    kategori: "Mutasi",
+    helpful: 33,
+    notHelpful: 0
+  }, {
+    id: "8",
+    pertanyaan: "Apa yang terjadi jika permohonan mutasi ditolak?",
+    jawaban: "Berkas akan dikembalikan ke TU unit asal dengan alasan tertulis. Pegawai dapat memperbaiki atau mengajukan kembali sesuai ketentuan.",
+    kategori: "Mutasi",
+    helpful: 26,
+    notHelpful: 1
+  }, {
+    id: "9",
+    pertanyaan: "Jika mutasi disetujui tetapi berkas kurang lengkap, apa yang harus dilakukan?",
+    jawaban: "Pegawai wajib melengkapi berkas terlebih dahulu sebelum usulan diproses lebih lanjut.",
+    kategori: "Mutasi",
+    helpful: 29,
+    notHelpful: 0
+  }, {
+    id: "10",
+    pertanyaan: "Apakah pegawai boleh mengajukan mutasi antar instansi (misalnya antar kementerian/lembaga atau ke pemerintah daerah)?",
+    jawaban: "Boleh, sepanjang memenuhi syarat, tersedia formasi di instansi tujuan, dan mendapat persetujuan dari kedua instansi serta BKN.",
+    kategori: "Mutasi",
+    helpful: 24,
+    notHelpful: 2
   }];
   const getStatusBadge = (status: string) => {
     const statusMap = {
