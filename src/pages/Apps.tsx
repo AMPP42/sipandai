@@ -55,8 +55,8 @@ export default function Apps() {
     },
     {
       id: 'konsultasi',
-      title: 'Konsultasi & Bimbingan SDM',
-      description: 'Ticketing system, live chat, dan knowledge base untuk konsultasi kepegawaian',
+      title: 'Panduan Layanan Kepegawaian',
+      description: 'Ticketing system, layanan konsultasi, dan panduan layanan kepegawaian',
       icon: MessageSquare,
       color: 'purple',
       features: ['Ticketing system', 'Live chat konselor', 'Knowledge base FAQ', 'Rating & feedback'],
