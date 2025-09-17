@@ -359,9 +359,9 @@ export default function KonsultasiSDM() {
           <TabsContent value="faq" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Frequently Asked Questions (FAQ)</CardTitle>
+                <CardTitle>Panduan Layanan Kepegawaian dan Daftar Frequently Asked Questions (FAQ)</CardTitle>
                 <CardDescription>
-                  Temukan jawaban untuk pertanyaan yang sering diajukan seputar kepegawaian
+                  Pahami panduan berikut dan temukan jawaban untuk pertanyaan yang sering diajukan seputar layanan kepegawaian
                 </CardDescription>
               </CardHeader>
               <CardContent>
