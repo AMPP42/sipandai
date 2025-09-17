@@ -7,22 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  MessageSquare, 
-  Ticket, 
-  Star, 
-  Clock, 
-  CheckCircle,
-  User,
-  Search,
-  Send,
-  Phone,
-  Calendar,
-  HelpCircle,
-  ThumbsUp,
-  ThumbsDown
-} from "lucide-react";
-
+import { MessageSquare, Ticket, Star, Clock, CheckCircle, User, Search, Send, Phone, Calendar, HelpCircle, ThumbsUp, ThumbsDown } from "lucide-react";
 interface TicketData {
   id: string;
   nomorTicket: string;
@@ -37,7 +22,6 @@ interface TicketData {
   rating?: number;
   feedback?: string;
 }
-
 interface FAQItem {
   id: string;
   pertanyaan: string;
@@ -46,7 +30,6 @@ interface FAQItem {
   helpful: number;
   notHelpful: number;
 }
-
 export default function KonsultasiSDM() {
   const [activeTab, setActiveTab] = useState("ticket");
   const [newTicket, setNewTicket] = useState({
@@ -57,105 +40,115 @@ export default function KonsultasiSDM() {
   });
 
   // Mock data for demonstration
-  const ticketData: TicketData[] = [
-    {
-      id: "1",
-      nomorTicket: "TKT/2024/0001",
-      judul: "Konsultasi Prosedur Kenaikan Pangkat",
-      kategori: "Kepangkatan",
-      prioritas: "sedang",
-      status: "in_progress",
-      tanggalBuat: "2024-01-15",
-      pembuatNama: "Ahmad Fauzi",
-      pembuatUnit: "Biro Hukum",
-      konselor: "Dr. Siti Aminah, M.M."
-    },
-    {
-      id: "2",
-      nomorTicket: "TKT/2024/0002",
-      judul: "Pertanyaan tentang Cuti Sakit",
-      kategori: "Cuti & Izin",
-      prioritas: "rendah",
-      status: "resolved",
-      tanggalBuat: "2024-01-10",
-      pembuatNama: "Budi Santoso",
-      pembuatUnit: "Inspektorat",
-      konselor: "Drs. Agus Wijaya",
-      rating: 5,
-      feedback: "Sangat membantu dan responsif"
-    }
-  ];
-
-  const faqData: FAQItem[] = [
-    {
-      id: "1",
-      pertanyaan: "Bagaimana prosedur pengajuan cuti tahunan?",
-      jawaban: "Untuk mengajukan cuti tahunan, Anda perlu: 1) Mengisi formulir permohonan cuti, 2) Mendapat persetujuan atasan langsung, 3) Menyerahkan ke bagian kepegawaian minimal 7 hari sebelum pelaksanaan cuti.",
-      kategori: "Cuti & Izin",
-      helpful: 25,
-      notHelpful: 2
-    },
-    {
-      id: "2",
-      pertanyaan: "Apa syarat untuk kenaikan pangkat regular?",
-      jawaban: "Syarat kenaikan pangkat regular: 1) Telah menempati pangkat sekarang minimal 4 tahun, 2) Memiliki DP3/SKP minimal baik, 3) Memenuhi persyaratan pendidikan dan diklat yang diperlukan, 4) Tidak sedang menjalani hukuman disiplin.",
-      kategori: "Kepangkatan",
-      helpful: 40,
-      notHelpful: 1
-    },
-    {
-      id: "3",
-      pertanyaan: "Bagaimana cara mengurus mutasi antar unit?",
-      jawaban: "Proses mutasi antar unit: 1) Ajukan permohonan mutasi ke atasan, 2) Dapatkan rekomendasi dari unit asal dan tujuan, 3) Serahkan berkas ke Biro Kepegawaian, 4) Tunggu proses verifikasi dan persetujuan dari pimpinan.",
-      kategori: "Mutasi",
-      helpful: 18,
-      notHelpful: 0
-    }
-  ];
-
+  const ticketData: TicketData[] = [{
+    id: "1",
+    nomorTicket: "TKT/2024/0001",
+    judul: "Konsultasi Prosedur Kenaikan Pangkat",
+    kategori: "Kepangkatan",
+    prioritas: "sedang",
+    status: "in_progress",
+    tanggalBuat: "2024-01-15",
+    pembuatNama: "Ahmad Fauzi",
+    pembuatUnit: "Biro Hukum",
+    konselor: "Dr. Siti Aminah, M.M."
+  }, {
+    id: "2",
+    nomorTicket: "TKT/2024/0002",
+    judul: "Pertanyaan tentang Cuti Sakit",
+    kategori: "Cuti & Izin",
+    prioritas: "rendah",
+    status: "resolved",
+    tanggalBuat: "2024-01-10",
+    pembuatNama: "Budi Santoso",
+    pembuatUnit: "Inspektorat",
+    konselor: "Drs. Agus Wijaya",
+    rating: 5,
+    feedback: "Sangat membantu dan responsif"
+  }];
+  const faqData: FAQItem[] = [{
+    id: "1",
+    pertanyaan: "Bagaimana prosedur pengajuan cuti tahunan?",
+    jawaban: "Untuk mengajukan cuti tahunan, Anda perlu: 1) Mengisi formulir permohonan cuti, 2) Mendapat persetujuan atasan langsung, 3) Menyerahkan ke bagian kepegawaian minimal 7 hari sebelum pelaksanaan cuti.",
+    kategori: "Cuti & Izin",
+    helpful: 25,
+    notHelpful: 2
+  }, {
+    id: "2",
+    pertanyaan: "Apa syarat untuk kenaikan pangkat regular?",
+    jawaban: "Syarat kenaikan pangkat regular: 1) Telah menempati pangkat sekarang minimal 4 tahun, 2) Memiliki DP3/SKP minimal baik, 3) Memenuhi persyaratan pendidikan dan diklat yang diperlukan, 4) Tidak sedang menjalani hukuman disiplin.",
+    kategori: "Kepangkatan",
+    helpful: 40,
+    notHelpful: 1
+  }, {
+    id: "3",
+    pertanyaan: "Bagaimana cara mengurus mutasi antar unit?",
+    jawaban: "Proses mutasi antar unit: 1) Ajukan permohonan mutasi ke atasan, 2) Dapatkan rekomendasi dari unit asal dan tujuan, 3) Serahkan berkas ke Biro Kepegawaian, 4) Tunggu proses verifikasi dan persetujuan dari pimpinan.",
+    kategori: "Mutasi",
+    helpful: 18,
+    notHelpful: 0
+  }];
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      open: { label: "Buka", className: "bg-blue-100 text-blue-700" },
-      in_progress: { label: "Sedang Diproses", className: "bg-yellow-100 text-yellow-700" },
-      resolved: { label: "Selesai", className: "bg-green-100 text-green-700" },
-      closed: { label: "Ditutup", className: "bg-gray-100 text-gray-700" }
+      open: {
+        label: "Buka",
+        className: "bg-blue-100 text-blue-700"
+      },
+      in_progress: {
+        label: "Sedang Diproses",
+        className: "bg-yellow-100 text-yellow-700"
+      },
+      resolved: {
+        label: "Selesai",
+        className: "bg-green-100 text-green-700"
+      },
+      closed: {
+        label: "Ditutup",
+        className: "bg-gray-100 text-gray-700"
+      }
     };
-    
     const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.open;
     return <Badge className={statusInfo.className}>{statusInfo.label}</Badge>;
   };
-
   const getPriorityBadge = (prioritas: string) => {
     const priorityMap = {
-      rendah: { label: "Rendah", className: "bg-green-100 text-green-700" },
-      sedang: { label: "Sedang", className: "bg-yellow-100 text-yellow-700" },
-      tinggi: { label: "Tinggi", className: "bg-orange-100 text-orange-700" },
-      urgent: { label: "Urgent", className: "bg-red-100 text-red-700" }
+      rendah: {
+        label: "Rendah",
+        className: "bg-green-100 text-green-700"
+      },
+      sedang: {
+        label: "Sedang",
+        className: "bg-yellow-100 text-yellow-700"
+      },
+      tinggi: {
+        label: "Tinggi",
+        className: "bg-orange-100 text-orange-700"
+      },
+      urgent: {
+        label: "Urgent",
+        className: "bg-red-100 text-red-700"
+      }
     };
-    
     const priorityInfo = priorityMap[prioritas as keyof typeof priorityMap] || priorityMap.rendah;
     return <Badge className={priorityInfo.className}>{priorityInfo.label}</Badge>;
   };
-
   const handleSubmitTicket = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Implement ticket submission
     console.log("New ticket:", newTicket);
     // Reset form
-    setNewTicket({ judul: "", kategori: "", prioritas: "", deskripsi: "" });
+    setNewTicket({
+      judul: "",
+      kategori: "",
+      prioritas: "",
+      deskripsi: ""
+    });
   };
-
   const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${i < rating ? 'text-yellow-500 fill-current' : 'text-gray-300'}`}
-      />
-    ));
+    return Array.from({
+      length: 5
+    }, (_, i) => <Star key={i} className={`w-4 h-4 ${i < rating ? 'text-yellow-500 fill-current' : 'text-gray-300'}`} />);
   };
-
-  return (
-    <div className="min-h-screen bg-background p-6">
+  return <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -164,9 +157,7 @@ export default function KonsultasiSDM() {
               <MessageSquare className="w-8 h-8 text-primary" />
               Panduan Layanan Kepegawaian
             </h1>
-            <p className="text-muted-foreground mt-2">
-              Ticketing system, layanan konsultasi, dan panduan layanan kepegawaian
-            </p>
+            <p className="text-muted-foreground mt-2">Ticketing system, layanan konsultasi, dan panduan terkait layanan kepegawaian</p>
           </div>
           <div className="flex gap-2">
             <Badge className="bg-blue-100 text-blue-700">
@@ -218,18 +209,18 @@ export default function KonsultasiSDM() {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="judul">Judul Konsultasi *</Label>
-                        <Input
-                          id="judul"
-                          value={newTicket.judul}
-                          onChange={(e) => setNewTicket({...newTicket, judul: e.target.value})}
-                          placeholder="Jelaskan topik konsultasi Anda..."
-                          required
-                        />
+                        <Input id="judul" value={newTicket.judul} onChange={e => setNewTicket({
+                        ...newTicket,
+                        judul: e.target.value
+                      })} placeholder="Jelaskan topik konsultasi Anda..." required />
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="kategori">Kategori *</Label>
-                        <Select value={newTicket.kategori} onValueChange={(value) => setNewTicket({...newTicket, kategori: value})}>
+                        <Select value={newTicket.kategori} onValueChange={value => setNewTicket({
+                        ...newTicket,
+                        kategori: value
+                      })}>
                           <SelectTrigger>
                             <SelectValue placeholder="Pilih kategori konsultasi" />
                           </SelectTrigger>
@@ -248,7 +239,10 @@ export default function KonsultasiSDM() {
 
                       <div className="space-y-2">
                         <Label htmlFor="prioritas">Tingkat Prioritas *</Label>
-                        <Select value={newTicket.prioritas} onValueChange={(value) => setNewTicket({...newTicket, prioritas: value})}>
+                        <Select value={newTicket.prioritas} onValueChange={value => setNewTicket({
+                        ...newTicket,
+                        prioritas: value
+                      })}>
                           <SelectTrigger>
                             <SelectValue placeholder="Pilih tingkat prioritas" />
                           </SelectTrigger>
@@ -265,14 +259,10 @@ export default function KonsultasiSDM() {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="deskripsi">Deskripsi Detail *</Label>
-                        <Textarea
-                          id="deskripsi"
-                          value={newTicket.deskripsi}
-                          onChange={(e) => setNewTicket({...newTicket, deskripsi: e.target.value})}
-                          placeholder="Jelaskan pertanyaan atau masalah Anda secara detail..."
-                          rows={8}
-                          required
-                        />
+                        <Textarea id="deskripsi" value={newTicket.deskripsi} onChange={e => setNewTicket({
+                        ...newTicket,
+                        deskripsi: e.target.value
+                      })} placeholder="Jelaskan pertanyaan atau masalah Anda secara detail..." rows={8} required />
                       </div>
                     </div>
                   </div>
@@ -313,8 +303,7 @@ export default function KonsultasiSDM() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {ticketData.map((ticket) => (
-                    <Card key={ticket.id} className="border border-border">
+                  {ticketData.map(ticket => <Card key={ticket.id} className="border border-border">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-3">
@@ -342,38 +331,31 @@ export default function KonsultasiSDM() {
                             <p className="text-muted-foreground">Konselor</p>
                             <p className="font-medium">{ticket.konselor || "Belum ditugaskan"}</p>
                           </div>
-                          {ticket.rating && (
-                            <div>
+                          {ticket.rating && <div>
                               <p className="text-muted-foreground">Rating</p>
                               <div className="flex items-center gap-1">
                                 {renderStars(ticket.rating)}
                                 <span className="ml-1 text-sm">({ticket.rating}/5)</span>
                               </div>
-                            </div>
-                          )}
+                            </div>}
                         </div>
 
-                        {ticket.feedback && (
-                          <div className="bg-muted p-3 rounded-lg mb-4">
+                        {ticket.feedback && <div className="bg-muted p-3 rounded-lg mb-4">
                             <p className="text-sm font-medium mb-1">Feedback:</p>
                             <p className="text-sm text-muted-foreground">{ticket.feedback}</p>
-                          </div>
-                        )}
+                          </div>}
 
                         <div className="flex gap-2">
                           <Button variant="outline" size="sm">
                             Lihat Detail
                           </Button>
-                          {ticket.status === 'resolved' && !ticket.rating && (
-                            <Button size="sm">
+                          {ticket.status === 'resolved' && !ticket.rating && <Button size="sm">
                               <Star className="w-4 h-4 mr-2" />
                               Beri Rating
-                            </Button>
-                          )}
+                            </Button>}
                         </div>
                       </CardContent>
-                    </Card>
-                  ))}
+                    </Card>)}
                 </div>
               </CardContent>
             </Card>
@@ -390,8 +372,7 @@ export default function KonsultasiSDM() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {faqData.map((faq) => (
-                    <Card key={faq.id} className="border border-border">
+                  {faqData.map(faq => <Card key={faq.id} className="border border-border">
                       <CardContent className="p-4">
                         <div className="space-y-3">
                           <div className="flex items-start justify-between">
@@ -421,8 +402,7 @@ export default function KonsultasiSDM() {
                           </div>
                         </div>
                       </CardContent>
-                    </Card>
-                  ))}
+                    </Card>)}
                 </div>
               </CardContent>
             </Card>
@@ -477,6 +457,5 @@ export default function KonsultasiSDM() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
-  );
+    </div>;
 }
