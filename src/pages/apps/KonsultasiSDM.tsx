@@ -68,7 +68,7 @@ export default function KonsultasiSDM() {
   const faqData: FAQItem[] = [{
     id: "1",
     pertanyaan: "Mutasi",
-    jawaban: `**Alur dan Prosedur Pengajuan Mutasi**
+    jawaban: `1. Alur dan Prosedur Pengajuan Mutasi
 
 1. Pegawai mengajukan permohonan mutasi ke TU dengan sepengetahuan Kepala Unit asal.
 2. TU unit asal memeriksa ketersediaan formasi (pegawai berkoordinasi dengan unit tujuan).
@@ -81,7 +81,7 @@ export default function KonsultasiSDM() {
    • Jika ditolak → berkas dikembalikan ke TU unit asal beserta dengan alasan
    • Jika disetujui tetapi ada kekurangan → pegawai wajib melengkapi terlebih dahulu.
 
-**Persyaratan yang Dibutuhkan**
+2. Persyaratan yang Dibutuhkan
 
 • Surat Pernyataan Lolos Butuh dari PPK Instansi Asal (Asli)
 • Surat Keterangan Tidak Sedang Menjalani Hukuman Disiplin (Asli)
@@ -99,24 +99,24 @@ export default function KonsultasiSDM() {
 • Surat permohonan mutasi dari ybs
 • Daftar Riwayat Hidup (DRH) sesuai Keputusan Kepala BKN Nomor 11 Tahun 2002
 
-**FAQ**
+3. FAQ
 
-**Siapa saja yang bisa mengajukan mutasi?**
+4. Siapa saja yang bisa mengajukan mutasi?
 Semua PNS yang memenuhi syarat administrasi dan kebutuhan formasi dapat mengajukan mutasi dengan persetujuan atasan dan Kepala Unit asal.
 
-**Apakah mutasi bisa dilakukan tanpa ketersediaan formasi di unit tujuan?**
+5. Apakah mutasi bisa dilakukan tanpa ketersediaan formasi di unit tujuan?
 Tidak. Mutasi hanya dapat dilakukan jika ada formasi di unit tujuan.
 
-**Berapa lama proses mutasi pegawai?**
+6. Berapa lama proses mutasi pegawai?
 Waktu bervariasi. Namun, rata-rata 1-3 bulan, tergantung kelengkapan berkas, proses verifikasi, dan persetujuan dari pejabat berwenang.
 
-**Apa yang terjadi jika permohonan mutasi ditolak?**
+7. Apa yang terjadi jika permohonan mutasi ditolak?
 Berkas akan dikembalikan ke TU unit asal dengan alasan tertulis. Pegawai dapat memperbaiki atau mengajukan kembali sesuai ketentuan.
 
-**Jika mutasi disetujui tetapi berkas kurang lengkap, apa yang harus dilakukan?**
+8. Jika mutasi disetujui tetapi berkas kurang lengkap, apa yang harus dilakukan?
 Pegawai wajib melengkapi berkas terlebih dahulu sebelum usulan diproses lebih lanjut.
 
-**Apakah pegawai boleh mengajukan mutasi antar instansi (misalnya antar kementerian/lembaga atau ke pemerintah daerah)?**
+9. Apakah pegawai boleh mengajukan mutasi antar instansi (misalnya antar kementerian/lembaga atau ke pemerintah daerah)?
 Boleh, sepanjang memenuhi syarat, tersedia formasi di instansi tujuan, dan mendapat persetujuan dari kedua instansi serta BKN.`,
     kategori: "Mutasi",
     helpful: 200,
@@ -411,10 +411,10 @@ Boleh, sepanjang memenuhi syarat, tersedia formasi di instansi tujuan, dan menda
                               </div>
                               <h4 className="font-semibold text-foreground mb-2">{faq.pertanyaan}</h4>
                               <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
-                                {faq.jawaban.split('\n\n').map((section, index) => {
-                                  if (section.startsWith('**') && section.endsWith('**')) {
-                                    return <h5 key={index} className="font-semibold text-foreground text-base mt-4 mb-2">{section.replace(/\*\*/g, '')}</h5>;
-                                  }
+                                 {faq.jawaban.split('\n\n').map((section, index) => {
+                                   if (/^\d+\./.test(section.trim())) {
+                                     return <h5 key={index} className="font-semibold text-foreground text-base mt-4 mb-2">{section}</h5>;
+                                   }
                                   return (
                                     <div key={index} className="space-y-1">
                                       {section.split('\n').map((line, lineIndex) => (
