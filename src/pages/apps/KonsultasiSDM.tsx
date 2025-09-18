@@ -190,7 +190,7 @@ Boleh, sepanjang memenuhi syarat, tersedia formasi di instansi tujuan, dan menda
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
               <MessageSquare className="w-8 h-8 text-primary" />
-              Panduan Layanan Kepegawaian
+              Panduan Layanan Mutasi, Kenaikan Pangkat, & Pensiun
             </h1>
             <p className="text-muted-foreground mt-2">Ticketing system, layanan konsultasi, dan panduan terkait layanan kepegawaian</p>
           </div>
