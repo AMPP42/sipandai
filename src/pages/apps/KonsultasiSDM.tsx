@@ -67,74 +67,60 @@ export default function KonsultasiSDM() {
   }];
   const faqData: FAQItem[] = [{
     id: "1",
-    pertanyaan: "Bagaimana prosedur pengajuan cuti tahunan?",
-    jawaban: "Untuk mengajukan cuti tahunan, Anda perlu: 1) Mengisi formulir permohonan cuti, 2) Mendapat persetujuan atasan langsung, 3) Menyerahkan ke bagian kepegawaian minimal 7 hari sebelum pelaksanaan cuti.",
-    kategori: "Cuti & Izin",
-    helpful: 25,
-    notHelpful: 2
-  }, {
-    id: "2",
-    pertanyaan: "Apa syarat untuk kenaikan pangkat regular?",
-    jawaban: "Syarat kenaikan pangkat regular: 1) Telah menempati pangkat sekarang minimal 4 tahun, 2) Memiliki DP3/SKP minimal baik, 3) Memenuhi persyaratan pendidikan dan diklat yang diperlukan, 4) Tidak sedang menjalani hukuman disiplin.",
-    kategori: "Kepangkatan",
-    helpful: 40,
-    notHelpful: 1
-  }, {
-    id: "3",
-    pertanyaan: "Alur dan Prosedur Pengajuan Mutasi",
-    jawaban: "1. Pegawai mengajukan permohonan mutasi ke TU dengan sepengetahuan Kepala Unit asal.\n2. TU unit asal memeriksa ketersediaan formasi (pegawai berkoordinasi dengan unit tujuan).\n3. Kepala Unit asal mengajukan Nota Dinas permohonan mutasi ke Sesditjen.\n4. Jika disetujui, pegawai melengkapi berkas ke TU.\n5. TU mengirimkan berkas ke SDMA Setditjen.\n6. SDMA memeriksa berkas, lalu mengajukan surat bebas temuan ke Inspektorat Jenderal dan surat bezetting yang ditandatangani Sesditjen.\n7. SDMA mengajukan berkas lengkap ke Biro.\n8. Menunggu persetujuan mutasi.\n   • Jika ditolak → berkas dikembalikan ke TU unit asal beserta dengan alasan\n   • Jika disetujui tetapi ada kekurangan → pegawai wajib melengkapi terlebih dahulu.",
+    pertanyaan: "Mutasi",
+    jawaban: `**Alur dan Prosedur Pengajuan Mutasi**
+
+1. Pegawai mengajukan permohonan mutasi ke TU dengan sepengetahuan Kepala Unit asal.
+2. TU unit asal memeriksa ketersediaan formasi (pegawai berkoordinasi dengan unit tujuan).
+3. Kepala Unit asal mengajukan Nota Dinas permohonan mutasi ke Sesditjen.
+4. Jika disetujui, pegawai melengkapi berkas ke TU.
+5. TU mengirimkan berkas ke SDMA Setditjen.
+6. SDMA memeriksa berkas, lalu mengajukan surat bebas temuan ke Inspektorat Jenderal dan surat bezetting yang ditandatangani Sesditjen.
+7. SDMA mengajukan berkas lengkap ke Biro.
+8. Menunggu persetujuan mutasi.
+   • Jika ditolak → berkas dikembalikan ke TU unit asal beserta dengan alasan
+   • Jika disetujui tetapi ada kekurangan → pegawai wajib melengkapi terlebih dahulu.
+
+**Persyaratan yang Dibutuhkan**
+
+• Surat Pernyataan Lolos Butuh dari PPK Instansi Asal (Asli)
+• Surat Keterangan Tidak Sedang Menjalani Hukuman Disiplin (Asli)
+• Surat Keterangan Tidak Sedang Menjalani Tugas Belajar/Ikatan Dinas (Asli)
+• Surat Keterangan Tidak Mempunyai Hutang Piutang dengan Pihak Bank (Asli)
+• Surat Pernyataan Bebas Temuan yang Diterbitkan oleh ITJEN (Asli)
+• ANJAB dan ABK yang ditandatangani oleh PPK Instansi Asal (Bila Pindah Antar Kementerian)
+• SK CPNS (Fotokopi legalisir)
+• SK PNS (Fotokopi legalisir)
+• SK Pangkat Terakhir (Fotokopi legalisir)
+• SK Jabatan Terakhir (Fotokopi legalisir)
+• KARPEG (Fotokopi legalisir)
+• Ijazah dan Transkrip Nilai Universitas (Fotokopi legalisir)
+• SKP 2 tahun terakhir (Fotokopi legalisir)
+• Surat permohonan mutasi dari ybs
+• Daftar Riwayat Hidup (DRH) sesuai Keputusan Kepala BKN Nomor 11 Tahun 2002
+
+**FAQ**
+
+**Siapa saja yang bisa mengajukan mutasi?**
+Semua PNS yang memenuhi syarat administrasi dan kebutuhan formasi dapat mengajukan mutasi dengan persetujuan atasan dan Kepala Unit asal.
+
+**Apakah mutasi bisa dilakukan tanpa ketersediaan formasi di unit tujuan?**
+Tidak. Mutasi hanya dapat dilakukan jika ada formasi di unit tujuan.
+
+**Berapa lama proses mutasi pegawai?**
+Waktu bervariasi. Namun, rata-rata 1-3 bulan, tergantung kelengkapan berkas, proses verifikasi, dan persetujuan dari pejabat berwenang.
+
+**Apa yang terjadi jika permohonan mutasi ditolak?**
+Berkas akan dikembalikan ke TU unit asal dengan alasan tertulis. Pegawai dapat memperbaiki atau mengajukan kembali sesuai ketentuan.
+
+**Jika mutasi disetujui tetapi berkas kurang lengkap, apa yang harus dilakukan?**
+Pegawai wajib melengkapi berkas terlebih dahulu sebelum usulan diproses lebih lanjut.
+
+**Apakah pegawai boleh mengajukan mutasi antar instansi (misalnya antar kementerian/lembaga atau ke pemerintah daerah)?**
+Boleh, sepanjang memenuhi syarat, tersedia formasi di instansi tujuan, dan mendapat persetujuan dari kedua instansi serta BKN.`,
     kategori: "Mutasi",
-    helpful: 35,
-    notHelpful: 1
-  }, {
-    id: "4",
-    pertanyaan: "Persyaratan yang Dibutuhkan untuk Mutasi",
-    jawaban: "• Surat Pernyataan Lolos Butuh dari PPK Instansi Asal (Asli)\n• Surat Keterangan Tidak Sedang Menjalani Hukuman Disiplin (Asli)\n• Surat Keterangan Tidak Sedang Menjalani Tugas Belajar/Ikatan Dinas (Asli)\n• Surat Keterangan Tidak Mempunyai Hutang Piutang dengan Pihak Bank (Asli)\n• Surat Pernyataan Bebas Temuan yang Diterbitkan oleh ITJEN (Asli)\n• ANJAB dan ABK yang ditandatangani oleh PPK Instansi Asal (Bila Pindah Antar Kementerian)\n• SK CPNS (Fotokopi legalisir)\n• SK PNS (Fotokopi legalisir)\n• SK Pangkat Terakhir (Fotokopi legalisir)\n• SK Jabatan Terakhir (Fotokopi legalisir)\n• KARPEG (Fotokopi legalisir)\n• Ijazah dan Transkrip Nilai Universitas (Fotokopi legalisir)\n• SKP 2 tahun terakhir (Fotokopi legalisir)\n• Surat permohonan mutasi dari ybs\n• Daftar Riwayat Hidup (DRH) sesuai Keputusan Kepala BKN Nomor 11 Tahun 2002",
-    kategori: "Mutasi",
-    helpful: 42,
-    notHelpful: 0
-  }, {
-    id: "5",
-    pertanyaan: "Siapa saja yang bisa mengajukan mutasi?",
-    jawaban: "Semua PNS yang memenuhi syarat administrasi dan kebutuhan formasi dapat mengajukan mutasi dengan persetujuan atasan dan Kepala Unit asal.",
-    kategori: "Mutasi",
-    helpful: 28,
-    notHelpful: 2
-  }, {
-    id: "6",
-    pertanyaan: "Apakah mutasi bisa dilakukan tanpa ketersediaan formasi di unit tujuan?",
-    jawaban: "Tidak. Mutasi hanya dapat dilakukan jika ada formasi di unit tujuan.",
-    kategori: "Mutasi",
-    helpful: 31,
-    notHelpful: 1
-  }, {
-    id: "7",
-    pertanyaan: "Berapa lama proses mutasi pegawai?",
-    jawaban: "Waktu bervariasi. Namun, rata-rata 1-3 bulan, tergantung kelengkapan berkas, proses verifikasi, dan persetujuan dari pejabat berwenang.",
-    kategori: "Mutasi",
-    helpful: 33,
-    notHelpful: 0
-  }, {
-    id: "8",
-    pertanyaan: "Apa yang terjadi jika permohonan mutasi ditolak?",
-    jawaban: "Berkas akan dikembalikan ke TU unit asal dengan alasan tertulis. Pegawai dapat memperbaiki atau mengajukan kembali sesuai ketentuan.",
-    kategori: "Mutasi",
-    helpful: 26,
-    notHelpful: 1
-  }, {
-    id: "9",
-    pertanyaan: "Jika mutasi disetujui tetapi berkas kurang lengkap, apa yang harus dilakukan?",
-    jawaban: "Pegawai wajib melengkapi berkas terlebih dahulu sebelum usulan diproses lebih lanjut.",
-    kategori: "Mutasi",
-    helpful: 29,
-    notHelpful: 0
-  }, {
-    id: "10",
-    pertanyaan: "Apakah pegawai boleh mengajukan mutasi antar instansi (misalnya antar kementerian/lembaga atau ke pemerintah daerah)?",
-    jawaban: "Boleh, sepanjang memenuhi syarat, tersedia formasi di instansi tujuan, dan mendapat persetujuan dari kedua instansi serta BKN.",
-    kategori: "Mutasi",
-    helpful: 24,
-    notHelpful: 2
+    helpful: 200,
+    notHelpful: 5
   }];
   const getStatusBadge = (status: string) => {
     const statusMap = {
@@ -424,7 +410,22 @@ export default function KonsultasiSDM() {
                                 <Badge className="bg-primary/10 text-primary">{faq.kategori}</Badge>
                               </div>
                               <h4 className="font-semibold text-foreground mb-2">{faq.pertanyaan}</h4>
-                              <p className="text-sm text-muted-foreground leading-relaxed">{faq.jawaban}</p>
+                              <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
+                                {faq.jawaban.split('\n\n').map((section, index) => {
+                                  if (section.startsWith('**') && section.endsWith('**')) {
+                                    return <h5 key={index} className="font-semibold text-foreground text-base mt-4 mb-2">{section.replace(/\*\*/g, '')}</h5>;
+                                  }
+                                  return (
+                                    <div key={index} className="space-y-1">
+                                      {section.split('\n').map((line, lineIndex) => (
+                                        <p key={lineIndex} className={line.startsWith('•') || /^\d+\./.test(line) ? 'ml-0' : line.startsWith('   •') ? 'ml-4' : ''}>
+                                          {line}
+                                        </p>
+                                      ))}
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             </div>
                           </div>
                           
