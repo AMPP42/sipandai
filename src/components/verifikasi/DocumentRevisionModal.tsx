@@ -167,36 +167,36 @@ export default function DocumentRevisionModal({
         ) : (
           <div className="space-y-6">
             {/* Summary */}
-            <div className={`border rounded-lg p-4 ${showRevisionInterface ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200'}`}>
-              <h4 className={`font-medium mb-2 ${showRevisionInterface ? 'text-yellow-800' : 'text-blue-800'}`}>
+            <div className="border rounded-lg p-4 bg-orange-50 border-orange-200">
+              <h4 className="font-medium mb-3 text-orange-800">
                 Ringkasan Verifikasi
               </h4>
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
                   <span className="text-gray-700">Total Dokumen:</span>
-                  <span className="font-medium ml-2">{documentVerifications.length}</span>
+                  <span className="font-bold ml-2">{documentVerifications.length}</span>
                 </div>
                 <div>
                   <span className="text-gray-700">Menunggu Verifikasi:</span>
-                  <span className="font-medium ml-2">{pendingDocuments.length}</span>
+                  <span className="font-bold ml-2 text-gray-600">{pendingDocuments.length}</span>
                 </div>
                 <div>
-                  <span className="text-yellow-700">Perlu Perbaikan:</span>
-                  <span className="font-medium ml-2">{documentsNeedingRevision.length}</span>
+                  <span className="text-orange-700">Perlu Perbaikan:</span>
+                  <span className="font-bold ml-2 text-orange-600">{documentsNeedingRevision.length}</span>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4 text-sm mt-2">
                 <div>
                   <span className="text-orange-700">Sudah Diperbaiki:</span>
-                  <span className="font-medium ml-2">{repairedDocuments.length}</span>
+                  <span className="font-bold ml-2 text-orange-600">{repairedDocuments.length}</span>
                 </div>
                 <div>
                   <span className="text-green-700">Diproses:</span>
-                  <span className="font-medium ml-2">{processedDocuments.length}</span>
+                  <span className="font-bold ml-2 text-green-600">{processedDocuments.length}</span>
                 </div>
                 <div>
                   <span className="text-blue-700">Disetujui:</span>
-                  <span className="font-medium ml-2">{approvedDocuments.length}</span>
+                  <span className="font-bold ml-2 text-blue-600">{approvedDocuments.length}</span>
                 </div>
               </div>
             </div>
