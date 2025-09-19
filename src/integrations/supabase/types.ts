@@ -527,6 +527,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      is_admin_pusat_user: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_admin_unit_for_application: {
+        Args: { app_id: string }
+        Returns: boolean
+      }
       recount_documents: {
         Args: { app_id: string }
         Returns: undefined
