@@ -121,6 +121,114 @@ Boleh, sepanjang memenuhi syarat, tersedia formasi di instansi tujuan, dan menda
     kategori: "Mutasi",
     helpful: 200,
     notHelpful: 5
+  }, {
+    id: "2",
+    pertanyaan: "Pensiun",
+    jawaban: `**Alur dan Prosedur Pensiun**
+
+1. TU unit asal melakukan pemberitahuan kepada pegawai yang akan memasuki usia pensiun
+2. Pegawai menyiapkan dan menyerahkan berkas pensiun ke TU
+3. TU memverifikasi kelengkapan administrasi
+4. TU mengirimkan berkas usulan pensiun ke Setditjen
+5. Petugas SDMA melakukan pemeriksaan kelengkapan berkas
+6. SDMA Setditjen mengirimkan berkas ke Biro
+
+**Persyaratan Pensiun**
+
+**Masa Persiapan Pensiun**
+1. Surat permohonan pensiun dari ybs
+2. Fotokopi karpeg
+3. Fotokopi surat nikah
+4. Fotokopi SK pengangkatan sebagai CPNS
+5. Fotokopi SK pengangkatan CPNS menjadi PNS
+6. Fotokopi SK kenaikan pangkat
+7. Fotokopi gaji berkala terakhir
+8. Fotokopi penilaian prestasi kerja 2 tahun terakhir
+9. Surat pernyataan tidak pernah dijatuhi hukuman disiplin sedang/berat dalam 1 tahun terakhir
+10. Foto pegawai ybs
+11. Surat pernyataan tidak sedang menjalani proses pidana
+
+**Pensiun Reguler**
+1. Surat permohonan pensiun dari ybs (tanpa kop unit kerja)
+2. Daftar susunan keluarga, tidak perlu ttd camat dan lurah, bila anak sudah berkeluarga tetap dimasukkan untuk data
+3. Kartu pegawai
+4. Akte/surat nikah
+5. Akte kelahiran anak (jika masih ada anak yang menjadi tanggungan)
+6. SK pengangkatan CPNS
+7. SK pengangkatan CPNS menjadi PNS
+8. SK kenaikan pangkat terakhir
+9. Kenaikan gaji berkala terakhir
+10. Penilaian prestasi kerja (SKP) 2 tahun terakhir
+11. Surat pernyataan tidak pernah dijatuhi hukuman disiplin sedang/berat dalam 1 tahun terakhir
+12. Surat pernyataan tidak sedang menjalani proses pidana
+13. Foto pegawai ybs
+14. Data perorangan calon penerima pensiun
+15. Surat keterangan kematian (bila ada)
+16. KTP
+17. NPWP
+18. Buku tabungan
+19. Surat keterangan sekolah/kuliah (bila terdapat anak yang masih menjadi tanggungan)
+
+**Pensiun Janda atau Duda**
+1. Surat permohonan pensiun dari janda/duda ybs
+2. Daftar susunan keluarga (ttd lurah dan camat)
+3. Fotokopi kartu pegawai almarhum
+4. Fotokopi surat nikah dan akte kelahiran anak
+5. Fotokopi SK pengangkatan CPNS almarhum
+6. Fotokopi pengangkatan CPNS menjadi PNS almarhum
+7. Fotokopi SK kenaikan pangkat almarhum
+8. Fotokopi gaji berkala terakhir almarhum
+9. Fotokopi penilaian prestasi kerja 2 tahun terakhir almarhum
+10. Surat pernyataan tidak pernah dijatuhi hukdis sedang/berat dalam 1 tahun terakhir
+11. Surat pernyataan tidak sedang menjalani proses pidana almarhum
+12. Data perorangan calon penerima pensiun
+13. Foto janda/duda ybs
+14. Surat keterangan kematian yang sah dari Dukcapil
+15. Surat keterangan janda/duda dari kelurahan
+16. Fotokopi karis (untuk janda) /karsu (untuk duda)
+17. Fotokopi KTP janda/duda
+18. Fotokopi NPWP janda/duda
+19. Fotokopi buku tabungan janda/duda
+20. Surat keterangan sekolah/kuliah (bila terdapat anak yang masih menjadi tanggungan)
+
+**Pensiun Anak**
+1. Surat permohonan pensiun dari anak (ttd anak, tanpa kop)
+2. Daftar susunan keluarga (ttd lurah dan camat)
+3. Fotokopi kartu pegawai
+4. Fotokopi surat nikah
+5. Fotokopi surat pengangkatan CPNS
+6. Fotokopi SK pengangkatan CPNS menjadi PNS
+7. Fotokopi SK kenaikan pangkat
+8. Fotokopi gaji berkala terakhir
+9. Fotokopi penilaian prestasi kerja 2 tahun terakhir
+10. Surat pernyataan tidak pernah dijatuhi hukuman disiplin sedang/berat dalam 1 tahun terakhir
+11. Surat pernyataan tidak sedang menjalani proses pidana
+12. Data perorangan calon penerima pensiun (ttd anak)
+13. Foto anak
+14. Surat keterangan kematian yang sah
+
+**FAQ Pensiun**
+
+**Kapan paling lambat PNS harus mengajukan berkas pensiun?**
+Berkas pengajuan pensiun wajib disampaikan setidaknya 12 bulan sebelum TMT pensiun. TU biasanya sudah memberi pemberitahuan paling tidak sejak 12 bulan sebelum pensiun.
+
+**Jika berkas saya tidak lengkap, apakah pengajuan pensiun bisa diproses?**
+Tidak. Berkas harus lengkap agar bisa diproses. Jika ada kekurangan, TU atau Petugas SDMA akan mengembalikan berkas untuk dilengkapi.
+
+**Siapa yang mengurus pengajuan pensiun saya?**
+Pegawai yang bersangkutan menyerahkan berkas ke TU unit asal, lalu diteruskan ke SDMA Setditjen, dan selanjutnya diproses oleh Biro OSDMA ke BKN.
+
+**Berapa lama proses pengajuan pensiun sampai SK terbit?**
+Umumnya sekitar 3-6 bulan sebelum TMT pensiun. Namun, proses bisa lebih cepat atau lebih lama tergantung kelengkapan berkas.
+
+**Apakah ada konsekuensi jika saya terlambat mengajukan pensiun?**
+Jika terlambat, bisa berdampak pada keterlambatan penerbitan SK pensiun dan keterlambatan pembayaran pensiun pertama. Karena itu, pengajuan sebaiknya dilakukan jauh hari sebelum masa pensiun.
+
+**Apakah ahli waris juga harus mengajukan pensiun jika PNS meninggal dunia?**
+Ya. Ahli waris (janda/duda/anak) perlu mengajukan usulan pensiun janda/duda/anak dengan melampirkan dokumen pendukung.`,
+    kategori: "Pensiun",
+    helpful: 0,
+    notHelpful: 0
   }];
   const getStatusBadge = (status: string) => {
     const statusMap = {
