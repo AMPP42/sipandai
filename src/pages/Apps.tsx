@@ -55,7 +55,7 @@ export default function Apps() {
     },
     {
       id: 'konsultasi',
-      title: 'Panduan Layanan Kepegawaian',
+      title: 'Panduan Layanan Mutasi, Kenaikan Pangkat, dan Pensiun',
       description: 'Ticketing system, layanan konsultasi, dan panduan layanan kepegawaian',
       icon: MessageSquare,
       color: 'purple',
