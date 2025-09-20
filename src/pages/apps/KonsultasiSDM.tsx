@@ -123,6 +123,73 @@ Boleh, sepanjang memenuhi syarat, tersedia formasi di instansi tujuan, dan menda
     notHelpful: 5
   }, {
     id: "2",
+    pertanyaan: "Kenaikan Pangkat",
+    jawaban: `**Alur dan Prosedur Kenaikan Pangkat**
+
+1. Pegawai yang telah memenuhi syarat kenaikan pangkat mengajukan usulan kenaikan pangkat melalui TU unit masing-masing
+2. TU mengunggah dokumen persyaratan KP ke link google drive kenaikan pangkat Binalavotas
+3. TU memverifikasi kelengkapan administrasi
+4. TU mengirimkan berkas usulan ke SDMA Setditjen
+5. Petugas SDMA memeriksa berkas dan melakukan verifikasi
+6. Apabila terdapat kesalahan maka berkas akan dikembalikan ke TU unit asal
+7. Jika berkas sudah lengkap maka petugas SDMA akan mengajukan berkas ke Biro melalui SIASN
+8. Biro melakukan verifikasi akhir kemudian meneruskan ke BKN
+9. BKN akan melakukan verifikasi akhir dan menerbitkan SK
+
+**Persyaratan Kenaikan Pangkat**
+
+**Kenaikan Pangkat untuk Fungsional Umum**
+1. Fotokopi Kartu Pegawai (karpeg)
+2. Fotokopi SK Pangkat terakhir
+3. Fotokopi ijazah + transkrip nilai terakhir
+4. Fotokopi SKP 2 tahun terakhir
+
+**Kenaikan Pangkat Pejabat Struktural**
+1. (Nomor 1-4 sama dengan fungsional umum)
+2. Fotokopi SK jabatan terakhir
+3. Fotokopi surat pernyataan
+4. Khusus untuk pejabat struktural eselon III yang pendidikan terakhirnya S1 dan pangkat terakhirnya III/d harus lulus diklat PIM III atau ujian dinas
+
+**Kenaikan Pangkat Pejabat Fungsional**
+1. (Nomor 1-4 sama dengan fungsional umum)
+2. Fotokopi SK jabatan fungsional terakhir
+3. Fotokopi PAK mulai dari yang tercantum pada SK pangkat terakhir sampai dengan PAK terakhir (berurutan tiap periode)
+PAK terakhir harus asli
+4. Khusus untuk pejabat fungsional terampil yang akan pindah/naik ke tingkat ahli harus lulus diklat alih kategori dan ijazah terakhir sudah dinilai dalam PAK (Predikat Angka Kredit)
+
+**Pertama kali naik pangkat**
+1.(Nomor 1-4 sama dengan fungsional umum)
+2. Fotokopi SK CPNS
+
+**Kenaikan Pangkat Penyesuaian Ijazah**
+1. (Nomor 1-4 sama dengan fungsional umum)
+2. Fotokopi surat tanda lulus ujian penyesuaian kenaikan pangkat
+3. Uraian tugas
+4. Fotokopi ijazah + transkrip nilai terakhir yang telah dilegalisir ASLI
+
+**Kenaikan pangkat golongan II/d ke III/a**
+1. (Nomor 1-4 sama dengan fungsional umum)
+2. Fotokopi surat tanda lulus ujian dinas
+
+**FAQ Kenaikan Pangkat**
+
+**Kapan kenaikan pangkat diajukan?**
+Dua bulan sebelum periode pengajuan kenaikan pangkat (apabila akan mengikuti kenaikan pangkat periode September, maka pengumpulan dokumen dan berkas persyaratan dimulai pada bulan Juli)
+
+**Apa yang terjadi jika berkas saya tidak lengkap?**
+Jika berkas tidak lengkap, usulan tidak dapat diproses. TU atau petugas SDMA akan mengembalikan berkas untuk dilengkapi terlebih dahulu.
+
+**Apakah kenaikan pangkat otomatis diberikan jika sudah memenuhi masa kerja?**
+Untuk jabatan pelaksana kenaikan pangkat diberikan secara otomatis (selama SKP memenuhi syarat) tetapi proses administrasi tetap dilaksanakan sesuai prosedur.
+Untuk jabatan fungsional harus mengajukan sesuai angka kredit.
+
+**Apakah kenaikan pangkat karena pendidikan bisa langsung diajukan setelah lulus kuliah?**
+Bisa, dengan catatan pendidikan sudah diakui oleh BKN sehingga setelah kuliah pegawai yang bersangkutan wajib melaporkan ke atasan dan mengajukan izin penggunaan gelar.`,
+    kategori: "Kenaikan Pangkat",
+    helpful: 0,
+    notHelpful: 0
+  }, {
+    id: "3",
     pertanyaan: "Pensiun",
     jawaban: `**Alur dan Prosedur Pensiun**
 
