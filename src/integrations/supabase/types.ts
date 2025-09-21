@@ -98,6 +98,119 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_replies: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          keywords: string[]
+          reply_text: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          keywords: string[]
+          reply_text: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          keywords?: string[]
+          reply_text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          created_at: string
+          file_name: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          message_text: string | null
+          message_type: string
+          sender_id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          message_text?: string | null
+          message_type?: string
+          sender_id: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          message_text?: string | null
+          message_type?: string
+          sender_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_sessions: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          feedback: string | null
+          id: string
+          officer_id: string | null
+          rating: number | null
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          feedback?: string | null
+          id?: string
+          officer_id?: string | null
+          rating?: number | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          feedback?: string | null
+          id?: string
+          officer_id?: string | null
+          rating?: number | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       document_verifications: {
         Row: {
           admin_notes: string | null
@@ -353,6 +466,33 @@ export type Database = {
           read_at?: string | null
           recipient_id?: string
           title?: string
+        }
+        Relationships: []
+      }
+      officer_status: {
+        Row: {
+          created_at: string
+          id: string
+          last_seen: string
+          officer_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_seen?: string
+          officer_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_seen?: string
+          officer_id?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
