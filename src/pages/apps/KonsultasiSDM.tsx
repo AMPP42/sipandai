@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquare, Ticket, Star, Clock, CheckCircle, User, Search, Send, Phone, Calendar, HelpCircle, ThumbsUp, ThumbsDown } from "lucide-react";
+import { LiveChatInterface } from '@/components/chat/LiveChatInterface';
 interface TicketData {
   id: string;
   nomorTicket: string;
@@ -629,26 +630,7 @@ Ya. Ahli waris (janda/duda/anak) perlu mengajukan usulan pensiun janda/duda/anak
 
           {/* Tab: Live Chat */}
           <TabsContent value="live-chat" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Live Chat dengan Konselor</CardTitle>
-                <CardDescription>
-                  Chat langsung dengan konselor SDM untuk konsultasi real-time
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Phone className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Live Chat Segera Hadir</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Fitur live chat akan memungkinkan Anda berkonsultasi langsung dengan konselor SDM secara real-time.
-                  </p>
-                  <Button disabled>
-                    Mulai Chat
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <LiveChatInterface />
           </TabsContent>
 
           {/* Tab: Appointment */}
