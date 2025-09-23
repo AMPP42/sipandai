@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ interface FAQItem {
   notHelpful: number;
 }
 export default function KonsultasiSDM() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("ticket");
   const [newTicket, setNewTicket] = useState({
     judul: "",
@@ -649,10 +651,8 @@ Ya. Ahli waris (janda/duda/anak) perlu mengajukan usulan pensiun janda/duda/anak
                   <p className="text-muted-foreground mb-4">
                     Buat janji dengan konselor untuk mendapat bantuan langsung terkait kepegawaian Anda.
                   </p>
-                  <Button asChild>
-                    <a href="/apps/jadwal-konsultasi">
-                      Buat Appointment
-                    </a>
+                  <Button onClick={() => navigate("/apps/jadwal-konsultasi")}>
+                    Buat Appointment
                   </Button>
                 </div>
               </CardContent>
