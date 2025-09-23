@@ -21,6 +21,7 @@ import KenaikanPangkat from "./pages/apps/KenaikanPangkat";
 import ReminderPensiun from "./pages/apps/ReminderPensiun";
 import PengajuanMutasiTerpadu from "./pages/apps/PengajuanMutasiTerpadu";
 import KonsultasiSDM from "./pages/apps/KonsultasiSDM";
+import JadwalKonsultasi from "./pages/apps/JadwalKonsultasi";
 
 // Admin pages
 import PanelAdmin from "./pages/PanelAdmin";
@@ -112,6 +113,14 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <PengajuanMutasiTerpadu />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/apps/jadwal-konsultasi" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <JadwalKonsultasi />
                 </DashboardLayout>
               </ProtectedRoute>
             } />

@@ -645,12 +645,14 @@ Ya. Ahli waris (janda/duda/anak) perlu mengajukan usulan pensiun janda/duda/anak
               <CardContent>
                 <div className="text-center py-12">
                   <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Sistem Appointment Segera Hadir</h3>
+                  <h3 className="text-lg font-semibold mb-2">Jadwalkan Konsultasi Tatap Muka</h3>
                   <p className="text-muted-foreground mb-4">
-                    Fitur penjadwalan konsultasi akan memungkinkan Anda membuat janji dengan konselor untuk pertemuan tatap muka.
+                    Buat janji dengan konselor untuk mendapat bantuan langsung terkait kepegawaian Anda.
                   </p>
-                  <Button disabled>
-                    Buat Appointment
+                  <Button asChild>
+                    <a href="/apps/jadwal-konsultasi">
+                      Buat Appointment
+                    </a>
                   </Button>
                 </div>
               </CardContent>

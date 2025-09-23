@@ -68,6 +68,101 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_notifications: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          email_sent: boolean | null
+          id: string
+          recipient_id: string
+          sent_at: string
+          type: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          email_sent?: boolean | null
+          id?: string
+          recipient_id: string
+          sent_at?: string
+          type: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          email_sent?: boolean | null
+          id?: string
+          recipient_id?: string
+          sent_at?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_notifications_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointments: {
+        Row: {
+          catatan_admin: string | null
+          created_at: string
+          email: string
+          id: string
+          jam_konsultasi: string
+          jenis_konsultasi: string
+          keterangan: string | null
+          konselor_id: string | null
+          nama_lengkap: string
+          nip: string
+          nomor_hp: string
+          status: string
+          tanggal_konsultasi: string
+          unit_kerja: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          catatan_admin?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          jam_konsultasi: string
+          jenis_konsultasi: string
+          keterangan?: string | null
+          konselor_id?: string | null
+          nama_lengkap: string
+          nip: string
+          nomor_hp: string
+          status?: string
+          tanggal_konsultasi: string
+          unit_kerja: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          catatan_admin?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          jam_konsultasi?: string
+          jenis_konsultasi?: string
+          keterangan?: string | null
+          konselor_id?: string | null
+          nama_lengkap?: string
+          nip?: string
+          nomor_hp?: string
+          status?: string
+          tanggal_konsultasi?: string
+          unit_kerja?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
