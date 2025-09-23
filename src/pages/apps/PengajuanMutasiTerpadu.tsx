@@ -191,7 +191,7 @@ export default function PengajuanMutasiTerpadu() {
         submitter_id: user?.id || '',
         submitter_name: user?.name || '',
         submitter_unit: user?.unit || '',
-        status: 'submitted' as const,
+        status: 'draft' as const,
         estimasi: JSON.stringify({
           employee_id: selectedEmployee.id,
           employee_name: selectedEmployee.nama,
@@ -205,24 +205,22 @@ export default function PengajuanMutasiTerpadu() {
         })
       };
 
-      const { error } = await supabase
+      const { data: insertedApp, error } = await supabase
         .from('applications')
-        .insert(applicationData);
+        .insert(applicationData)
+        .select()
+        .single();
 
       if (error) throw error;
 
       toast({
         title: "Berhasil",
-        description: "Pengajuan mutasi terpadu berhasil dibuat",
+        description: "Draft pengajuan mutasi terpadu berhasil dibuat. Silakan lengkapi dokumen untuk melanjutkan.",
         variant: "default"
       });
 
-      // Reset form
-      setSelectedEmployee(null);
-      setSelectedPosition(null);
-      setAlasanMutasi('');
-      setActiveTab('list');
-      await loadApplications();
+      // Navigate to detail page for document upload
+      navigate(`/detail-mutasi-terpadu/${insertedApp.id}`);
 
     } catch (error: any) {
       console.error('Error submitting application:', error);
