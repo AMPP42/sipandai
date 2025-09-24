@@ -67,7 +67,8 @@ const DOCUMENT_REQUIREMENTS = [
   'Ijazah dan Transkrip Nilai Universitas (Fotokopi legalisir)',
   'SKP 2 tahun terakhir (Fotokopi legalisir)',
   'Surat permohonan mutasi dari ybs',
-  'Daftar Riwayat Hidup (DRH) sesuai Keputusan Kepala BKN Nomor 11 Tahun 2002'
+  'Daftar Riwayat Hidup (DRH) sesuai Keputusan Kepala BKN Nomor 11 Tahun 2002',
+  'Nota Dinas Usulan Mutasi yang telah ditandatangani'
 ];
 
 export default function PengajuanMutasiTerpadu() {
