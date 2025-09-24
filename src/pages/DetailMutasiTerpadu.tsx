@@ -209,15 +209,98 @@ export default function DetailMutasiTerpadu() {
     });
   };
 
+  const handleSaveDraft = async () => {
+    if (!application || !application.employee_data) return;
+
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "User tidak terautentikasi",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      // Update application keterangan only (keep status as draft)
+      const { error: updateError } = await supabase
+        .from('applications')
+        .update({
+          keterangan: `Kategori: Mutasi Terpadu${additionalNotes ? ` - ${additionalNotes}` : ''}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (updateError) throw updateError;
+
+      // Delete existing documents first
+      const { error: deleteDocsError } = await supabase
+        .from('documents')
+        .delete()
+        .eq('application_id', id);
+
+      if (deleteDocsError) throw deleteDocsError;
+
+      // Insert new documents only if there are any
+      const documentEntries = Object.entries(documents).filter(([key, link]) => link.trim() !== '');
+      if (documentEntries.length > 0) {
+        const documentInserts = documentEntries.map(([key, link]) => {
+          const index = parseInt(key.replace('doc_', ''));
+          const documentName = DOCUMENT_REQUIREMENTS[index];
+          
+          return {
+            application_id: id,
+            title: documentName,
+            drive_link: link.trim(),
+            created_by: user.id,
+            document_category: 'mutasi_terpadu',
+            document_index: index
+          };
+        });
+
+        const { error: documentsError } = await supabase
+          .from('documents')
+          .insert(documentInserts);
+
+        if (documentsError) throw documentsError;
+      }
+
+      toast({
+        title: "Berhasil",
+        description: "Draft pengajuan mutasi berhasil disimpan",
+      });
+
+      // Reload the application data
+      await loadApplication();
+      await loadApplicationForEdit();
+
+    } catch (error: any) {
+      console.error('Error saving draft:', error);
+      toast({
+        title: "Error",
+        description: "Gagal menyimpan draft pengajuan",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmitApplication = async () => {
     if (!application || !application.employee_data) return;
 
-    // Check if at least one document is provided
-    const documentEntries = Object.entries(documents).filter(([key, link]) => link.trim() !== '');
-    if (documentEntries.length === 0) {
+    // Check if all documents are provided for final submission
+    const allDocumentsProvided = DOCUMENT_REQUIREMENTS.every((_, index) => {
+      const docKey = `doc_${index}`;
+      return documents[docKey] && documents[docKey].trim() !== '';
+    });
+
+    if (!allDocumentsProvided) {
       toast({
         title: "Error", 
-        description: "Harap upload minimal satu dokumen persyaratan",
+        description: "Semua dokumen persyaratan harus diisi sebelum submit pengajuan",
         variant: "destructive"
       });
       return;
@@ -407,7 +490,12 @@ export default function DetailMutasiTerpadu() {
 
   const canEdit = application?.status === 'draft' || application?.status === 'revision_needed' || isEditing;
   const submittedDocumentsCount = Object.values(documents).filter(link => link.trim() !== '').length;
-  const canSubmit = canEdit && submittedDocumentsCount > 0;
+  const allDocumentsCompleted = DOCUMENT_REQUIREMENTS.every((_, index) => {
+    const docKey = `doc_${index}`;
+    return documents[docKey] && documents[docKey].trim() !== '';
+  });
+  const canSaveDraft = canEdit;
+  const canSubmit = canEdit && allDocumentsCompleted;
   const progressPercentage = Math.round((submittedDocumentsCount / DOCUMENT_REQUIREMENTS.length) * 100);
 
   if (loading) {
@@ -456,6 +544,22 @@ export default function DetailMutasiTerpadu() {
             <Button onClick={() => setIsEditing(true)} variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Edit Usulan
+            </Button>
+          )}
+          {canSaveDraft && (
+            <Button 
+              onClick={handleSaveDraft} 
+              disabled={isSubmitting}
+              variant="outline"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                'Simpan Draft'
+              )}
             </Button>
           )}
           {canSubmit && (
