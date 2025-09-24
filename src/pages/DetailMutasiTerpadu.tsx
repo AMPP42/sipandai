@@ -224,10 +224,11 @@ export default function DetailMutasiTerpadu() {
     try {
       setIsSubmitting(true);
       
-      // Update application keterangan only (keep status as draft)
+      // Update application keterangan and ensure status stays as draft
       const { error: updateError } = await supabase
         .from('applications')
         .update({
+          status: 'draft', // Explicitly ensure status remains draft
           keterangan: `Kategori: Mutasi Terpadu${additionalNotes ? ` - ${additionalNotes}` : ''}`,
           updated_at: new Date().toISOString()
         })
@@ -243,23 +244,22 @@ export default function DetailMutasiTerpadu() {
 
       if (deleteDocsError) throw deleteDocsError;
 
-      // Insert new documents only if there are any
-      const documentEntries = Object.entries(documents).filter(([key, link]) => link.trim() !== '');
-      if (documentEntries.length > 0) {
-        const documentInserts = documentEntries.map(([key, link]) => {
-          const index = parseInt(key.replace('doc_', ''));
-          const documentName = DOCUMENT_REQUIREMENTS[index];
-          
-          return {
-            application_id: id,
-            title: documentName,
-            drive_link: link.trim(),
-            created_by: user.id,
-            document_category: 'mutasi_terpadu',
-            document_index: index
-          };
-        });
+      // Insert ALL documents from the form state, including empty ones as placeholders
+      const documentInserts = DOCUMENT_REQUIREMENTS.map((documentName, index) => {
+        const docKey = `doc_${index}`;
+        const linkValue = documents[docKey] || '';
+        
+        return {
+          application_id: id,
+          title: documentName,
+          drive_link: linkValue.trim(),
+          created_by: user.id,
+          document_category: 'mutasi_terpadu',
+          document_index: index
+        };
+      }).filter(doc => doc.drive_link !== ''); // Only save documents with actual links
 
+      if (documentInserts.length > 0) {
         const { error: documentsError } = await supabase
           .from('documents')
           .insert(documentInserts);
@@ -269,12 +269,14 @@ export default function DetailMutasiTerpadu() {
 
       toast({
         title: "Berhasil",
-        description: "Draft pengajuan mutasi berhasil disimpan",
+        description: `Draft disimpan dengan ${documentInserts.length} dokumen. Status tetap Draft.`,
       });
 
-      // Reload the application data
-      await loadApplication();
-      await loadApplicationForEdit();
+      console.log('Draft saved successfully:', {
+        applicationId: id,
+        documentsCount: documentInserts.length,
+        status: 'draft'
+      });
 
     } catch (error: any) {
       console.error('Error saving draft:', error);
