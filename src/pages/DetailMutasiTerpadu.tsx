@@ -614,103 +614,159 @@ export default function DetailMutasiTerpadu() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
-            {/* Timeline Item 1: Pengajuan dibuat */}
-            <div className="flex items-start gap-4">
-              <div className="flex flex-col items-center">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                {(application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') && (
-                  <div className="w-0.5 h-12 bg-green-500 mt-2"></div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-medium text-gray-900">Pengajuan dibuat</h4>
-                <p className="text-xs text-gray-500 mt-1">
-                  {new Date(application?.created_at || '').toLocaleDateString('id-ID', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-            </div>
+          <div className="relative">
+            {/* Horizontal timeline container */}
+            <div className="flex items-center justify-between relative">
+              {/* Background connecting line */}
+              <div className="absolute top-6 left-6 right-6 h-0.5 bg-gray-200 z-0"></div>
+              
+              {/* Active connecting lines */}
+              {(application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') && (
+                <div className="absolute top-6 left-6 h-0.5 bg-green-500 z-10" style={{ width: 'calc(50% - 12px)' }}></div>
+              )}
+              
+              {application?.status === 'approved' && (
+                <div className="absolute top-6 right-6 h-0.5 bg-green-500 z-10" style={{ width: 'calc(50% - 12px)' }}></div>
+              )}
+              
+              {application?.status === 'revision_needed' && (
+                <div className="absolute top-6 right-6 h-0.5 bg-yellow-500 z-10" style={{ width: 'calc(50% - 12px)' }}></div>
+              )}
 
-            {/* Timeline Item 2: Data telah diajukan */}
-            {(application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') && (
-              <div className="flex items-start gap-4">
-                <div className="flex flex-col items-center">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  {(application?.status === 'approved' || application?.status === 'revision_needed') && (
-                    <div className={`w-0.5 h-12 mt-2 ${application?.status === 'approved' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+              {/* Timeline Step 1: Pengajuan dibuat */}
+              <div className="flex flex-col items-center z-20 bg-white px-4">
+                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mb-2 relative">
+                  <CheckCircle className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-center min-w-0 max-w-32">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-1">Pengajuan Dibuat</h4>
+                  <p className="text-xs text-gray-600 break-words">
+                    {new Date(application?.created_at || '').toLocaleDateString('id-ID', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric'
+                    })}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(application?.created_at || '').toLocaleTimeString('id-ID', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              {/* Timeline Step 2: Data telah diajukan */}
+              <div className="flex flex-col items-center z-20 bg-white px-4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 relative ${
+                  (application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') 
+                    ? 'bg-green-500' 
+                    : 'bg-gray-300'
+                }`}>
+                  {(application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') ? (
+                    <Send className="w-6 h-6 text-white" />
+                  ) : (
+                    <Clock className="w-6 h-6 text-gray-500" />
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-medium text-gray-900">Data telah diajukan</h4>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {application?.tanggal_pengajuan ? 
-                      new Date(application.tanggal_pengajuan).toLocaleDateString('id-ID', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      }) : 
-                      new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })
-                    }
-                  </p>
+                <div className="text-center min-w-0 max-w-32">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-1">Data Diajukan</h4>
+                  {(application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') ? (
+                    <>
+                      <p className="text-xs text-gray-600 break-words">
+                        {application?.tanggal_pengajuan ? 
+                          new Date(application.tanggal_pengajuan).toLocaleDateString('id-ID', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          }) : 
+                          new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })
+                        }
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {application?.tanggal_pengajuan ? 
+                          new Date(application.tanggal_pengajuan).toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }) : 
+                          new Date(application?.updated_at || '').toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        }
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-gray-500">Menunggu</p>
+                  )}
                 </div>
               </div>
-            )}
 
-            {/* Timeline Item 3: Data telah disetujui (for approved status) */}
-            {application?.status === 'approved' && (
-              <div className="flex items-start gap-4">
-                <div className="flex flex-col items-center">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              {/* Timeline Step 3: Status akhir */}
+              <div className="flex flex-col items-center z-20 bg-white px-4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 relative ${
+                  application?.status === 'approved' 
+                    ? 'bg-green-500' 
+                    : application?.status === 'revision_needed'
+                    ? 'bg-yellow-500'
+                    : 'bg-gray-300'
+                }`}>
+                  {application?.status === 'approved' ? (
+                    <CheckCircle className="w-6 h-6 text-white" />
+                  ) : application?.status === 'revision_needed' ? (
+                    <AlertTriangle className="w-6 h-6 text-white" />
+                  ) : (
+                    <Clock className="w-6 h-6 text-gray-500" />
+                  )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-medium text-gray-900">Data telah disetujui dan sedang diproses</h4>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
+                <div className="text-center min-w-0 max-w-32">
+                  {application?.status === 'approved' ? (
+                    <>
+                      <h4 className="text-sm font-semibold text-gray-900 mb-1">Disetujui & Diproses</h4>
+                      <p className="text-xs text-gray-600 break-words">
+                        {new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(application?.updated_at || '').toLocaleTimeString('id-ID', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </>
+                  ) : application?.status === 'revision_needed' ? (
+                    <>
+                      <h4 className="text-sm font-semibold text-gray-900 mb-1">Perlu Perbaikan</h4>
+                      <p className="text-xs text-gray-600 break-words">
+                        {new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(application?.updated_at || '').toLocaleTimeString('id-ID', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h4 className="text-sm font-semibold text-gray-900 mb-1">Menunggu Verifikasi</h4>
+                      <p className="text-xs text-gray-500">Belum diproses</p>
+                    </>
+                  )}
                 </div>
               </div>
-            )}
-
-            {/* Timeline Item 3: Data perlu perbaikan (for revision_needed status) */}
-            {application?.status === 'revision_needed' && (
-              <div className="flex items-start gap-4">
-                <div className="flex flex-col items-center">
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-medium text-gray-900">Data perlu perbaikan</h4>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         </CardContent>
       </Card>
