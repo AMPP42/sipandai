@@ -559,31 +559,45 @@ export default function PengajuanMutasiTerpadu() {
                      {applications.map((app) => {
                        const getStatusTimestamp = (application: Application) => {
                          if (application.status === 'submitted' && application.tanggal_pengajuan) {
-                           return `Diajukan: ${new Date(application.tanggal_pengajuan).toLocaleDateString('id-ID', {
+                           return new Date(application.tanggal_pengajuan).toLocaleDateString('id-ID', {
                              day: '2-digit',
                              month: '2-digit', 
                              year: 'numeric',
                              hour: '2-digit',
                              minute: '2-digit'
-                           })}`;
+                           });
                          } else if (application.status === 'revision_needed') {
-                           return `Perlu perbaikan: ${new Date(application.updated_at).toLocaleDateString('id-ID', {
+                           return new Date(application.updated_at).toLocaleDateString('id-ID', {
                              day: '2-digit',
                              month: '2-digit',
                              year: 'numeric',
                              hour: '2-digit',
                              minute: '2-digit'
-                           })}`;
+                           });
+                         } else if (application.status === 'approved') {
+                           return new Date(application.updated_at).toLocaleDateString('id-ID', {
+                             day: '2-digit',
+                             month: '2-digit',
+                             year: 'numeric',
+                             hour: '2-digit',
+                             minute: '2-digit'
+                           });
                          } else if (application.status === 'draft') {
-                           return `Draft dibuat: ${new Date(application.created_at).toLocaleDateString('id-ID', {
+                           return new Date(application.created_at).toLocaleDateString('id-ID', {
                              day: '2-digit',
                              month: '2-digit',
                              year: 'numeric',
                              hour: '2-digit',
                              minute: '2-digit'
-                           })}`;
+                           });
                          }
-                         return new Date(application.created_at).toLocaleDateString('id-ID');
+                         return new Date(application.created_at).toLocaleDateString('id-ID', {
+                           day: '2-digit',
+                           month: '2-digit',
+                           year: 'numeric',
+                           hour: '2-digit',
+                           minute: '2-digit'
+                         });
                        };
 
                        return (
@@ -597,15 +611,10 @@ export default function PengajuanMutasiTerpadu() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="space-y-1">
-                              {getStatusBadge(app.status)}
-                              <p className="text-xs text-muted-foreground">
-                                {getStatusTimestamp(app)}
-                              </p>
-                            </div>
+                            {getStatusBadge(app.status)}
                           </TableCell>
                           <TableCell>
-                            {new Date(app.created_at).toLocaleDateString('id-ID')}
+                            {getStatusTimestamp(app)}
                           </TableCell>
                           <TableCell>
                             <Button
