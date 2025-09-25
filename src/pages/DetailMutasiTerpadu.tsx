@@ -605,6 +605,116 @@ export default function DetailMutasiTerpadu() {
         </CardContent>
       </Card>
 
+      {/* Timeline */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Timeline Pengajuan
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Timeline Item 1: Pengajuan dibuat */}
+            <div className="flex items-start gap-4">
+              <div className="flex flex-col items-center">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                {(application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') && (
+                  <div className="w-0.5 h-12 bg-green-500 mt-2"></div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-medium text-gray-900">Pengajuan dibuat</h4>
+                <p className="text-xs text-gray-500 mt-1">
+                  {new Date(application?.created_at || '').toLocaleDateString('id-ID', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
+              </div>
+            </div>
+
+            {/* Timeline Item 2: Data telah diajukan */}
+            {(application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') && (
+              <div className="flex items-start gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  {(application?.status === 'approved' || application?.status === 'revision_needed') && (
+                    <div className={`w-0.5 h-12 mt-2 ${application?.status === 'approved' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-medium text-gray-900">Data telah diajukan</h4>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {application?.tanggal_pengajuan ? 
+                      new Date(application.tanggal_pengajuan).toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) : 
+                      new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Timeline Item 3: Data telah disetujui (for approved status) */}
+            {application?.status === 'approved' && (
+              <div className="flex items-start gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-medium text-gray-900">Data telah disetujui dan sedang diproses</h4>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Timeline Item 3: Data perlu perbaikan (for revision_needed status) */}
+            {application?.status === 'revision_needed' && (
+              <div className="flex items-start gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-medium text-gray-900">Data perlu perbaikan</h4>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Edit Mode Summary */}
       {isEditing && Object.keys(documentVerificationStatus).length > 0 && (
         <Card className="bg-orange-50 border-orange-200">
