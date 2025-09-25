@@ -556,34 +556,70 @@ export default function PengajuanMutasiTerpadu() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {applications.map((app) => (
-                      <TableRow key={app.id}>
-                         <TableCell>
-                           <div>
-                             <p className="font-medium">{app.judul}</p>
-                             <p className="text-sm text-muted-foreground">
-                               {app.estimasi && JSON.parse(app.estimasi).nomor_usulan}
-                             </p>
-                           </div>
-                         </TableCell>
-                         <TableCell>
-                           {getStatusBadge(app.status)}
-                         </TableCell>
-                         <TableCell>
-                           {new Date(app.created_at).toLocaleDateString('id-ID')}
-                         </TableCell>
-                         <TableCell>
-                           <Button
-                             variant="outline"
-                             size="sm"
-                             onClick={() => navigate(`/detail-mutasi-terpadu/${app.id}`)}
-                           >
-                             <Eye className="w-4 h-4 mr-2" />
-                             Detail
-                           </Button>
-                         </TableCell>
-                      </TableRow>
-                    ))}
+                     {applications.map((app) => {
+                       const getStatusTimestamp = (application: Application) => {
+                         if (application.status === 'submitted' && application.tanggal_pengajuan) {
+                           return `Diajukan: ${new Date(application.tanggal_pengajuan).toLocaleDateString('id-ID', {
+                             day: '2-digit',
+                             month: '2-digit', 
+                             year: 'numeric',
+                             hour: '2-digit',
+                             minute: '2-digit'
+                           })}`;
+                         } else if (application.status === 'revision_needed') {
+                           return `Perlu perbaikan: ${new Date(application.updated_at).toLocaleDateString('id-ID', {
+                             day: '2-digit',
+                             month: '2-digit',
+                             year: 'numeric',
+                             hour: '2-digit',
+                             minute: '2-digit'
+                           })}`;
+                         } else if (application.status === 'draft') {
+                           return `Draft dibuat: ${new Date(application.created_at).toLocaleDateString('id-ID', {
+                             day: '2-digit',
+                             month: '2-digit',
+                             year: 'numeric',
+                             hour: '2-digit',
+                             minute: '2-digit'
+                           })}`;
+                         }
+                         return new Date(application.created_at).toLocaleDateString('id-ID');
+                       };
+
+                       return (
+                       <TableRow key={app.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{app.judul}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {app.estimasi && JSON.parse(app.estimasi).nomor_usulan}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {getStatusBadge(app.status)}
+                              <p className="text-xs text-muted-foreground">
+                                {getStatusTimestamp(app)}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(app.created_at).toLocaleDateString('id-ID')}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/detail-mutasi-terpadu/${app.id}`)}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              Detail
+                            </Button>
+                          </TableCell>
+                       </TableRow>
+                       );
+                     })}
                   </TableBody>
                 </Table>
               )}
