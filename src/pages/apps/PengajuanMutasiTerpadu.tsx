@@ -236,12 +236,13 @@ export default function PengajuanMutasiTerpadu() {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+    const variants: Record<string, "default" | "secondary" | "destructive" | "outline" | "warning"> = {
       'draft': 'secondary',
       'submitted': 'default',
       'in_review': 'outline',
       'approved': 'default',
-      'rejected': 'destructive'
+      'rejected': 'destructive',
+      'revision_needed': 'warning'
     };
 
     const labels: Record<string, string> = {
@@ -249,7 +250,8 @@ export default function PengajuanMutasiTerpadu() {
       'submitted': 'Diajukan',
       'in_review': 'Dalam Review',
       'approved': 'Disetujui',
-      'rejected': 'Ditolak'
+      'rejected': 'Ditolak',
+      'revision_needed': 'Perlu perbaikan'
     };
 
     return (
