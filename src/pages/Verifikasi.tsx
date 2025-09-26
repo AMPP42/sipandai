@@ -42,7 +42,9 @@ interface ApplicationItem {
   catatan_reviewer?: string;
   user_id?: string;
   submitter_id?: string;
+  reviewed_at?: string;
   created_at: string;
+  updated_at?: string;
 }
 
 interface VerifikasiProps {
@@ -324,6 +326,55 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
     return new Date(date).toLocaleDateString('id-ID');
   };
 
+  const getStatusTimestamp = (app: ApplicationItem) => {
+    let timestamp: string;
+    let label: string;
+
+    switch (app.status) {
+      case 'draft':
+        timestamp = app.created_at;
+        label = 'Dibuat';
+        break;
+      case 'submitted':
+        timestamp = app.tanggal_usulan || app.tanggal_pengajuan || app.created_at;
+        label = 'Diajukan';
+        break;
+      case 'in_review':
+        timestamp = app.updated_at || app.created_at;
+        label = 'Dalam Review';
+        break;
+      case 'revision_needed':
+        timestamp = app.updated_at || app.created_at;
+        label = 'Perlu Revisi';
+        break;
+      case 'approved':
+        timestamp = app.updated_at || app.created_at;
+        label = 'Disetujui';
+        break;
+      case 'rejected':
+        timestamp = app.updated_at || app.created_at;
+        label = 'Ditolak';
+        break;
+      case 'completed':
+        timestamp = app.updated_at || app.created_at;
+        label = 'Selesai';
+        break;
+      default:
+        timestamp = app.created_at;
+        label = 'Dibuat';
+    }
+
+    const time = new Date(timestamp).toLocaleString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+
+    return `${label}: ${time}`;
+  };
+
   const handleDetailedVerification = (application: ApplicationItem) => {
     setSelectedApplication(application);
     setShowDetailedVerification(true);
@@ -579,7 +630,14 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
                         : application.submitter_unit}
                     </TableCell>
                     <TableCell>{getApplicationType(application)}</TableCell>
-                    <TableCell>{getApplicationDate(application)}</TableCell>
+                    <TableCell>
+                      <div>
+                        <div>{getApplicationDate(application)}</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {getStatusTimestamp(application)}
+                        </div>
+                      </div>
+                    </TableCell>
                     <TableCell>{getStatusBadge(application.status)}</TableCell>
                     <TableCell>{getActionButtons(application)}</TableCell>
                   </TableRow>
