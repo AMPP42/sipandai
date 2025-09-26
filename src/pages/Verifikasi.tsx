@@ -299,7 +299,7 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
 
   const getApplicationType = (app: ApplicationItem) => {
     if (app.type === 'usulan_mutasi') {
-      return app.jenis_mutasi || 'Mutasi';
+      return 'Usulan Mutasi';
     }
     
     switch (app.jenis) {
