@@ -130,9 +130,8 @@ export default function StatusUsulan() {
       case 'pensiun':
         return 'Pengajuan Pensiun';
       case 'mutasi':
-        return 'Pengajuan Mutasi';
       case 'mutasi_terpadu':
-        return 'Usulan Mutasi';
+        return 'Pengajuan Mutasi';
       case 'kenaikan_pangkat':
         return 'Kenaikan Pangkat';
       default:
