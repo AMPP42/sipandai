@@ -522,7 +522,7 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
                 <SelectContent>
                   <SelectItem value="all">Semua Aplikasi</SelectItem>
                   <SelectItem value="pensiun">Pengajuan Pensiun</SelectItem>
-                  <SelectItem value="mutasi">Usulan Mutasi</SelectItem>
+                  <SelectItem value="mutasi">Pengajuan Mutasi</SelectItem>
                   <SelectItem value="kenaikan_pangkat">Kenaikan Pangkat</SelectItem>
                 </SelectContent>
               </Select>
