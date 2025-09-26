@@ -583,27 +583,49 @@ export default function DetailMutasiTerpadu() {
         </div>
       </div>
 
-      {/* Progress */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5" />
-            Progress Pengajuan
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Dokumen yang sudah diupload</span>
-              <span>{submittedDocumentsCount} dari {DOCUMENT_REQUIREMENTS.length}</span>
+      {/* Progress - Only show for draft and revision_needed status */}
+      {(application.status === 'draft' || application.status === 'revision_needed') && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              Progress Pengajuan
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>
+                  {application.status === 'revision_needed' 
+                    ? 'Dokumen perbaikan yang sudah diupload' 
+                    : 'Dokumen yang sudah diupload'
+                  }
+                </span>
+                <span>
+                  {application.status === 'revision_needed' 
+                    ? Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix' && documents[Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === v) || '']?.trim() !== '').length
+                    : submittedDocumentsCount
+                  } dari {application.status === 'revision_needed' 
+                    ? Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length 
+                    : DOCUMENT_REQUIREMENTS.length
+                  }
+                </span>
+              </div>
+              <Progress value={
+                application.status === 'revision_needed' 
+                  ? Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix' && documents[Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === v) || '']?.trim() !== '').length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)
+                  : progressPercentage
+              } className="w-full" />
+              <p className="text-xs text-muted-foreground">
+                {application.status === 'revision_needed' 
+                  ? Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix' && documents[Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === v) || '']?.trim() !== '').length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)
+                  : progressPercentage
+                }% selesai
+              </p>
             </div>
-            <Progress value={progressPercentage} className="w-full" />
-            <p className="text-xs text-muted-foreground">
-              {progressPercentage}% selesai
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Timeline */}
       <Card>
