@@ -517,7 +517,7 @@ export default function DetailMutasiTerpadu() {
       <div className="container mx-auto py-6">
         <div className="text-center py-8">
           <p>Pengajuan tidak ditemukan</p>
-          <Button onClick={() => navigate('/apps/pengajuan-mutasi-terpadu')} className="mt-4">
+          <Button onClick={() => navigate('/status')} className="mt-4">
             Kembali
           </Button>
         </div>
@@ -529,7 +529,7 @@ export default function DetailMutasiTerpadu() {
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="sm" onClick={() => navigate('/apps/pengajuan-mutasi-terpadu')}>
+        <Button variant="outline" size="sm" onClick={() => navigate('/status')}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Kembali
         </Button>
