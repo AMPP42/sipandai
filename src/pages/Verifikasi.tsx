@@ -146,7 +146,10 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
     // Filter by application type
     if (filterType !== 'all') {
       if (filterType === 'mutasi') {
-        filtered = filtered.filter(app => app.type === 'usulan_mutasi');
+        // Include both legacy usulan_mutasi and applications with jenis 'mutasi' or 'mutasi_terpadu'
+        filtered = filtered.filter(app => 
+          app.type === 'usulan_mutasi' || (app.type === 'application' && (app.jenis === 'mutasi' || app.jenis === 'mutasi_terpadu'))
+        );
       } else {
         filtered = filtered.filter(app => 
           app.type === 'application' && app.jenis === filterType
@@ -307,6 +310,8 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
         return 'Pengajuan Pensiun';
       case 'mutasi':
         return 'Pengajuan Mutasi';
+      case 'mutasi_terpadu':
+        return 'Usulan Mutasi';
       case 'kenaikan_pangkat':
         return 'Kenaikan Pangkat';
       default:
