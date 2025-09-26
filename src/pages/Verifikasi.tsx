@@ -146,10 +146,7 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
     // Filter by application type
     if (filterType !== 'all') {
       if (filterType === 'mutasi') {
-        filtered = filtered.filter(app => 
-          app.type === 'usulan_mutasi' || 
-          (app.type === 'application' && app.jenis === 'mutasi')
-        );
+        filtered = filtered.filter(app => app.type === 'usulan_mutasi');
       } else {
         filtered = filtered.filter(app => 
           app.type === 'application' && app.jenis === filterType
@@ -302,7 +299,7 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
 
   const getApplicationType = (app: ApplicationItem) => {
     if (app.type === 'usulan_mutasi') {
-      return 'Usulan Mutasi';
+      return app.jenis_mutasi || 'Mutasi';
     }
     
     switch (app.jenis) {
