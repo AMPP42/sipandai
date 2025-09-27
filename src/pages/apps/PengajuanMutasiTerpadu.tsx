@@ -381,9 +381,28 @@ export default function PengajuanMutasiTerpadu() {
                 )}
               </div>
 
+              {/* Unit Selection */}
+              <div className="space-y-4">
+                <Label className="text-base font-semibold">2. Pilih Unit Kerja Tujuan</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih unit kerja tujuan..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="biro-sdm">Biro SDM</SelectItem>
+                    <SelectItem value="biro-keuangan">Biro Keuangan</SelectItem>
+                    <SelectItem value="biro-umum">Biro Umum</SelectItem>
+                    <SelectItem value="sekretariat-jenderal">Sekretariat Jenderal</SelectItem>
+                    <SelectItem value="direktorat-1">Direktorat 1</SelectItem>
+                    <SelectItem value="direktorat-2">Direktorat 2</SelectItem>
+                    <SelectItem value="direktorat-3">Direktorat 3</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Position Selection */}
               <div className="space-y-4">
-                <Label className="text-base font-semibold">2. Pilih Formasi Jabatan Tujuan</Label>
+                <Label className="text-base font-semibold">3. Pilih Formasi Jabatan Tujuan</Label>
                 {selectedPosition ? (
                   <Card className="bg-muted/50">
                     <CardContent className="p-4">
