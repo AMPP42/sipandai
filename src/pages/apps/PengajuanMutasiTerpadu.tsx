@@ -52,6 +52,36 @@ interface Position {
 }
 
 
+const WORK_UNITS = [
+  'Sekretariat Direktorat Jenderal Pembinaan Pelatihan Vokasi dan Produktivitas',
+  'Direktorat Bina Standarisasi Kompetensi dan Program Pelatihan',
+  'Direktorat Bina Instruktur dan Tenaga Pelatihan',
+  'Direktorat Bina Kelembagaan Pelatihan Vokasi',
+  'Direktorat Bina Penyelenggaraan Pelatihan Vokasi dan Pemagangan',
+  'Direktorat Bina Peningkatan Produktivitas',
+  'Sekretariat Badan Nasional Sertifikasi Profesi',
+  'Balai Besar Pelatihan Vokasi dan Produktivitas Bandung',
+  'Balai Besar Pelatihan Vokasi dan Produktivitas Bekasi',
+  'Balai Besar Pelatihan Vokasi dan Produktivitas Serang',
+  'Balai Besar Pelatihan Vokasi dan Produktivitas Medan',
+  'Balai Besar Pelatihan Vokasi dan Produktivitas Semarang',
+  'Balai Besar Pelatihan Vokasi dan Produktivitas Makassar',
+  'Balai Pelatihan Vokasi dan Produktivitas Surakarta',
+  'Balai Pelatihan Vokasi dan Produktivitas Banda Aceh',
+  'Balai Pelatihan Vokasi dan Produktivitas Samarinda',
+  'Balai Pelatihan Vokasi dan Produktivitas Sorong',
+  'Balai Pelatihan Vokasi dan Produktivitas Ternate',
+  'Balai Pelatihan Vokasi dan Produktivitas Kendari',
+  'Balai Pelatihan Vokasi dan Produktivitas Padang',
+  'Balai Pelatihan Vokasi dan Produktivitas Ambon',
+  'Balai Pelatihan Vokasi dan Produktivitas Bandung Barat',
+  'Balai Pelatihan Vokasi dan Produktivitas Lombok Timur',
+  'Balai Pelatihan Vokasi dan Produktivitas Bantaeng',
+  'Balai Pelatihan Vokasi dan Produktivitas Sidoarjo',
+  'Balai Pelatihan Vokasi dan Produktivitas Pangkajene Kepulauan',
+  'Balai Pelatihan Vokasi dan Produktivitas Belitung'
+];
+
 const DOCUMENT_REQUIREMENTS = [
   'Surat Pernyataan Lolos Butuh dari PPK Instansi Asal (Asli)',
   'Surat Keterangan Tidak Sedang Menjalani Hukuman Disiplin (Asli)',
@@ -81,11 +111,14 @@ export default function PengajuanMutasiTerpadu() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [searchEmployee, setSearchEmployee] = useState('');
   const [searchPosition, setSearchPosition] = useState('');
+  const [searchUnit, setSearchUnit] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   const [alasanMutasi, setAlasanMutasi] = useState('');
   const [isEmployeeDialogOpen, setIsEmployeeDialogOpen] = useState(false);
   const [isPositionDialogOpen, setIsPositionDialogOpen] = useState(false);
+  const [isUnitDialogOpen, setIsUnitDialogOpen] = useState(false);
 
   useEffect(() => {
     loadEmployees();
@@ -266,10 +299,16 @@ export default function PengajuanMutasiTerpadu() {
     emp.nip.includes(searchEmployee)
   );
 
-  const filteredPositions = positions.filter(pos => 
-    pos.unit.toLowerCase().includes(searchPosition.toLowerCase()) ||
-    pos.jabatan.toLowerCase().includes(searchPosition.toLowerCase())
+  const filteredUnits = WORK_UNITS.filter(unit => 
+    unit.toLowerCase().includes(searchUnit.toLowerCase())
   );
+
+  const filteredPositions = positions.filter(pos => {
+    const matchesSearch = pos.unit.toLowerCase().includes(searchPosition.toLowerCase()) ||
+      pos.jabatan.toLowerCase().includes(searchPosition.toLowerCase());
+    const matchesSelectedUnit = selectedUnit ? pos.unit === selectedUnit : true;
+    return matchesSearch && matchesSelectedUnit;
+  });
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -384,20 +423,76 @@ export default function PengajuanMutasiTerpadu() {
               {/* Unit Selection */}
               <div className="space-y-4">
                 <Label className="text-base font-semibold">2. Pilih Unit Kerja Tujuan</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih unit kerja tujuan..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="biro-sdm">Biro SDM</SelectItem>
-                    <SelectItem value="biro-keuangan">Biro Keuangan</SelectItem>
-                    <SelectItem value="biro-umum">Biro Umum</SelectItem>
-                    <SelectItem value="sekretariat-jenderal">Sekretariat Jenderal</SelectItem>
-                    <SelectItem value="direktorat-1">Direktorat 1</SelectItem>
-                    <SelectItem value="direktorat-2">Direktorat 2</SelectItem>
-                    <SelectItem value="direktorat-3">Direktorat 3</SelectItem>
-                  </SelectContent>
-                </Select>
+                {selectedUnit ? (
+                  <Card className="bg-muted/50">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Building className="w-5 h-5 text-primary" />
+                          <div>
+                            <p className="font-medium">{selectedUnit}</p>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => setSelectedUnit(null)}>
+                          Ubah
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Dialog open={isUnitDialogOpen} onOpenChange={setIsUnitDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Pilih Unit Kerja Tujuan
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl">
+                      <DialogHeader>
+                        <DialogTitle>Pilih Unit Kerja Tujuan</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Search className="w-4 h-4" />
+                          <Input
+                            placeholder="Cari unit kerja..."
+                            value={searchUnit}
+                            onChange={(e) => setSearchUnit(e.target.value)}
+                          />
+                        </div>
+                        <div className="max-h-96 overflow-y-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Unit Kerja</TableHead>
+                                <TableHead>Aksi</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {filteredUnits.map((unit, index) => (
+                                <TableRow key={index}>
+                                  <TableCell className="font-medium">{unit}</TableCell>
+                                  <TableCell>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedUnit(unit);
+                                        setSelectedPosition(null); // Reset position when unit changes
+                                        setIsUnitDialogOpen(false);
+                                      }}
+                                    >
+                                      Pilih
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
               </div>
 
               {/* Position Selection */}
@@ -526,6 +621,7 @@ export default function PengajuanMutasiTerpadu() {
                   variant="outline"
                   onClick={() => {
                     setSelectedEmployee(null);
+                    setSelectedUnit(null);
                     setSelectedPosition(null);
                     setAlasanMutasi('');
                   }}
@@ -534,7 +630,7 @@ export default function PengajuanMutasiTerpadu() {
                 </Button>
                 <Button
                   onClick={handleSubmitApplication}
-                  disabled={loading || !selectedEmployee || !selectedPosition || !alasanMutasi.trim()}
+                  disabled={loading || !selectedEmployee || !selectedUnit || !selectedPosition || !alasanMutasi.trim()}
                 >
                   {loading ? 'Menyimpan...' : 'Buat Pengajuan'}
                 </Button>
