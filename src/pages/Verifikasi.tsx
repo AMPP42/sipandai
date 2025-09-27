@@ -631,11 +631,8 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
                     </TableCell>
                     <TableCell>{getApplicationType(application)}</TableCell>
                     <TableCell>
-                      <div>
-                        <div>{getApplicationDate(application)}</div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {getStatusTimestamp(application)}
-                        </div>
+                      <div className="text-sm text-gray-700">
+                        {getStatusTimestamp(application)}
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(application.status)}</TableCell>
