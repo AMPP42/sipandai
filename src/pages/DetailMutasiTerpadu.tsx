@@ -552,7 +552,7 @@ export default function DetailMutasiTerpadu() {
           {canSaveDraft && (
             <Button 
               onClick={handleSaveDraft} 
-              disabled={isSubmitting}
+              disabled={isSubmitting || submittedDocumentsCount === 0}
               variant="outline"
             >
               {isSubmitting ? (
@@ -561,7 +561,10 @@ export default function DetailMutasiTerpadu() {
                   Menyimpan...
                 </>
               ) : (
-                'Simpan Draft'
+                <>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Simpan Draft ({submittedDocumentsCount}/{DOCUMENT_REQUIREMENTS.length})
+                </>
               )}
             </Button>
           )}
