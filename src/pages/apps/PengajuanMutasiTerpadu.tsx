@@ -520,7 +520,11 @@ export default function PengajuanMutasiTerpadu() {
                 ) : (
                   <Dialog open={isPositionDialogOpen} onOpenChange={setIsPositionDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" className="w-full">
+                      <Button 
+                        variant="outline" 
+                        className="w-full" 
+                        disabled={!selectedUnit}
+                      >
                         <Plus className="w-4 h-4 mr-2" />
                         Pilih Formasi Jabatan
                       </Button>
