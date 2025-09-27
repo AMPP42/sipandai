@@ -588,7 +588,7 @@ export default function PengajuanMutasiTerpadu() {
 
               {/* Reason */}
               <div className="space-y-4">
-                <Label className="text-base font-semibold">3. Alasan Mutasi</Label>
+                <Label className="text-base font-semibold">4. Alasan Mutasi</Label>
                 <Textarea
                   placeholder="Jelaskan alasan mengajukan mutasi pegawai..."
                   value={alasanMutasi}
@@ -599,7 +599,7 @@ export default function PengajuanMutasiTerpadu() {
 
               {/* Document Requirements */}
               <div className="space-y-4">
-                <Label className="text-base font-semibold">4. Persyaratan Dokumen</Label>
+                <Label className="text-base font-semibold">5. Persyaratan Dokumen</Label>
                 <Card>
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground mb-3">
