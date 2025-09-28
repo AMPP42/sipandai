@@ -137,6 +137,9 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
   const filterApplications = () => {
     let filtered = applicationList;
 
+    // Filter out draft applications - don't show them in verification list
+    filtered = filtered.filter(app => app.status !== 'draft');
+
     // Filter for resubmitted applications if showResubmittedOnly is true
     if (showResubmittedOnly) {
       filtered = filtered.filter(app => 
