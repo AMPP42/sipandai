@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 import DocumentVerificationStatus from '@/components/applications/DocumentVerificationStatus';
 import { 
   ArrowLeft, 
@@ -614,17 +615,30 @@ export default function DetailMutasiTerpadu() {
                   }
                 </span>
               </div>
-              <Progress value={
-                application.status === 'revision_needed' 
-                  ? Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix' && documents[Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === v) || '']?.trim() !== '').length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)
-                  : progressPercentage
-              } className="w-full" />
-              <p className="text-xs text-muted-foreground">
-                {application.status === 'revision_needed' 
-                  ? Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix' && documents[Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === v) || '']?.trim() !== '').length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)
-                  : progressPercentage
-                }% selesai
-              </p>
+              <Progress 
+                value={
+                  application.status === 'revision_needed' 
+                    ? Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix' && documents[Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === v) || '']?.trim() !== '').length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)
+                    : progressPercentage
+                } 
+                className={cn(
+                  "w-full",
+                  allDocumentsCompleted && "[&>div]:bg-green-500"
+                )}
+              />
+              {allDocumentsCompleted ? (
+                <p className="text-xs text-green-600 font-medium flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" />
+                  Dokumen persyaratan sudah lengkap
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {application.status === 'revision_needed' 
+                    ? Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix' && documents[Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === v) || '']?.trim() !== '').length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)
+                    : progressPercentage
+                  }% selesai
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
