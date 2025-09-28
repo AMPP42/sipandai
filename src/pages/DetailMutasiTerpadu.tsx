@@ -207,7 +207,19 @@ export default function DetailMutasiTerpadu() {
     setFixedDocuments(prev => new Set(prev).add(docKey));
     toast({
       title: "Dokumen Diperbaiki",
-      description: "Dokumen telah ditandai sebagai diperbaiki"
+      description: "Dokumen telah ditandai sebagai diperbaiki dan dikunci"
+    });
+  };
+
+  const handleUnmarkDocumentFixed = (docKey: string) => {
+    setFixedDocuments(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(docKey);
+      return newSet;
+    });
+    toast({
+      title: "Edit Dokumen",
+      description: "Dokumen dapat diedit kembali"
     });
   };
 
@@ -499,11 +511,11 @@ export default function DetailMutasiTerpadu() {
     return documents[docKey] && documents[docKey].trim() !== '';
   });
   
-  // Check if all revision documents are completed
+  // Check if all revision documents are completed (based on fixed status)
   const revisionDocumentsCompleted = application?.status === 'revision_needed' 
     ? Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').every(verification => {
         const docKey = Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === verification);
-        return docKey && documents[docKey] && documents[docKey].trim() !== '';
+        return docKey && fixedDocuments.has(docKey);
       })
     : false;
   
@@ -627,9 +639,12 @@ export default function DetailMutasiTerpadu() {
               <Progress 
                 value={
                   application.status === 'revision_needed' 
-                    ? Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix' && documents[Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === v) || '']?.trim() !== '').length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)
+                    ? Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').filter(verification => {
+                        const docKey = Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === verification);
+                        return docKey && fixedDocuments.has(docKey);
+                      }).length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)
                     : progressPercentage
-                } 
+                }
                 className={cn(
                   "w-full",
                   // For revision status: green if all revision documents completed, gray if not
@@ -650,7 +665,10 @@ export default function DetailMutasiTerpadu() {
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    {Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix' && documents[Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === v) || '']?.trim() !== '').length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)}% perbaikan selesai
+                    {Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').filter(verification => {
+                      const docKey = Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === verification);
+                      return docKey && fixedDocuments.has(docKey);
+                    }).length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)}% perbaikan selesai
                   </p>
                 )
               ) : (
@@ -1006,8 +1024,8 @@ export default function DetailMutasiTerpadu() {
                         placeholder="Masukkan link Google Drive dokumen..."
                         value={documents[docKey] || ""}
                         onChange={(e) => handleDocumentChange(index, e.target.value)}
-                        className={needsAttention ? 'border-red-300 focus:border-red-500' : isFixed ? 'border-blue-300 focus:border-blue-500' : ''}
-                        disabled={!canEdit}
+                        className={needsAttention ? 'border-red-300 focus:border-red-500' : isFixed ? 'border-green-300 focus:border-green-500 bg-green-50' : ''}
+                        disabled={!canEdit || isFixed}
                       />
                       {needsAttention && !isFixed && documents[docKey] && (
                         <Button 
@@ -1016,6 +1034,16 @@ export default function DetailMutasiTerpadu() {
                           className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
                         >
                           Perbaiki
+                        </Button>
+                      )}
+                      {needsAttention && isFixed && (
+                        <Button 
+                          onClick={() => handleUnmarkDocumentFixed(docKey)}
+                          size="sm"
+                          variant="outline"
+                          className="whitespace-nowrap"
+                        >
+                          Edit
                         </Button>
                       )}
                       {documents[docKey] && (
