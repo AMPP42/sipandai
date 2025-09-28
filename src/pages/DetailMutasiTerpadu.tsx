@@ -498,6 +498,15 @@ export default function DetailMutasiTerpadu() {
     const docKey = `doc_${index}`;
     return documents[docKey] && documents[docKey].trim() !== '';
   });
+  
+  // Check if all revision documents are completed
+  const revisionDocumentsCompleted = application?.status === 'revision_needed' 
+    ? Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').every(verification => {
+        const docKey = Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === verification);
+        return docKey && documents[docKey] && documents[docKey].trim() !== '';
+      })
+    : false;
+  
   const canSaveDraft = canEdit;
   const canSubmit = canEdit && allDocumentsCompleted;
   const progressPercentage = Math.round((submittedDocumentsCount / DOCUMENT_REQUIREMENTS.length) * 100);
@@ -623,21 +632,38 @@ export default function DetailMutasiTerpadu() {
                 } 
                 className={cn(
                   "w-full",
-                  allDocumentsCompleted && "[&>div]:bg-green-500"
+                  // For revision status: green if all revision documents completed, gray if not
+                  application.status === 'revision_needed' 
+                    ? revisionDocumentsCompleted 
+                      ? "[&>div]:bg-green-500" 
+                      : "[&>div]:bg-gray-400"
+                    : allDocumentsCompleted 
+                      ? "[&>div]:bg-green-500" 
+                      : ""
                 )}
               />
-              {allDocumentsCompleted ? (
-                <p className="text-xs text-green-600 font-medium flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3" />
-                  Dokumen persyaratan sudah lengkap
-                </p>
+              {application.status === 'revision_needed' ? (
+                revisionDocumentsCompleted ? (
+                  <p className="text-xs text-green-600 font-medium flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" />
+                    Dokumen perbaikan sudah lengkap
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix' && documents[Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === v) || '']?.trim() !== '').length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)}% perbaikan selesai
+                  </p>
+                )
               ) : (
-                <p className="text-xs text-muted-foreground">
-                  {application.status === 'revision_needed' 
-                    ? Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix' && documents[Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === v) || '']?.trim() !== '').length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)
-                    : progressPercentage
-                  }% selesai
-                </p>
+                allDocumentsCompleted ? (
+                  <p className="text-xs text-green-600 font-medium flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" />
+                    Dokumen persyaratan sudah lengkap
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {progressPercentage}% selesai
+                  </p>
+                )
               )}
             </div>
           </CardContent>
