@@ -84,6 +84,7 @@ export default function DetailMutasiTerpadu() {
   const [isEditing, setIsEditing] = useState(false);
   const [documentVerificationStatus, setDocumentVerificationStatus] = useState<DocumentVerificationStatus>({});
   const [fixedDocuments, setFixedDocuments] = useState<Set<string>>(new Set());
+  const [savedDocuments, setSavedDocuments] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [additionalNotes, setAdditionalNotes] = useState('');
 
@@ -213,6 +214,26 @@ export default function DetailMutasiTerpadu() {
 
   const handleUnmarkDocumentFixed = (docKey: string) => {
     setFixedDocuments(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(docKey);
+      return newSet;
+    });
+    toast({
+      title: "Edit Dokumen",
+      description: "Dokumen dapat diedit kembali"
+    });
+  };
+
+  const handleSaveDocument = (docKey: string) => {
+    setSavedDocuments(prev => new Set(prev).add(docKey));
+    toast({
+      title: "Dokumen Disimpan",
+      description: "Link dokumen telah disimpan dan dikunci"
+    });
+  };
+
+  const handleEditDocument = (docKey: string) => {
+    setSavedDocuments(prev => {
       const newSet = new Set(prev);
       newSet.delete(docKey);
       return newSet;
@@ -1018,51 +1039,79 @@ export default function DetailMutasiTerpadu() {
                       </div>
                     )}
                     
-                    <div className="flex gap-2">
-                      <Input
-                        id={`doc-${index}`}
-                        placeholder="Masukkan link Google Drive dokumen..."
-                        value={documents[docKey] || ""}
-                        onChange={(e) => handleDocumentChange(index, e.target.value)}
-                        className={needsAttention ? 'border-red-300 focus:border-red-500' : isFixed ? 'border-green-300 focus:border-green-500 bg-green-50' : ''}
-                        disabled={!canEdit || isFixed}
-                      />
-                      {needsAttention && !isFixed && documents[docKey] && (
-                        <Button 
-                          onClick={() => handleMarkDocumentFixed(docKey)}
-                          size="sm"
-                          className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
-                        >
-                          Perbaiki
-                        </Button>
-                      )}
-                      {needsAttention && isFixed && (
-                        <Button 
-                          onClick={() => handleUnmarkDocumentFixed(docKey)}
-                          size="sm"
-                          variant="outline"
-                          className="whitespace-nowrap"
-                        >
-                          Edit
-                        </Button>
-                      )}
-                      {documents[docKey] && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(documents[docKey], '_blank')}
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                    
-                    {isFixed && (
-                      <div className="bg-blue-50 border border-blue-200 rounded p-2">
-                        <p className="text-xs font-medium text-blue-800">✓ Dokumen telah diperbaiki</p>
-                        <p className="text-xs text-blue-700">Dokumen ini telah ditandai sebagai diperbaiki dan siap untuk direview ulang.</p>
-                      </div>
-                    )}
+                     <div className="flex gap-2">
+                       <Input
+                         id={`doc-${index}`}
+                         placeholder="Masukkan link Google Drive dokumen..."
+                         value={documents[docKey] || ""}
+                         onChange={(e) => handleDocumentChange(index, e.target.value)}
+                         className={needsAttention ? 'border-red-300 focus:border-red-500' : isFixed ? 'border-green-300 focus:border-green-500 bg-green-50' : savedDocuments.has(docKey) ? 'border-green-300 focus:border-green-500 bg-green-50' : ''}
+                         disabled={!canEdit || isFixed || savedDocuments.has(docKey)}
+                       />
+                       {/* Revision flow buttons */}
+                       {needsAttention && !isFixed && documents[docKey] && (
+                         <Button 
+                           onClick={() => handleMarkDocumentFixed(docKey)}
+                           size="sm"
+                           className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
+                         >
+                           Perbaiki
+                         </Button>
+                       )}
+                       {needsAttention && isFixed && (
+                         <Button 
+                           onClick={() => handleUnmarkDocumentFixed(docKey)}
+                           size="sm"
+                           variant="outline"
+                           className="whitespace-nowrap"
+                         >
+                           Edit
+                         </Button>
+                       )}
+                       {/* Regular save/edit buttons */}
+                       {!needsAttention && !savedDocuments.has(docKey) && documents[docKey] && documents[docKey].trim() !== '' && (
+                         <Button 
+                           onClick={() => handleSaveDocument(docKey)}
+                           size="sm"
+                           className="bg-green-600 hover:bg-green-700 text-white whitespace-nowrap"
+                         >
+                           Simpan
+                         </Button>
+                       )}
+                       {!needsAttention && savedDocuments.has(docKey) && (
+                         <Button 
+                           onClick={() => handleEditDocument(docKey)}
+                           size="sm"
+                           variant="outline"
+                           className="whitespace-nowrap"
+                         >
+                           Edit
+                         </Button>
+                       )}
+                       {documents[docKey] && (
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => window.open(documents[docKey], '_blank')}
+                         >
+                           <Download className="w-4 h-4" />
+                         </Button>
+                       )}
+                     </div>
+                     
+                     {isFixed && (
+                       <div className="bg-blue-50 border border-blue-200 rounded p-2">
+                         <p className="text-xs font-medium text-blue-800">✓ Dokumen telah diperbaiki</p>
+                         <p className="text-xs text-blue-700">Dokumen ini telah ditandai sebagai diperbaiki dan siap untuk direview ulang.</p>
+                       </div>
+                     )}
+                     
+                     {!needsAttention && savedDocuments.has(docKey) && (
+                       <div className="bg-green-50 border border-green-200 rounded p-2">
+                         <p className="text-xs font-medium text-green-800">✓ Dokumen telah disimpan</p>
+                         <p className="text-xs text-green-700">Link dokumen telah disimpan dan dikunci dari perubahan.</p>
+                       </div>
+                     )}
                   </div>
                 );
               })}
