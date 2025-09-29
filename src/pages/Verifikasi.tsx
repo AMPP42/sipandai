@@ -167,10 +167,10 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
       filtered = filtered.filter(app => {
         switch (statusFilter) {
           case 'menunggu_verifikasi':
-            return app.status === 'submitted';
+            return app.status === 'submitted' && !app.catatan_reviewer;
           case 'perlu_perbaikan':
             return app.status === 'revision_needed';
-          case 'sudah_diperbaiki':
+          case 'perbaikan_diajukan':
             return app.status === 'submitted' && app.catatan_reviewer;
           case 'diproses':
             return app.status === 'approved';
@@ -270,11 +270,17 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, application?: ApplicationItem) => {
+    // Check if this is a resubmitted application (revision submitted)
+    const isRevisionSubmitted = status === 'submitted' && application?.catatan_reviewer;
+    
     switch (status) {
       case 'draft':
         return <Badge className="bg-gray-100 text-gray-700">Draft</Badge>;
       case 'submitted':
+        if (isRevisionSubmitted) {
+          return <Badge className="bg-green-100 text-green-700">Perbaikan Diajukan</Badge>;
+        }
         return <Badge className="bg-gray-100 text-gray-700">Menunggu Verifikasi</Badge>;
       case 'in_review':
         return <Badge className="bg-orange-100 text-orange-700">Sudah Diperbaiki</Badge>;
@@ -333,14 +339,23 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
     let timestamp: string;
     let label: string;
 
+    // Check if this is a resubmitted application (revision submitted)
+    const isRevisionSubmitted = app.status === 'submitted' && app.catatan_reviewer;
+
     switch (app.status) {
       case 'draft':
         timestamp = app.created_at;
         label = 'Dibuat';
         break;
       case 'submitted':
-        timestamp = app.tanggal_usulan || app.tanggal_pengajuan || app.created_at;
-        label = 'Diajukan';
+        if (isRevisionSubmitted) {
+          // For revision submissions, use updated_at as the revision submission date
+          timestamp = app.updated_at || app.created_at;
+          label = 'Perbaikan Diajukan';
+        } else {
+          timestamp = app.tanggal_usulan || app.tanggal_pengajuan || app.created_at;
+          label = 'Diajukan';
+        }
         break;
       case 'in_review':
         timestamp = app.updated_at || app.created_at;
@@ -586,14 +601,14 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
                 <SelectTrigger className="w-56">
                   <SelectValue placeholder="Filter berdasarkan status" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Status</SelectItem>
-                  <SelectItem value="menunggu_verifikasi">Menunggu Verifikasi</SelectItem>
-                  <SelectItem value="perlu_perbaikan">Perlu Perbaikan</SelectItem>
-                  <SelectItem value="sudah_diperbaiki">Sudah Diperbaiki</SelectItem>
-                  <SelectItem value="diproses">Diproses</SelectItem>
-                  <SelectItem value="disetujui">Disetujui</SelectItem>
-                </SelectContent>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Status</SelectItem>
+                    <SelectItem value="menunggu_verifikasi">Menunggu Verifikasi</SelectItem>
+                    <SelectItem value="perlu_perbaikan">Perlu Perbaikan</SelectItem>
+                    <SelectItem value="perbaikan_diajukan">Perbaikan Diajukan</SelectItem>
+                    <SelectItem value="diproses">Diproses</SelectItem>
+                    <SelectItem value="disetujui">Disetujui</SelectItem>
+                  </SelectContent>
               </Select>
             </div>
           </div>
@@ -638,7 +653,7 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
                         {getStatusTimestamp(application)}
                       </div>
                     </TableCell>
-                    <TableCell>{getStatusBadge(application.status)}</TableCell>
+                    <TableCell>{getStatusBadge(application.status, application)}</TableCell>
                     <TableCell>{getActionButtons(application)}</TableCell>
                   </TableRow>
                 ))}
