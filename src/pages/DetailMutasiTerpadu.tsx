@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -87,6 +88,9 @@ export default function DetailMutasiTerpadu() {
   const [savedDocuments, setSavedDocuments] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [additionalNotes, setAdditionalNotes] = useState('');
+  const [showSubmitConfirmation, setShowSubmitConfirmation] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [applicationSubmitted, setApplicationSubmitted] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -302,6 +306,8 @@ export default function DetailMutasiTerpadu() {
         if (documentsError) throw documentsError;
       }
 
+      setDraftSaved(true);
+      
       toast({
         title: "Berhasil",
         description: `Draft disimpan dengan ${documentInserts.length} dokumen. Status tetap Draft.`,
@@ -326,6 +332,8 @@ export default function DetailMutasiTerpadu() {
   };
 
   const handleSubmitApplication = async () => {
+    setShowSubmitConfirmation(false);
+    
     if (!application || !application.employee_data) return;
 
     // Check if all documents are provided for final submission
@@ -425,6 +433,8 @@ export default function DetailMutasiTerpadu() {
           description: `Perbaikan usulan mutasi untuk ${application.employee_data.employee_name} berhasil dikirim ulang!`,
         });
 
+        setApplicationSubmitted(true);
+
         // Clear edit state and navigate back
         setIsEditing(false);
         setDocumentVerificationStatus({});
@@ -476,6 +486,7 @@ export default function DetailMutasiTerpadu() {
           description: `Pengajuan mutasi untuk ${application.employee_data.employee_name} berhasil disubmit dan sedang menunggu verifikasi!`,
         });
 
+        setApplicationSubmitted(true);
         navigate('/status'); // Navigate to status page
       }
 
@@ -540,8 +551,15 @@ export default function DetailMutasiTerpadu() {
       })
     : false;
   
-  const canSaveDraft = canEdit;
-  const canSubmit = canEdit && allDocumentsCompleted;
+  // Draft button enabled when at least one document is saved
+  const canSaveDraft = canEdit && savedDocuments.size > 0;
+  
+  // Submit button enabled when all save buttons have been clicked (all documents saved)
+  const allDocumentsSaved = DOCUMENT_REQUIREMENTS.every((_, index) => {
+    const docKey = `doc_${index}`;
+    return savedDocuments.has(docKey) && documents[docKey] && documents[docKey].trim() !== '';
+  });
+  const canSubmit = canEdit && allDocumentsSaved;
   const progressPercentage = Math.round((submittedDocumentsCount / DOCUMENT_REQUIREMENTS.length) * 100);
 
   if (loading) {
@@ -595,28 +613,43 @@ export default function DetailMutasiTerpadu() {
           {canSaveDraft && (
             <Button 
               onClick={handleSaveDraft} 
-              disabled={isSubmitting || submittedDocumentsCount === 0}
-              variant="outline"
+              disabled={isSubmitting || draftSaved}
+              variant={draftSaved ? "default" : "outline"}
+              className={draftSaved ? "bg-green-600 hover:bg-green-700 text-white" : ""}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Menyimpan...
                 </>
+              ) : draftSaved ? (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Draft Tersimpan
+                </>
               ) : (
                 <>
                   <FileText className="w-4 h-4 mr-2" />
-                  Simpan Draft ({submittedDocumentsCount}/{DOCUMENT_REQUIREMENTS.length})
+                  Simpan Draft ({savedDocuments.size}/{DOCUMENT_REQUIREMENTS.length})
                 </>
               )}
             </Button>
           )}
           {canSubmit && (
-            <Button onClick={handleSubmitApplication} disabled={isSubmitting}>
+            <Button 
+              onClick={() => setShowSubmitConfirmation(true)} 
+              disabled={isSubmitting || applicationSubmitted}
+              className={applicationSubmitted ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   {isEditing ? 'Mengirim Perbaikan...' : 'Mengirim...'}
+                </>
+              ) : applicationSubmitted ? (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Pengajuan Terkirim
                 </>
               ) : (
                 <>
@@ -1162,6 +1195,39 @@ export default function DetailMutasiTerpadu() {
           </CardContent>
         </Card>
       )}
+
+      {/* Submit Confirmation Dialog */}
+      <Dialog open={showSubmitConfirmation} onOpenChange={setShowSubmitConfirmation}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Submit Pengajuan</DialogTitle>
+          </DialogHeader>
+          <p className="text-muted-foreground">
+            Apakah anda sudah yakin untuk submit pengajuan?
+          </p>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowSubmitConfirmation(false)}
+            >
+              Tidak
+            </Button>
+            <Button 
+              onClick={handleSubmitApplication}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Mengirim...
+                </>
+              ) : (
+                'Ya'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
