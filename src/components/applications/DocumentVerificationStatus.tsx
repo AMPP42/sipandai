@@ -139,8 +139,9 @@ export default function DocumentVerificationStatus({ applicationId, applicationS
             Hasil verifikasi persyaratan dokumen oleh Admin Pusat
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4 mb-4">
+        <CardContent className="space-y-4">
+          {/* Summary Statistics */}
+          <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <CheckCircle className="w-4 h-4 text-green-600" />
@@ -164,6 +165,23 @@ export default function DocumentVerificationStatus({ applicationId, applicationS
             </div>
           </div>
 
+          {/* Document List with Status */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-muted-foreground">Rincian Status Dokumen:</h4>
+            {documentVerifications.map((verification) => (
+              <div key={verification.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                <div className="flex items-center gap-2 flex-1">
+                  {getStatusIcon(verification.status)}
+                  <span className="text-sm font-medium">{verification.document_name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {getStatusBadge(verification.status)}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Status Messages */}
           {summary.needsFix > 0 && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
