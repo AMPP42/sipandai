@@ -908,6 +908,14 @@ export default function DetailMutasiTerpadu() {
         </CardContent>
       </Card>
 
+      {/* Document Verification Status - Moved from bottom */}
+      {application.status !== 'draft' && (
+        <DocumentVerificationStatus 
+          applicationId={application.id} 
+          applicationStatus={application.status} 
+        />
+      )}
+
       {/* Edit Mode Summary */}
       {isEditing && Object.keys(documentVerificationStatus).length > 0 && (
         <Card className="bg-orange-50 border-orange-200">
@@ -1168,14 +1176,6 @@ export default function DetailMutasiTerpadu() {
             />
           </CardContent>
         </Card>
-      )}
-
-      {/* Document Verification Status */}
-      {application.status !== 'draft' && (
-        <DocumentVerificationStatus 
-          applicationId={application.id} 
-          applicationStatus={application.status} 
-        />
       )}
 
       {/* Information Card */}
