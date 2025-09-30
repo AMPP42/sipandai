@@ -554,12 +554,20 @@ export default function DetailMutasiTerpadu() {
   // Draft button enabled when at least one document is saved
   const canSaveDraft = canEdit && savedDocuments.size > 0;
   
-  // Submit button enabled when all save buttons have been clicked (all documents saved)
+  // For revision mode: Submit button enabled when all documents that need fixing are marked as fixed
+  // For new applications: Submit button enabled when all documents are saved
   const allDocumentsSaved = DOCUMENT_REQUIREMENTS.every((_, index) => {
     const docKey = `doc_${index}`;
     return savedDocuments.has(docKey) && documents[docKey] && documents[docKey].trim() !== '';
   });
-  const canSubmit = canEdit && allDocumentsSaved;
+  
+  const allRevisionDocumentsFixed = isEditing && application?.status === 'revision_needed' 
+    ? Object.entries(documentVerificationStatus)
+        .filter(([_, verification]) => verification.status === 'needs_fix')
+        .every(([docKey, _]) => fixedDocuments.has(docKey) && documents[docKey] && documents[docKey].trim() !== '')
+    : false;
+  
+  const canSubmit = canEdit && (allRevisionDocumentsFixed || (!isEditing && allDocumentsSaved) || (isEditing && application?.status !== 'revision_needed' && allDocumentsSaved));
   const progressPercentage = Math.round((submittedDocumentsCount / DOCUMENT_REQUIREMENTS.length) * 100);
 
   if (loading) {
