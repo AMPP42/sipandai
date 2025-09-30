@@ -507,7 +507,7 @@ export default function DetailMutasiTerpadu() {
     const isResubmitted = keterangan?.includes('Perbaikan - Diajukan Ulang');
     
     if (status === 'submitted' && isResubmitted) {
-      return <Badge className="bg-blue-100 text-blue-700">Menunggu Verifikasi Ulang</Badge>;
+      return <Badge className="bg-blue-100 text-blue-700">Menunggu Verifikasi Kembali</Badge>;
     }
     
     const statusMap = {
@@ -814,41 +814,54 @@ export default function DetailMutasiTerpadu() {
                     <Clock className="w-6 h-6 text-gray-500" />
                   )}
                 </div>
-                <div className="text-center min-w-0 max-w-32">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-1">Data Diajukan</h4>
-                  {(application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') ? (
-                    <>
-                      <p className="text-xs text-gray-600 break-words">
-                        {application?.tanggal_pengajuan ? 
-                          new Date(application.tanggal_pengajuan).toLocaleDateString('id-ID', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric'
-                          }) : 
-                          new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric'
-                          })
-                        }
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {application?.tanggal_pengajuan ? 
-                          new Date(application.tanggal_pengajuan).toLocaleTimeString('id-ID', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          }) : 
-                          new Date(application?.updated_at || '').toLocaleTimeString('id-ID', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })
-                        }
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-xs text-gray-500">Menunggu</p>
-                  )}
-                </div>
+                 <div className="text-center min-w-0 max-w-32">
+                   <h4 className="text-sm font-semibold text-gray-900 mb-1">Data Diajukan</h4>
+                   {(application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') ? (
+                     <>
+                       <p className="text-xs text-gray-600 break-words">
+                         {/* For revision resubmissions, show the updated_at timestamp when the revision was submitted */}
+                         {application?.status === 'submitted' && application?.keterangan?.includes('Perbaikan - Diajukan Ulang') ? 
+                           new Date(application.updated_at || '').toLocaleDateString('id-ID', {
+                             day: '2-digit',
+                             month: 'short',
+                             year: 'numeric'
+                           }) :
+                           application?.tanggal_pengajuan ? 
+                           new Date(application.tanggal_pengajuan).toLocaleDateString('id-ID', {
+                             day: '2-digit',
+                             month: 'short',
+                             year: 'numeric'
+                           }) : 
+                           new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
+                             day: '2-digit',
+                             month: 'short',
+                             year: 'numeric'
+                           })
+                         }
+                       </p>
+                       <p className="text-xs text-gray-500">
+                         {/* For revision resubmissions, show the updated_at timestamp when the revision was submitted */}
+                         {application?.status === 'submitted' && application?.keterangan?.includes('Perbaikan - Diajukan Ulang') ? 
+                           new Date(application.updated_at || '').toLocaleTimeString('id-ID', {
+                             hour: '2-digit',
+                             minute: '2-digit'
+                           }) :
+                           application?.tanggal_pengajuan ? 
+                           new Date(application.tanggal_pengajuan).toLocaleTimeString('id-ID', {
+                             hour: '2-digit',
+                             minute: '2-digit'
+                           }) : 
+                           new Date(application?.updated_at || '').toLocaleTimeString('id-ID', {
+                             hour: '2-digit',
+                             minute: '2-digit'
+                           })
+                         }
+                       </p>
+                     </>
+                   ) : (
+                     <p className="text-xs text-gray-500">Menunggu</p>
+                   )}
+                 </div>
               </div>
 
               {/* Timeline Step 3: Status akhir */}
