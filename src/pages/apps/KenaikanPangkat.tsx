@@ -15,7 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DocumentRevisionModal from "@/components/verifikasi/DocumentRevisionModal";
 import type { Database } from '@/integrations/supabase/types';
-
 type Application = Database['public']['Tables']['applications']['Row'];
 interface PangkatData {
   id: string;
@@ -34,9 +33,10 @@ interface PangkatData {
   tanggalTerakhirNaik: string;
 }
 type ApplicationInsert = Database['public']['Tables']['applications']['Insert'];
-
 export default function KenaikanPangkat() {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [activeTab, setActiveTab] = useState("submit");
   const [selectedPegawai, setSelectedPegawai] = useState("");
   const [selectedKategori, setSelectedKategori] = useState("");
@@ -44,30 +44,28 @@ export default function KenaikanPangkat() {
   const [isEmployeeDialogOpen, setIsEmployeeDialogOpen] = useState(false);
   const [searchEmployee, setSearchEmployee] = useState("");
   const [loading, setLoading] = useState(false);
-  const [documentLinks, setDocumentLinks] = useState<{[key: string]: string}>({});
+  const [documentLinks, setDocumentLinks] = useState<{
+    [key: string]: string;
+  }>({});
   const [catatanTambahan, setCatatanTambahan] = useState("");
   const [applications, setApplications] = useState<Application[]>([]);
   const [selectedApplicationForRevision, setSelectedApplicationForRevision] = useState<Application | null>(null);
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
   const [filterPeriode, setFilterPeriode] = useState("");
-
   useEffect(() => {
     loadApplications();
   }, [user?.id]);
-
   const loadApplications = async () => {
     if (!user?.id) return;
-    
     try {
       setLoading(true);
       console.log('Loading applications for user:', user.id, 'unit:', user.unit);
-      const { data, error } = await supabase
-        .from('applications')
-        .select('*')
-        .eq('jenis', 'kenaikan_pangkat')
-        .eq('submitter_id', user.id)
-        .order('created_at', { ascending: false });
-      
+      const {
+        data,
+        error
+      } = await supabase.from('applications').select('*').eq('jenis', 'kenaikan_pangkat').eq('submitter_id', user.id).order('created_at', {
+        ascending: false
+      });
       if (error) {
         console.error('Error loading applications:', error);
         throw error;
@@ -158,7 +156,7 @@ export default function KenaikanPangkat() {
         className: "bg-yellow-100 text-yellow-700"
       },
       approved: {
-        label: "Diproses", 
+        label: "Diproses",
         className: "bg-blue-100 text-blue-700"
       },
       completed: {
@@ -333,7 +331,6 @@ export default function KenaikanPangkat() {
     };
     return documents[kategori] || [];
   };
-
   const handleSubmitPengajuan = async () => {
     if (!selectedPegawai || !selectedKategori || !selectedPeriode) {
       toast({
@@ -343,31 +340,25 @@ export default function KenaikanPangkat() {
       });
       return;
     }
-
     const selectedEmployee = pangkatData.find(p => p.id === selectedPegawai);
     if (!selectedEmployee) {
       toast({
-        title: "Error", 
+        title: "Error",
         description: "Data pegawai tidak ditemukan",
         variant: "destructive"
       });
       return;
     }
-
     try {
       setLoading(true);
-      
+
       // Generate application number
       const currentYear = new Date().getFullYear();
-      const { data: existingApps } = await supabase
-        .from('applications')
-        .select('id')
-        .eq('jenis', 'kenaikan_pangkat')
-        .gte('created_at', `${currentYear}-01-01`);
-      
+      const {
+        data: existingApps
+      } = await supabase.from('applications').select('id').eq('jenis', 'kenaikan_pangkat').gte('created_at', `${currentYear}-01-01`);
       const sequence = String(existingApps?.length + 1 || 1).padStart(4, '0');
       const nomorUsulan = `KP/${currentYear}/${sequence}`;
-
       const applicationData: ApplicationInsert = {
         jenis: 'kenaikan_pangkat' as const,
         judul: `Pengajuan Kenaikan Pangkat - ${selectedEmployee.nama}`,
@@ -393,16 +384,13 @@ export default function KenaikanPangkat() {
           catatan_tambahan: catatanTambahan
         })
       };
-
-      const { error } = await supabase
-        .from('applications')
-        .insert(applicationData);
-
+      const {
+        error
+      } = await supabase.from('applications').insert(applicationData);
       if (error) throw error;
-
       toast({
         title: "Berhasil",
-        description: `Pengajuan kenaikan pangkat untuk ${selectedEmployee.nama} berhasil disubmit dan dapat dilihat di tab Status Usulan!`,
+        description: `Pengajuan kenaikan pangkat untuk ${selectedEmployee.nama} berhasil disubmit dan dapat dilihat di tab Status Usulan!`
       });
 
       // Reset form
@@ -411,13 +399,12 @@ export default function KenaikanPangkat() {
       setSelectedPeriode("");
       setDocumentLinks({});
       setCatatanTambahan("");
-      
+
       // Refresh applications after successful submission
       await loadApplications();
-      
+
       // Redirect to status tab
       setActiveTab("status");
-
     } catch (error: any) {
       console.error('Error submitting application:', error);
       toast({
@@ -429,7 +416,6 @@ export default function KenaikanPangkat() {
       setLoading(false);
     }
   };
-
   return <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
@@ -659,14 +645,12 @@ export default function KenaikanPangkat() {
                 {/* Pilih Pegawai */}
                 <div className="space-y-4">
                   <Label className="text-base font-semibold">Pilih Pegawai</Label>
-                  {selectedPegawai ? (
-                    <Card className="bg-muted/50">
+                  {selectedPegawai ? <Card className="bg-muted/50">
                       <CardContent className="p-4">
                         {(() => {
-                          const pegawai = pangkatData.find(p => p.id === selectedPegawai);
-                          if (!pegawai) return null;
-                          return (
-                            <div className="flex items-center justify-between">
+                      const pegawai = pangkatData.find(p => p.id === selectedPegawai);
+                      if (!pegawai) return null;
+                      return <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 <User className="w-5 h-5 text-primary" />
                                 <div>
@@ -679,13 +663,10 @@ export default function KenaikanPangkat() {
                               <Button variant="outline" size="sm" onClick={() => setSelectedPegawai("")}>
                                 Ubah
                               </Button>
-                            </div>
-                          );
-                        })()}
+                            </div>;
+                    })()}
                       </CardContent>
-                    </Card>
-                  ) : (
-                    <Dialog open={isEmployeeDialogOpen} onOpenChange={setIsEmployeeDialogOpen}>
+                    </Card> : <Dialog open={isEmployeeDialogOpen} onOpenChange={setIsEmployeeDialogOpen}>
                       <DialogTrigger asChild>
                         <Button variant="outline" className="w-full">
                           <Plus className="w-4 h-4 mr-2" />
@@ -699,11 +680,7 @@ export default function KenaikanPangkat() {
                         <div className="space-y-4">
                           <div className="flex items-center gap-2">
                             <Search className="w-4 h-4" />
-                            <Input
-                              placeholder="Cari nama atau NIP..."
-                              value={searchEmployee}
-                              onChange={(e) => setSearchEmployee(e.target.value)}
-                            />
+                            <Input placeholder="Cari nama atau NIP..." value={searchEmployee} onChange={e => setSearchEmployee(e.target.value)} />
                           </div>
                           <div className="max-h-96 overflow-y-auto">
                             <Table>
@@ -717,37 +694,26 @@ export default function KenaikanPangkat() {
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {pangkatData
-                                  .filter(pegawai => 
-                                    pegawai.nama.toLowerCase().includes(searchEmployee.toLowerCase()) ||
-                                    pegawai.nip.includes(searchEmployee)
-                                  )
-                                  .map((pegawai) => (
-                                  <TableRow key={pegawai.id}>
+                                {pangkatData.filter(pegawai => pegawai.nama.toLowerCase().includes(searchEmployee.toLowerCase()) || pegawai.nip.includes(searchEmployee)).map(pegawai => <TableRow key={pegawai.id}>
                                     <TableCell className="font-medium">{pegawai.nama}</TableCell>
                                     <TableCell>{pegawai.nip}</TableCell>
                                     <TableCell>Balai Besar Pelatihan Vokasi dan Produktivitas Bandung</TableCell>
                                     <TableCell>Pengadministrasi Perkantoran</TableCell>
                                     <TableCell>
-                                      <Button
-                                        size="sm"
-                                        onClick={() => {
-                                          setSelectedPegawai(pegawai.id);
-                                          setIsEmployeeDialogOpen(false);
-                                        }}
-                                      >
+                                      <Button size="sm" onClick={() => {
+                                  setSelectedPegawai(pegawai.id);
+                                  setIsEmployeeDialogOpen(false);
+                                }}>
                                         Pilih
                                       </Button>
                                     </TableCell>
-                                  </TableRow>
-                                ))}
+                                  </TableRow>)}
                               </TableBody>
                             </Table>
                           </div>
                         </div>
                       </DialogContent>
-                    </Dialog>
-                  )}
+                    </Dialog>}
                 </div>
 
                 {/* Employee Summary Card */}
@@ -832,16 +798,10 @@ export default function KenaikanPangkat() {
                               </span>}
                           </Label>
                           <div className="flex gap-2">
-                            <Input 
-                              id={`doc-${index}`} 
-                              placeholder="Masukkan link Google Drive dokumen..." 
-                              className="flex-1"
-                              value={documentLinks[`doc-${index}`] || ''}
-                              onChange={(e) => setDocumentLinks(prev => ({
-                                ...prev,
-                                [`doc-${index}`]: e.target.value
-                              }))}
-                            />
+                            <Input id={`doc-${index}`} placeholder="Masukkan link Google Drive dokumen..." className="flex-1" value={documentLinks[`doc-${index}`] || ''} onChange={e => setDocumentLinks(prev => ({
+                        ...prev,
+                        [`doc-${index}`]: e.target.value
+                      }))} />
                           </div>
                         </div>)}
                     </CardContent>
@@ -850,13 +810,7 @@ export default function KenaikanPangkat() {
                 {/* Catatan Tambahan */}
                 <div className="space-y-2">
                   <Label htmlFor="catatan-tambahan">Catatan Tambahan (Opsional)</Label>
-                  <textarea 
-                    id="catatan-tambahan" 
-                    className="w-full min-h-[100px] px-3 py-2 border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none rounded-md" 
-                    placeholder="Masukkan catatan atau keterangan tambahan jika diperlukan..."
-                    value={catatanTambahan}
-                    onChange={(e) => setCatatanTambahan(e.target.value)}
-                  />
+                  <textarea id="catatan-tambahan" className="w-full min-h-[100px] px-3 py-2 border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none rounded-md" placeholder="Masukkan catatan atau keterangan tambahan jika diperlukan..." value={catatanTambahan} onChange={e => setCatatanTambahan(e.target.value)} />
                 </div>
 
                 {/* Informasi Penting */}
@@ -874,19 +828,11 @@ export default function KenaikanPangkat() {
 
                 {/* Action Buttons */}
                 <div className="flex justify-end space-x-3 pt-4">
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center gap-2"
-                    onClick={() => setActiveTab("status")}
-                  >
+                  <Button variant="outline" className="flex items-center gap-2" onClick={() => setActiveTab("status")}>
                     <FileText className="w-4 h-4" />
                     Lihat Status Pengajuan
                   </Button>
-                  <Button 
-                    className="flex items-center gap-2"
-                    onClick={handleSubmitPengajuan}
-                    disabled={loading}
-                  >
+                  <Button className="flex items-center gap-2" onClick={handleSubmitPengajuan} disabled={loading}>
                     <TrendingUp className="w-4 h-4" />
                     {loading ? "Mengirim..." : "Submit Pengajuan"}
                   </Button>
@@ -932,16 +878,13 @@ export default function KenaikanPangkat() {
                     </div>
                   </div>
                 </div>
-                {loading ? (
-                  <div className="text-center py-12">
+                {loading ? <div className="text-center py-12">
                     <Clock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Memuat Data...</h3>
                     <p className="text-muted-foreground">
                       Sedang memuat data pengajuan kenaikan pangkat
                     </p>
-                  </div>
-                ) : applications.length === 0 ? (
-                  <div className="text-center py-12">
+                  </div> : applications.length === 0 ? <div className="text-center py-12">
                     <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Belum Ada Pengajuan</h3>
                     <p className="text-muted-foreground mb-4">
@@ -951,13 +894,11 @@ export default function KenaikanPangkat() {
                       <TrendingUp className="w-4 h-4 mr-2" />
                       Buat Pengajuan Baru
                     </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
+                  </div> : <div className="space-y-4">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>No. Usulan</TableHead>
+                          
                           <TableHead>Nama Pegawai</TableHead>
                           <TableHead>Kategori</TableHead>
                           <TableHead>Periode</TableHead>
@@ -967,19 +908,14 @@ export default function KenaikanPangkat() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {applications
-                          .filter((app) => {
-                            if (!filterPeriode || filterPeriode === "all") return true;
-                            const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
-                            return estimasiData.periode?.toLowerCase() === filterPeriode.toLowerCase();
-                          })
-                          .map((app) => {
-                          const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
-                          return (
-                            <TableRow key={app.id}>
-                              <TableCell className="font-mono">
-                                {estimasiData.nomor_usulan || 'N/A'}
-                              </TableCell>
+                        {applications.filter(app => {
+                      if (!filterPeriode || filterPeriode === "all") return true;
+                      const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
+                      return estimasiData.periode?.toLowerCase() === filterPeriode.toLowerCase();
+                    }).map(app => {
+                      const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
+                      return <TableRow key={app.id}>
+                              
                               <TableCell className="font-medium">
                                 {estimasiData.employee_name || 'N/A'}
                               </TableCell>
@@ -996,25 +932,19 @@ export default function KenaikanPangkat() {
                                 {new Date(app.created_at).toLocaleDateString('id-ID')}
                               </TableCell>
                               <TableCell>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedApplicationForRevision(app);
-                                    setIsRevisionModalOpen(true);
-                                  }}
-                                >
+                                <Button variant="outline" size="sm" onClick={() => {
+                            setSelectedApplicationForRevision(app);
+                            setIsRevisionModalOpen(true);
+                          }}>
                                   <FileText className="w-4 h-4 mr-2" />
                                   Detail
                                 </Button>
                               </TableCell>
-                            </TableRow>
-                          );
-                        })}
+                            </TableRow>;
+                    })}
                       </TableBody>
                     </Table>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
             </Card>
 
@@ -1027,12 +957,10 @@ export default function KenaikanPangkat() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {applications.length > 0 ? (
-                  <div className="space-y-4">
-                    {applications.slice(0, 5).map((app) => {
-                      const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
-                      return (
-                        <div key={app.id} className="flex items-start gap-4 pb-4 border-b last:border-b-0">
+                {applications.length > 0 ? <div className="space-y-4">
+                    {applications.slice(0, 5).map(app => {
+                  const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
+                  return <div key={app.id} className="flex items-start gap-4 pb-4 border-b last:border-b-0">
                           <div className="flex-shrink-0">
                             {app.status === 'submitted' && <Clock className="w-5 h-5 text-yellow-500" />}
                             {app.status === 'approved' && <CheckCircle className="w-5 h-5 text-blue-500" />}
@@ -1046,29 +974,25 @@ export default function KenaikanPangkat() {
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {new Date(app.created_at).toLocaleDateString('id-ID', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                             </p>
                           </div>
                           <div>
                             {getStatusBadge(app.status)}
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
+                        </div>;
+                })}
+                  </div> : <div className="text-center py-8">
                     <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                     <p className="text-muted-foreground">
                       Timeline akan ditampilkan setelah pengajuan dibuat
                     </p>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
             </Card>
           </TabsContent>
@@ -1076,17 +1000,10 @@ export default function KenaikanPangkat() {
         </Tabs>
 
         {/* Document Revision Modal */}
-        {selectedApplicationForRevision && (
-          <DocumentRevisionModal
-            open={isRevisionModalOpen}
-            onOpenChange={setIsRevisionModalOpen}
-            application={selectedApplicationForRevision}
-            onRevisionSubmitted={() => {
-              loadApplications();
-              setSelectedApplicationForRevision(null);
-            }}
-          />
-        )}
+        {selectedApplicationForRevision && <DocumentRevisionModal open={isRevisionModalOpen} onOpenChange={setIsRevisionModalOpen} application={selectedApplicationForRevision} onRevisionSubmitted={() => {
+        loadApplications();
+        setSelectedApplicationForRevision(null);
+      }} />}
       </div>
     </div>;
 }
