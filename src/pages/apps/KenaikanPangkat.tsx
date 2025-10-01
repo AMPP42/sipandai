@@ -52,9 +52,54 @@ export default function KenaikanPangkat() {
   const [selectedApplicationForRevision, setSelectedApplicationForRevision] = useState<Application | null>(null);
   const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
   const [filterPeriode, setFilterPeriode] = useState("");
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [documentRequirements, setDocumentRequirements] = useState<any[]>([]);
+
   useEffect(() => {
     loadApplications();
+    loadEmployees();
+    loadDocumentRequirements();
   }, [user?.id]);
+
+  const loadEmployees = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .order('nama');
+
+      if (error) throw error;
+      setEmployees(data || []);
+    } catch (error: any) {
+      console.error('Error loading employees:', error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat data pegawai",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const loadDocumentRequirements = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('document_types')
+        .select('*')
+        .eq('is_active', true)
+        .order('code');
+
+      if (error) throw error;
+      setDocumentRequirements(data || []);
+    } catch (error: any) {
+      console.error('Error loading document requirements:', error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat persyaratan dokumen",
+        variant: "destructive"
+      });
+    }
+  };
+
   const loadApplications = async () => {
     if (!user?.id) return;
     try {
@@ -84,38 +129,48 @@ export default function KenaikanPangkat() {
     }
   };
 
-  // Mock data for demonstration
-  const pangkatData: PangkatData[] = [{
-    id: "1",
-    nama: "Dr. Ahmad Fauzi, S.H., M.H.",
-    nip: "196508121990031001",
-    pangkatSekarang: "Pembina",
-    golonganSekarang: "IV/a",
-    pangkatTujuan: "Pembina Tingkat I",
-    golonganTujuan: "IV/b",
-    masaKerja: {
-      tahun: 15,
-      bulan: 6
-    },
-    syaratTerpenuhi: true,
-    statusPengajuan: "eligible",
-    tanggalTerakhirNaik: "2020-04-01"
-  }, {
-    id: "2",
-    nama: "Siti Nurhaliza, S.E., M.M.",
-    nip: "197203101995032002",
-    pangkatSekarang: "Penata Muda Tingkat I",
-    golonganSekarang: "III/b",
-    pangkatTujuan: "Penata",
-    golonganTujuan: "III/c",
-    masaKerja: {
-      tahun: 8,
-      bulan: 3
-    },
-    syaratTerpenuhi: false,
-    statusPengajuan: "not_eligible",
-    tanggalTerakhirNaik: "2022-01-01"
-  }];
+  // Transform employees data to pangkat data format
+  const pangkatData: PangkatData[] = employees.map(emp => {
+    // Calculate masa kerja from tmt_cpns or use existing masa_kerja
+    let masaKerjaTahun = 0;
+    let masaKerjaBulan = 0;
+    
+    if (emp.tmt_cpns) {
+      const tmtCpns = new Date(emp.tmt_cpns);
+      const today = new Date();
+      const diffTime = Math.abs(today.getTime() - tmtCpns.getTime());
+      const diffMonths = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 30.44));
+      masaKerjaTahun = Math.floor(diffMonths / 12);
+      masaKerjaBulan = diffMonths % 12;
+    } else if (emp.masa_kerja) {
+      // Parse existing masa_kerja string (e.g., "15 tahun 6 bulan")
+      const match = emp.masa_kerja.match(/(\d+)\s*tahun\s*(\d+)\s*bulan/);
+      if (match) {
+        masaKerjaTahun = parseInt(match[1]);
+        masaKerjaBulan = parseInt(match[2]);
+      }
+    }
+
+    // Determine if eligible based on masa kerja (at least 4 years)
+    const syaratTerpenuhi = masaKerjaTahun >= 4;
+
+    return {
+      id: emp.id,
+      nama: emp.nama,
+      nip: emp.nip || '-',
+      pangkatSekarang: emp.pangkat || '-',
+      golonganSekarang: '-', // Can be extracted from pangkat if needed
+      pangkatTujuan: '-', // Would need additional logic
+      golonganTujuan: '-',
+      masaKerja: {
+        tahun: masaKerjaTahun,
+        bulan: masaKerjaBulan
+      },
+      syaratTerpenuhi,
+      statusPengajuan: syaratTerpenuhi ? 'eligible' as const : 'not_eligible' as const,
+      tanggalTerakhirNaik: emp.tmt_pangkat_terakhir || '-'
+    };
+  });
   const persyaratanPangkat = [{
     nama: "Masa Kerja Minimal",
     deskripsi: "4 tahun dalam pangkat terakhir",
@@ -206,130 +261,15 @@ export default function KenaikanPangkat() {
     return kategoriMap[kategori] || kategori;
   };
   const getDocumentRequirements = (kategori: string) => {
-    const documents: {
-      [key: string]: Array<{
-        nama: string;
-        catatan?: string;
-      }>;
-    } = {
-      reguler: [{
-        nama: "SKP 2 tahun terakhir",
-        catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'"
-      }, {
-        nama: "SK Jabatan terakhir"
-      }, {
-        nama: "SK Pangkat terakhir"
-      }, {
-        nama: "Kartu Pegawai"
-      }, {
-        nama: "Ijazah + Transkrip nilai terakhir"
-      }, {
-        nama: "Nota Dinas"
-      }],
-      fungsional: [{
-        nama: "PAK tahun 2022 hingga saat ini",
-        catatan: "Wajib 3 lembar di setiap tahun"
-      }, {
-        nama: "SKP 2 tahun terakhir",
-        catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'"
-      }, {
-        nama: "SK Jabatan terakhir",
-        catatan: "Wajib disertai sertifikat uji kompetensi bagi pegawai yang naik jabatan"
-      }, {
-        nama: "SK Pangkat terakhir"
-      }, {
-        nama: "Kartu Pegawai"
-      }, {
-        nama: "Ijazah + transkrip nilai terakhir"
-      }, {
-        nama: "Nota Dinas"
-      }],
-      struktural: [{
-        nama: "SKP 2 tahun terakhir",
-        catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'"
-      }, {
-        nama: "SK Jabatan terakhir"
-      }, {
-        nama: "SK Pangkat terakhir"
-      }, {
-        nama: "Kartu Pegawai"
-      }, {
-        nama: "Ijazah + Transkrip Nilai terakhir"
-      }, {
-        nama: "Surat Pernyataan Pelantikan"
-      }, {
-        nama: "Surat Pernyataan Melaksanakan Tugas"
-      }, {
-        nama: "Surat Pernyataan Pelantikan"
-      }, {
-        nama: "Khusus untuk Pejabat Struktural Eselon III yang pendidikan terakhirnya S1 dan pangkat terakhirnya dilakulukan, wajib lulus diklat PIM III"
-      }, {
-        nama: "Nota Dinas"
-      }],
-      pertama_kali: [{
-        nama: "SK CPNS"
-      }, {
-        nama: "SK PNS"
-      }, {
-        nama: "SKP 2 tahun terakhir",
-        catatan: "Nilai minimal 'Baik'; Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'"
-      }, {
-        nama: "PAK tahun 2022 hingga saat ini",
-        catatan: "Khusus untuk jabatan fungsional; Wajib 3 lembar di setiap tahun"
-      }, {
-        nama: "SK Jabatan",
-        catatan: "Khusus untuk jabatan fungsional"
-      }, {
-        nama: "Berita Acara Pengambilan Sumpah Jabatan PNS",
-        catatan: "Khusus untuk jabatan fungsional"
-      }, {
-        nama: "SK Pangkat terakhir"
-      }, {
-        nama: "Kartu Pegawai"
-      }, {
-        nama: "Ijazah + Transkrip Nilai terakhir"
-      }, {
-        nama: "Nota Dinas"
-      }],
-      penyesuaian_ijazah: [{
-        nama: "Surat Tanda Lulus Ujian Penyesuaian Kenaikan Pangkat"
-      }, {
-        nama: "Ijazah + Transkrip Nilai terakhir yang telah dilegalisir"
-      }, {
-        nama: "Uraian Tugas"
-      }, {
-        nama: "SKP 2 tahun terakhir",
-        catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'"
-      }, {
-        nama: "SK Jabatan terakhir"
-      }, {
-        nama: "SK Pangkat terakhir"
-      }, {
-        nama: "Kartu Pegawai"
-      }, {
-        nama: "Ijazah + Transkrip Nilai terakhir"
-      }, {
-        nama: "Nota Dinas"
-      }],
-      iid_ke_iiia: [{
-        nama: "Surat Tanda Lulus Ujian Dinas"
-      }, {
-        nama: "SKP 2 tahun terakhir",
-        catatan: "Nilai minimal 'Baik', Nilai 'Sangat Baik' perlu dilampirkan bukti inovasi; Wajib ada lembar 'Dokumen Evaluasi Kinerja Pegawai'"
-      }, {
-        nama: "SK Jabatan",
-        catatan: "Khusus untuk jabatan fungsional"
-      }, {
-        nama: "SK Pangkat terakhir"
-      }, {
-        nama: "Kartu Pegawai"
-      }, {
-        nama: "Ijazah + Transkrip Nilai terakhir"
-      }, {
-        nama: "Nota Dinas"
-      }]
-    };
-    return documents[kategori] || [];
+    // Filter document requirements by category
+    const filtered = documentRequirements.filter(doc => 
+      doc.category === `kenaikan_pangkat_${kategori}`
+    );
+    
+    return filtered.map(doc => ({
+      nama: doc.name,
+      catatan: doc.description
+    }));
   };
   const handleSubmitPengajuan = async () => {
     if (!selectedPegawai || !selectedKategori || !selectedPeriode) {

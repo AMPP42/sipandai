@@ -306,6 +306,63 @@ export type Database = {
         }
         Relationships: []
       }
+      consultation_tickets: {
+        Row: {
+          created_at: string
+          deskripsi: string
+          feedback: string | null
+          id: string
+          judul: string
+          kategori: string
+          konselor_id: string | null
+          konselor_name: string | null
+          nomor_ticket: string
+          prioritas: string
+          rating: number | null
+          status: string
+          updated_at: string
+          user_id: string
+          user_name: string
+          user_unit: string
+        }
+        Insert: {
+          created_at?: string
+          deskripsi: string
+          feedback?: string | null
+          id?: string
+          judul: string
+          kategori: string
+          konselor_id?: string | null
+          konselor_name?: string | null
+          nomor_ticket: string
+          prioritas: string
+          rating?: number | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          user_name: string
+          user_unit: string
+        }
+        Update: {
+          created_at?: string
+          deskripsi?: string
+          feedback?: string | null
+          id?: string
+          judul?: string
+          kategori?: string
+          konselor_id?: string | null
+          konselor_name?: string | null
+          nomor_ticket?: string
+          prioritas?: string
+          rating?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          user_name?: string
+          user_unit?: string
+        }
+        Relationships: []
+      }
       consultation_types: {
         Row: {
           code: string
@@ -599,6 +656,45 @@ export type Database = {
           tmt_pensiun?: string | null
           tmt_pns?: string | null
           unit?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      faq_items: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          helpful: number
+          id: string
+          is_active: boolean
+          jawaban: string
+          kategori: string
+          not_helpful: number
+          pertanyaan: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          helpful?: number
+          id?: string
+          is_active?: boolean
+          jawaban: string
+          kategori: string
+          not_helpful?: number
+          pertanyaan: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          helpful?: number
+          id?: string
+          is_active?: boolean
+          jawaban?: string
+          kategori?: string
+          not_helpful?: number
+          pertanyaan?: string
           updated_at?: string
         }
         Relationships: []
@@ -918,6 +1014,10 @@ export type Database = {
         Returns: boolean
       }
       generate_nomor_usulan: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_ticket_number: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
