@@ -3,8 +3,9 @@ import { useSearchParams, Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Database, CheckCircle, UserCheck, Users, BarChart3, MessageSquare } from "lucide-react";
+import { Database, CheckCircle, UserCheck, Users, BarChart3 } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
+import { getAccessibleAdminTabs, canAccessAdminTab } from '@/lib/permissions';
 
 // Import existing admin components
 import AdminPegawai from "./AdminPegawai";
@@ -17,31 +18,40 @@ export default function PanelAdmin() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState(tabFromUrl || "database-pegawai");
+  
+  // Get tabs accessible to current user based on permissions
+  const accessibleTabs = getAccessibleAdminTabs(user);
+  const defaultTab = accessibleTabs[0]?.id || 'database-pegawai';
+  const [activeTab, setActiveTab] = useState(tabFromUrl || defaultTab);
 
   useEffect(() => {
     if (tabFromUrl) {
-      // For admin_unit, redirect to database-pegawai if trying to access other tabs
-      if (user?.role === 'admin_unit' && tabFromUrl !== 'database-pegawai') {
-        setActiveTab('database-pegawai');
-      } else {
+      // Check if user has permission to access this tab
+      if (canAccessAdminTab(user, tabFromUrl)) {
         setActiveTab(tabFromUrl);
+      } else {
+        // Redirect to first accessible tab
+        setActiveTab(defaultTab);
       }
     }
-  }, [tabFromUrl, user?.role]);
-
-  // Redirect admin_unit users if they don't have access to panel admin
-  if (user?.role === 'admin_unit') {
-    // Only allow access to database-pegawai tab
-    if (tabFromUrl && tabFromUrl !== 'database-pegawai') {
-      return <Navigate to="/panel-admin?tab=database-pegawai" replace />;
-    }
-  }
+  }, [tabFromUrl, user, defaultTab]);
 
   // Redirect non-admin users
-  if (user?.role !== 'admin_pusat' && user?.role !== 'admin_unit') {
+  if (!user || (user.role !== 'admin_pusat' && user.role !== 'admin_unit')) {
     return <Navigate to="/dashboard" replace />;
   }
+
+  // Get tab icon
+  const getTabIcon = (tabId: string) => {
+    const icons: Record<string, any> = {
+      'database-pegawai': Database,
+      'formasi-jabatan': UserCheck,
+      'verifikasi-usulan': CheckCircle,
+      'user-management': Users,
+      'statistik-laporan': BarChart3,
+    };
+    return icons[tabId] || Database;
+  };
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -56,36 +66,25 @@ export default function PanelAdmin() {
 
         {/* Admin Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className={`grid w-full ${user?.role === 'admin_unit' ? 'grid-cols-1' : 'grid-cols-5'}`}>
-            <TabsTrigger value="database-pegawai" className="flex items-center gap-2">
-              <Database className="w-4 h-4" />
-              Database Pegawai
-              {user?.role === 'admin_unit' && user?.unit && (
-                <Badge variant="secondary" className="ml-2 text-xs">
-                  {user.unit}
-                </Badge>
-              )}
-            </TabsTrigger>
-            {user?.role === 'admin_pusat' && (
-              <>
-                <TabsTrigger value="verifikasi-usulan" className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" />
-                  Verifikasi Usulan
+          <TabsList className={`grid w-full grid-cols-${accessibleTabs.length}`}>
+            {accessibleTabs.map((tab) => {
+              const Icon = getTabIcon(tab.id);
+              return (
+                <TabsTrigger 
+                  key={tab.id} 
+                  value={tab.id} 
+                  className="flex items-center gap-2"
+                >
+                  <Icon className="w-4 h-4" />
+                  {tab.title}
+                  {tab.id === 'database-pegawai' && user?.role === 'admin_unit' && user?.unit && (
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      {user.unit}
+                    </Badge>
+                  )}
                 </TabsTrigger>
-                <TabsTrigger value="formasi-jabatan" className="flex items-center gap-2">
-                  <UserCheck className="w-4 h-4" />
-                  Formasi Jabatan
-                </TabsTrigger>
-                <TabsTrigger value="user-management" className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  User Management
-                </TabsTrigger>
-                <TabsTrigger value="statistik-laporan" className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4" />
-                  Statistik & Laporan
-                </TabsTrigger>
-              </>
-            )}
+              );
+            })}
           </TabsList>
 
           {/* Tab Contents */}
@@ -114,78 +113,81 @@ export default function PanelAdmin() {
             </Card>
           </TabsContent>
 
-          {user?.role === 'admin_pusat' && (
-            <>
-              <TabsContent value="verifikasi-usulan" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5" />
-                      Verifikasi Usulan
-                    </CardTitle>
-                    <CardDescription>
-                      Verifikasi dan proses usulan mutasi pegawai
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Verifikasi />
-                  </CardContent>
-                </Card>
-              </TabsContent>
+          <TabsContent value="verifikasi-usulan" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  Verifikasi Usulan
+                  {user?.role === 'admin_unit' && user?.unit && (
+                    <Badge variant="secondary" className="ml-2">
+                      {user.unit}
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  {user?.role === 'admin_unit'
+                    ? `Verifikasi usulan mutasi dari unit ${user.unit}`
+                    : 'Verifikasi dan proses usulan mutasi pegawai'
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Verifikasi />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
+          <TabsContent value="formasi-jabatan" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCheck className="w-5 h-5" />
+                  Formasi Jabatan
+                </CardTitle>
+                <CardDescription>
+                  Kelola formasi dan struktur jabatan
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdminFormasi />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              <TabsContent value="formasi-jabatan" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <UserCheck className="w-5 h-5" />
-                      Formasi Jabatan
-                    </CardTitle>
-                    <CardDescription>
-                      Kelola formasi dan struktur jabatan
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <AdminFormasi />
-                  </CardContent>
-                </Card>
-              </TabsContent>
+          <TabsContent value="user-management" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  User Management
+                </CardTitle>
+                <CardDescription>
+                  Kelola pengguna dan hak akses sistem
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdminUsers />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              <TabsContent value="user-management" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="w-5 h-5" />
-                      User Management
-                    </CardTitle>
-                    <CardDescription>
-                      Kelola pengguna dan hak akses sistem
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <AdminUsers />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="statistik-laporan" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BarChart3 className="w-5 h-5" />
-                      Statistik & Laporan
-                    </CardTitle>
-                    <CardDescription>
-                      Lihat statistik dan buat laporan sistem
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <AdminReports />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </>
-          )}
+          <TabsContent value="statistik-laporan" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5" />
+                  Statistik & Laporan
+                </CardTitle>
+                <CardDescription>
+                  Lihat statistik dan buat laporan sistem
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdminReports />
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </div>

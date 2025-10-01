@@ -4,20 +4,9 @@ import { NavLink, useLocation } from "react-router-dom";
 import { 
   Building2, 
   LayoutDashboard, 
-  Users, 
   FileText, 
-  TrendingUp, 
   Settings,
-  Database,
-  CheckCircle,
-  Clock,
-  MessageCircle,
-  BarChart3,
-  UserCheck,
-  Shield,
-  GitBranch,
-  ChevronDown,
-  ChevronRight
+  Shield
 } from "lucide-react";
 
 import {
@@ -29,27 +18,18 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
+import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 
 interface MenuItem {
   title: string;
   url: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string;
-}
-
-interface AdminMenuItem {
-  title: string;
-  url: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: string;
+  requirePermission?: string;
 }
 
 export function AppSidebar() {
@@ -58,44 +38,41 @@ export function AppSidebar() {
   const { user } = useAuth();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
-  const [adminMenuOpen, setAdminMenuOpen] = useState(true);
 
   const isActive = (path: string) => currentPath === path;
-  const isAdminPathActive = () => {
-    return currentPath.startsWith('/panel-admin') || currentPath === '/verifikasi';
-  };
   
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     `sidebar-nav-item ${isActive ? 'sidebar-nav-active' : ''}`;
 
-  // Define main menu items
+  // Define main menu items based on permissions
   const getMainMenuItems = (): MenuItem[] => {
-    const commonItems: MenuItem[] = [
-      { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+    if (!user) return [];
+
+    const items: MenuItem[] = [
+      { 
+        title: "Dashboard", 
+        url: "/dashboard", 
+        icon: LayoutDashboard 
+      },
     ];
 
-    if (user?.role === 'admin_pusat') {
-      return [
-        ...commonItems,
-        { 
-          title: "Panel Admin", 
-          url: "/panel-admin", 
-          icon: Shield
-        },
-        { title: "Portal Aplikasi", url: "/apps", icon: FileText },
-      ];
-    } else {
-      // admin_unit role - only show database pegawai and portal aplikasi
-      return [
-        ...commonItems,
-        { 
-          title: "Database Pegawai", 
-          url: "/panel-admin?tab=database-pegawai", 
-          icon: Database
-        },
-        { title: "Portal Aplikasi", url: "/apps", icon: FileText },
-      ];
+    // Add Panel Admin for both admin roles
+    if (user.role === 'admin_pusat' || user.role === 'admin_unit') {
+      items.push({ 
+        title: user.role === 'admin_pusat' ? 'Panel Admin' : 'Panel Admin Unit', 
+        url: "/panel-admin", 
+        icon: Shield,
+      });
     }
+
+    // Add Portal Aplikasi for all users
+    items.push({ 
+      title: "Portal Aplikasi", 
+      url: "/apps", 
+      icon: FileText 
+    });
+
+    return items;
   };
 
   const mainMenuItems = getMainMenuItems();

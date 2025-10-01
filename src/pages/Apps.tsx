@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,66 +9,138 @@ import {
   MessageSquare, 
   Users,
   ArrowRight,
-  Clock,
-  CheckCircle
+  CheckCircle,
+  Lock
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { getAccessibleApplications, canViewStats, APPLICATIONS } from '@/lib/permissions';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Apps() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const applications = [
-    {
-      id: 'mutasi',
-      title: 'Pengajuan Berkas Usulan Mutasi',
-      description: 'Sistem pengajuan mutasi pegawai dengan tracking timeline dan notifikasi real-time',
-      icon: FileText,
-      color: 'blue',
-      features: ['Form pengajuan online', 'Upload dokumen Google Drive', 'Tracking status real-time', 'Notifikasi otomatis'],
-      stats: { total: 23, pending: 5, approved: 15 },
-      available: true,
-      route: '/apps/pengajuan-mutasi-terpadu'
+  // Get applications accessible to current user
+  const accessibleApps = getAccessibleApplications(user);
+
+  // Fetch statistics based on user role and unit
+  const { data: stats } = useQuery({
+    queryKey: ['app-stats', user?.id, user?.unit],
+    queryFn: async () => {
+      if (!user) return null;
+
+      const isAdminPusat = user.role === 'admin_pusat';
+      const userUnit = user.unit;
+
+      // Build query based on role
+      let applicationsQuery = supabase
+        .from('applications')
+        .select('jenis, status, submitter_unit');
+
+      // Filter by unit for admin_unit
+      if (!isAdminPusat && userUnit) {
+        applicationsQuery = applicationsQuery.eq('submitter_unit', userUnit);
+      }
+
+      const { data: applications } = await applicationsQuery;
+
+      // Calculate stats for each app type
+      const mutasiApps = applications?.filter(a => a.jenis === 'mutasi') || [];
+      const pangkatApps = applications?.filter(a => a.jenis === 'kenaikan_pangkat') || [];
+
+      // For pension, query employees table
+      let employeesQuery = supabase
+        .from('employees')
+        .select('tmt_pensiun, unit');
+
+      if (!isAdminPusat && userUnit) {
+        employeesQuery = employeesQuery.eq('unit', userUnit);
+      }
+
+      const { data: employees } = await employeesQuery;
+
+      const now = new Date();
+      const oneYear = new Date();
+      oneYear.setFullYear(now.getFullYear() + 1);
+
+      const pensiunSoon = employees?.filter(e => {
+        if (!e.tmt_pensiun) return false;
+        const pensiunDate = new Date(e.tmt_pensiun);
+        return pensiunDate >= now && pensiunDate <= oneYear;
+      }) || [];
+
+      return {
+        mutasi: {
+          total: mutasiApps.length,
+          pending: mutasiApps.filter(a => a.status === 'submitted').length,
+          approved: mutasiApps.filter(a => a.status === 'approved').length,
+        },
+        pangkat: {
+          total: pangkatApps.length,
+          pending: pangkatApps.filter(a => a.status === 'submitted').length,
+          approved: pangkatApps.filter(a => a.status === 'approved').length,
+        },
+        pensiun: {
+          total: employees?.length || 0,
+          reminder: pensiunSoon.length,
+          processed: 5, // Placeholder
+        },
+        konsultasi: isAdminPusat ? {
+          active: 8,
+          resolved: 45,
+          pending: 3,
+        } : null, // Only admin_pusat can see consultation stats
+      };
     },
-    {
-      id: 'pangkat',
-      title: 'Pengajuan Kenaikan Pangkat',
-      description: 'Validasi syarat otomatis dan checklist dokumen persyaratan kenaikan pangkat',
-      icon: TrendingUp,
-      color: 'green',
-      features: ['Validasi syarat otomatis', 'Checklist dokumen', 'Kalkulasi masa kerja', 'Integrasi database kepangkatan'],
-      stats: { total: 18, pending: 3, approved: 12 },
-      available: true,
-      route: '/apps/kenaikan-pangkat'
-    },
-    {
-      id: 'pensiun',
-      title: 'Administrasi & Reminder Pensiun',
-      description: 'Auto-reminder dan dashboard countdown persiapan pensiun pegawai',
-      icon: Calendar,
-      color: 'orange',
-      features: ['Auto-reminder pensiun', 'Dashboard countdown', 'Checklist persiapan', 'Generate surat keterangan'],
-      stats: { total: 47, reminder: 12, processed: 5 },
-      available: true,
-      route: '/apps/reminder-pensiun'
-    },
-    {
-      id: 'konsultasi',
-      title: 'Panduan Layanan Mutasi, Kenaikan Pangkat, dan Pensiun',
-      description: 'Ticketing system, layanan konsultasi, panduan, dan FAQ',
-      icon: MessageSquare,
-      color: 'purple',
-      features: ['Ticketing system', 'Live chat konselor', 'Knowledge base FAQ', 'Rating & feedback'],
-      stats: { active: 8, resolved: 45, pending: 3 },
-      available: true,
-      route: '/apps/konsultasi-sdm'
-    }
-  ];
+    enabled: !!user,
+  });
+
+  const getIconComponent = (appId: string) => {
+    const icons: Record<string, any> = {
+      mutasi: FileText,
+      pangkat: TrendingUp,
+      pensiun: Calendar,
+      konsultasi: MessageSquare,
+    };
+    return icons[appId] || FileText;
+  };
+
+  const getColorClass = (appId: string) => {
+    const colors: Record<string, string> = {
+      mutasi: 'blue',
+      pangkat: 'green',
+      pensiun: 'orange',
+      konsultasi: 'purple',
+    };
+    return colors[appId] || 'blue';
+  };
+
+  const getFeatures = (appId: string) => {
+    const features: Record<string, string[]> = {
+      mutasi: ['Form pengajuan online', 'Upload dokumen Google Drive', 'Tracking status real-time', 'Notifikasi otomatis'],
+      pangkat: ['Validasi syarat otomatis', 'Checklist dokumen', 'Kalkulasi masa kerja', 'Integrasi database kepangkatan'],
+      pensiun: ['Auto-reminder pensiun', 'Dashboard countdown', 'Checklist persiapan', 'Generate surat keterangan'],
+      konsultasi: ['Ticketing system', 'Live chat konselor', 'Knowledge base FAQ', 'Rating & feedback'],
+    };
+    return features[appId] || [];
+  };
+
+  const getAppStats = (appId: string) => {
+    if (!stats) return null;
+    if (!canViewStats(user, appId)) return null;
+
+    const statsMap: Record<string, any> = {
+      mutasi: stats.mutasi,
+      pangkat: stats.pangkat,
+      pensiun: stats.pensiun,
+      konsultasi: stats.konsultasi,
+    };
+    return statsMap[appId];
+  };
 
   const handleOpenApp = (app: any) => {
-    if (app.available && app.route) {
-      navigate(app.route);
-    }
+    navigate(app.route);
   };
 
   return (
@@ -85,97 +156,106 @@ export default function Apps() {
               Portal Aplikasi SIPANDAI
             </h1>
             <p className="text-gray-600 mt-2">
-              Akses semua aplikasi administrasi ASN dalam satu portal terintegrasi
+              Akses aplikasi administrasi ASN yang tersedia untuk {user?.role === 'admin_pusat' ? 'Admin Pusat' : `Admin Unit - ${user?.unit}`}
             </p>
           </div>
-          <Badge className="bg-brand-100 text-brand-700 border-brand-200">
-            {applications.filter(app => app.available).length} Aplikasi Aktif
-          </Badge>
+          <div className="text-right">
+            <Badge className="bg-brand-100 text-brand-700 border-brand-200">
+              {accessibleApps.length} Aplikasi Tersedia
+            </Badge>
+            {user?.role === 'admin_unit' && user?.unit && (
+              <p className="text-sm text-gray-500 mt-2">Unit: {user.unit}</p>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Applications Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {applications.map((app) => (
-          <Card key={app.id} className="hover:shadow-lg transition-all duration-200 border-gray-200">
-            <CardHeader className="pb-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4">
-                  <div className={`p-3 rounded-xl bg-${app.color}-100`}>
-                    <app.icon className={`w-6 h-6 text-${app.color}-600`} />
+        {accessibleApps.map((app) => {
+          const Icon = getIconComponent(app.id);
+          const color = getColorClass(app.id);
+          const features = getFeatures(app.id);
+          const appStats = getAppStats(app.id);
+
+          return (
+            <Card key={app.id} className="hover:shadow-lg transition-all duration-200 border-gray-200">
+              <CardHeader className="pb-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-xl bg-${color}-100`}>
+                      <Icon className={`w-6 h-6 text-${color}-600`} />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">{app.title}</CardTitle>
+                      <CardDescription className="mt-2 text-sm">
+                        {app.description}
+                      </CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-lg">{app.title}</CardTitle>
-                    <CardDescription className="mt-2 text-sm">
-                      {app.description}
-                    </CardDescription>
-                  </div>
-                </div>
-                {app.available ? (
                   <Badge className="bg-green-100 text-green-700 border-green-200">
                     Aktif
                   </Badge>
-                ) : (
-                  <Badge variant="secondary">
-                    Segera
-                  </Badge>
-                )}
-              </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-4">
-              {/* Features */}
-              <div>
-                <h4 className="font-medium text-gray-900 mb-2 text-sm">Fitur Utama:</h4>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                  {app.features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2 text-xs text-gray-600">
-                      <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Stats */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-2 text-sm">Statistik:</h4>
-                <div className="flex gap-4 text-xs">
-                  {Object.entries(app.stats).map(([key, value]) => (
-                    <div key={key} className="text-center">
-                      <p className="font-bold text-gray-900">{value}</p>
-                      <p className="text-gray-600 capitalize">
-                        {key === 'total' ? 'Total' : 
-                         key === 'pending' ? 'Pending' : 
-                         key === 'approved' ? 'Disetujui' : 
-                         key === 'reminder' ? 'Reminder' : 
-                         key === 'processed' ? 'Diproses' :
-                         key === 'active' ? 'Aktif' :
-                         key === 'resolved' ? 'Selesai' : key}
-                      </p>
-                    </div>
-                  ))}
                 </div>
-              </div>
+              </CardHeader>
+              
+              <CardContent className="space-y-4">
+                {/* Features */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2 text-sm">Fitur Utama:</h4>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                    {features.map((feature, index) => (
+                      <li key={index} className="flex items-center gap-2 text-xs text-gray-600">
+                        <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-2">
-                <Button 
-                  className="btn-primary flex-1" 
-                  disabled={!app.available}
-                  size="sm"
-                  onClick={() => handleOpenApp(app)}
-                >
-                  Buka Aplikasi
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-                <Button variant="outline" size="sm">
-                  Info Lengkap
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                {/* Stats - only show if user has permission */}
+                {appStats && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-medium text-gray-900 mb-2 text-sm">
+                      Statistik {user?.role === 'admin_unit' ? `(${user.unit})` : ''}:
+                    </h4>
+                    <div className="flex gap-4 text-xs">
+                      {Object.entries(appStats).map(([key, value]) => (
+                        <div key={key} className="text-center">
+                          <p className="font-bold text-gray-900">{value as number}</p>
+                          <p className="text-gray-600 capitalize">
+                            {key === 'total' ? 'Total' : 
+                             key === 'pending' ? 'Pending' : 
+                             key === 'approved' ? 'Disetujui' : 
+                             key === 'reminder' ? 'Reminder' : 
+                             key === 'processed' ? 'Diproses' :
+                             key === 'active' ? 'Aktif' :
+                             key === 'resolved' ? 'Selesai' : key}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-2">
+                  <Button 
+                    className="btn-primary flex-1" 
+                    size="sm"
+                    onClick={() => handleOpenApp(app)}
+                  >
+                    Buka Aplikasi
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    Info Lengkap
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Integration Info */}
