@@ -269,10 +269,15 @@ export const AdminChatView: React.FC<AdminChatViewProps> = ({
           </Button>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[500px]">
-          <div className="text-center text-muted-foreground">
-            <User className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>Belum ada percakapan untuk tiket ini</p>
-            <p className="text-sm mt-1">User belum memulai live chat</p>
+          <div className="text-center text-muted-foreground max-w-md">
+            <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="font-medium mb-2">Belum ada sesi chat untuk tiket ini</p>
+            <p className="text-sm">
+              Tiket sudah ditugaskan ke konselor, tetapi {userName} belum memulai percakapan live chat.
+            </p>
+            <p className="text-sm mt-2">
+              User perlu membuka halaman "Panduan Layanan" → tab "Ticket Saya", lalu klik tombol "Mulai Live Chat" pada tiket ini.
+            </p>
           </div>
         </CardContent>
       </Card>

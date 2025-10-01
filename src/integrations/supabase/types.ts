@@ -372,7 +372,7 @@ export type Database = {
           kategori: string
           konselor_id?: string | null
           konselor_name?: string | null
-          nomor_ticket: string
+          nomor_ticket?: string
           prioritas: string
           rating?: number | null
           status?: string
