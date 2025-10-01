@@ -284,6 +284,7 @@ export type Database = {
           session_duration_seconds: number | null
           started_at: string
           status: string
+          ticket_id: string | null
           topic: string | null
           updated_at: string
           user_id: string
@@ -305,6 +306,7 @@ export type Database = {
           session_duration_seconds?: number | null
           started_at?: string
           status?: string
+          ticket_id?: string | null
           topic?: string | null
           updated_at?: string
           user_id: string
@@ -326,12 +328,21 @@ export type Database = {
           session_duration_seconds?: number | null
           started_at?: string
           status?: string
+          ticket_id?: string | null
           topic?: string | null
           updated_at?: string
           user_id?: string
           wait_time_seconds?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "chat_sessions_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       consultation_tickets: {
         Row: {

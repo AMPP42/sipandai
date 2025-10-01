@@ -63,7 +63,7 @@ interface AutoReply {
   category: string;
 }
 
-export const LiveChatInterface = () => {
+export const LiveChatInterface = ({ ticketId }: { ticketId?: string | null }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
@@ -248,23 +248,37 @@ export const LiveChatInterface = () => {
   const startChat = async () => {
     if (!user) return;
 
+    // Check if ticketId is provided (required for starting chat)
+    if (!ticketId) {
+      toast({
+        title: "Ticket diperlukan",
+        description: "Anda harus memiliki ticket konsultasi yang disetujui untuk memulai live chat. Silakan buat ticket konsultasi terlebih dahulu.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     
     try {
       // Check if there are online officers
       const onlineOfficers = officers.filter(o => o.status === 'online');
       
-      // Create new chat session
+      // Create new chat session linked to ticket
       const { data: session, error: sessionError } = await supabase
         .from('chat_sessions')
         .insert({
           user_id: user.id,
+          ticket_id: ticketId,
           status: onlineOfficers.length > 0 ? 'waiting' : 'waiting'
         })
         .select()
         .single();
 
-      if (sessionError) throw sessionError;
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw sessionError;
+      }
 
       const chatSession: ChatSession = {
         ...session,
@@ -291,11 +305,11 @@ export const LiveChatInterface = () => {
         title: "Chat dimulai",
         description: "Anda dapat mulai mengetik pesan Anda",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error starting chat:', error);
       toast({
         title: "Error",
-        description: "Gagal memulai chat. Silakan coba lagi.",
+        description: error.message || "Gagal memulai chat. Silakan coba lagi.",
         variant: "destructive",
       });
     } finally {
@@ -636,6 +650,22 @@ export const LiveChatInterface = () => {
 
           {/* Start Chat */}
           <div className="text-center space-y-4">
+            {!ticketId && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-left">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-yellow-800 mb-1">Ticket Konsultasi Diperlukan</p>
+                    <p className="text-sm text-yellow-700">
+                      Untuk mengakses live chat, Anda harus memiliki ticket konsultasi yang telah disetujui oleh admin. 
+                      Silakan buat ticket konsultasi terlebih dahulu di tab "Buat Ticket", 
+                      lalu tunggu hingga ticket disetujui dan status menjadi "Sedang Diproses".
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {onlineOfficers.length > 0 ? (
               <>
                 <div className="text-green-600 font-medium">
@@ -658,7 +688,7 @@ export const LiveChatInterface = () => {
             
             <Button 
               onClick={startChat}
-              disabled={isLoading}
+              disabled={isLoading || !ticketId}
               className="w-full"
             >
               {isLoading ? 'Memulai...' : 'Mulai Chat'}

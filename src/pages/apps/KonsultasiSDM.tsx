@@ -29,6 +29,19 @@ interface TicketData {
   feedback?: string;
 }
 
+interface AppointmentData {
+  id: string;
+  tanggal_konsultasi: string;
+  jam_konsultasi: string;
+  nama_lengkap: string;
+  nip: string;
+  unit_kerja: string;
+  jenis_konsultasi: string;
+  status: string;
+  catatan_admin?: string;
+  konselor_id?: string;
+}
+
 interface FAQItem {
   id: string;
   pertanyaan: string;
@@ -45,7 +58,9 @@ export default function KonsultasiSDM() {
   const [activeTab, setActiveTab] = useState("faq");
   const [loading, setLoading] = useState(false);
   const [tickets, setTickets] = useState<TicketData[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentData[]>([]);
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
+  const [activeTicketForChat, setActiveTicketForChat] = useState<string | null>(null);
   const [newTicket, setNewTicket] = useState({
     judul: "",
     kategori: "",
@@ -56,6 +71,7 @@ export default function KonsultasiSDM() {
   useEffect(() => {
     loadTickets();
     loadFAQs();
+    loadAppointments();
   }, [user?.id]);
 
   const loadTickets = async () => {
@@ -127,6 +143,34 @@ export default function KonsultasiSDM() {
         variant: "destructive"
       });
     }
+  };
+
+  const loadAppointments = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('tanggal_konsultasi', { ascending: false });
+
+      if (error) throw error;
+
+      setAppointments(data || []);
+    } catch (error: any) {
+      console.error('Error loading appointments:', error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat data appointment",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleStartChatFromTicket = (ticketId: string) => {
+    setActiveTicketForChat(ticketId);
+    setActiveTab("live-chat");
   };
 
   const handleSubmitTicket = async (e: React.FormEvent) => {
@@ -270,7 +314,7 @@ export default function KonsultasiSDM() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="ticket" className="flex items-center gap-2">
               <Ticket className="w-4 h-4" />
               Buat Ticket
@@ -290,6 +334,10 @@ export default function KonsultasiSDM() {
             <TabsTrigger value="appointment" className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
               Jadwal Konsultasi
+            </TabsTrigger>
+            <TabsTrigger value="my-appointments" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Jadwal Saya
             </TabsTrigger>
           </TabsList>
 
@@ -446,6 +494,18 @@ export default function KonsultasiSDM() {
                               )}
                             </div>
                           )}
+
+                          {ticket.status === 'in_progress' && (
+                            <div className="mt-4">
+                              <Button 
+                                onClick={() => handleStartChatFromTicket(ticket.id)}
+                                className="w-full"
+                              >
+                                <Phone className="w-4 h-4 mr-2" />
+                                Mulai Live Chat
+                              </Button>
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     ))}
@@ -528,7 +588,7 @@ export default function KonsultasiSDM() {
 
           {/* Tab: Live Chat */}
           <TabsContent value="live-chat">
-            <LiveChatInterface />
+            <LiveChatInterface ticketId={activeTicketForChat} />
           </TabsContent>
 
           {/* Tab: Appointment */}
@@ -552,6 +612,92 @@ export default function KonsultasiSDM() {
                     Buat Jadwal Konsultasi
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: My Appointments */}
+          <TabsContent value="my-appointments" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Jadwal Konsultasi Saya</CardTitle>
+                <CardDescription>
+                  Pantau status jadwal konsultasi yang telah diajukan
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {appointments.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Belum Ada Jadwal</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Anda belum pernah mengajukan jadwal konsultasi
+                    </p>
+                    <Button onClick={() => navigate('/apps/jadwal-konsultasi')}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Buat Jadwal Baru
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {appointments.map((appointment) => {
+                      const statusMap: Record<string, { label: string; className: string }> = {
+                        pending: { label: "Menunggu", className: "bg-yellow-100 text-yellow-700" },
+                        approved: { label: "Disetujui", className: "bg-green-100 text-green-700" },
+                        rejected: { label: "Ditolak", className: "bg-red-100 text-red-700" },
+                        completed: { label: "Selesai", className: "bg-gray-100 text-gray-700" }
+                      };
+                      const status = statusMap[appointment.status] || statusMap.pending;
+                      
+                      return (
+                        <Card key={appointment.id} className="border-l-4 border-l-primary">
+                          <CardContent className="p-6">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-3">
+                                  <h3 className="font-semibold text-lg">{appointment.jenis_konsultasi}</h3>
+                                  <Badge className={status.className}>{status.label}</Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {new Date(appointment.tanggal_konsultasi).toLocaleDateString('id-ID', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  })} • {appointment.jam_konsultasi}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Nama:</span>{" "}
+                                <span className="font-medium">{appointment.nama_lengkap}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">NIP:</span>{" "}
+                                <span className="font-medium">{appointment.nip}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Unit:</span>{" "}
+                                <span className="font-medium">{appointment.unit_kerja}</span>
+                              </div>
+                            </div>
+
+                            {appointment.catatan_admin && (
+                              <div className="mt-4 pt-4 border-t">
+                                <span className="text-sm text-muted-foreground font-medium">Catatan Admin:</span>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {appointment.catatan_admin}
+                                </p>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
