@@ -251,21 +251,17 @@ export default function AdminPegawai() {
         .gt('tmt_pensiun', today.toISOString().split('T')[0]);
       const { count: retirementCount } = await retirementQuery;
 
-      // Get unique units count - fetch all units by setting large range
-      let unitQuery = supabase
-        .from('employees')
-        .select('unit')
-        .not('unit', 'is', null)
-        .range(0, 10000); // Ensure we get all records to count unique units
-      const { data: unitData } = await unitQuery;
-      
-      const uniqueUnits = new Set(unitData?.map(emp => emp.unit)).size;
+      // Get units count from work_units reference table
+      const { count: unitsCount } = await supabase
+        .from('work_units')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
 
       setStats({
         total: totalCount || 0,
         active: activeCount || 0,
         approaching_retirement: retirementCount || 0,
-        units: uniqueUnits
+        units: unitsCount || 0
       });
 
     } catch (error: any) {
