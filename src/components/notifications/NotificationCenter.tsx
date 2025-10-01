@@ -13,7 +13,10 @@ interface Notification {
   id: string;
   title: string;
   body?: string;
-  type?: 'info' | 'success' | 'warning' | 'error';
+  notification_type?: 'info' | 'success' | 'warning' | 'error' | 'chat' | 'application' | 'appointment';
+  priority?: string;
+  action_url?: string;
+  action_label?: string;
   read_at?: string;
   created_at: string;
 }
@@ -43,7 +46,10 @@ export default function NotificationCenter() {
               id: (payload.new as any).id,
               title: (payload.new as any).title,
               body: (payload.new as any).body,
-              type: 'info',
+              notification_type: (payload.new as any).notification_type || 'info',
+              priority: (payload.new as any).priority,
+              action_url: (payload.new as any).action_url,
+              action_label: (payload.new as any).action_label,
               read_at: (payload.new as any).read_at,
               created_at: (payload.new as any).created_at
             };
@@ -67,7 +73,7 @@ export default function NotificationCenter() {
     try {
       const { data, error } = await supabase
         .from('notifications')
-        .select('id, title, body, read_at, created_at')
+        .select('id, title, body, notification_type, priority, action_url, action_label, read_at, created_at')
         .eq('recipient_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -78,7 +84,10 @@ export default function NotificationCenter() {
         id: notification.id,
         title: notification.title,
         body: notification.body,
-        type: 'info' as const,
+        notification_type: notification.notification_type as any || 'info',
+        priority: notification.priority,
+        action_url: notification.action_url,
+        action_label: notification.action_label,
         read_at: notification.read_at,
         created_at: notification.created_at
       }));
@@ -143,6 +152,12 @@ export default function NotificationCenter() {
         return <XCircle className="w-5 h-5 text-red-600" />;
       case 'warning':
         return <AlertTriangle className="w-5 h-5 text-orange-600" />;
+      case 'chat':
+        return <Bell className="w-5 h-5 text-blue-600" />;
+      case 'application':
+        return <CheckCircle className="w-5 h-5 text-purple-600" />;
+      case 'appointment':
+        return <CheckCircle className="w-5 h-5 text-teal-600" />;
       default:
         return <Info className="w-5 h-5 text-blue-600" />;
     }
@@ -183,15 +198,27 @@ export default function NotificationCenter() {
                 key={notification.id}
                 className={`p-4 border-b border-gray-100 ${
                   !notification.read_at ? 'bg-blue-50' : ''
-                } hover:bg-gray-50 transition-colors`}
+                } ${notification.priority === 'urgent' ? 'border-l-4 border-l-red-500' : ''} hover:bg-gray-50 transition-colors`}
               >
                 <div className="flex items-start gap-3">
-                  {getNotificationIcon(notification.type)}
+                  {getNotificationIcon(notification.notification_type)}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
-                      <h4 className="text-sm font-medium text-gray-900 truncate">
-                        {notification.title}
-                      </h4>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-gray-900">
+                          {notification.title}
+                          {notification.priority === 'urgent' && (
+                            <Badge variant="destructive" className="ml-2 text-xs">
+                              Urgent
+                            </Badge>
+                          )}
+                          {notification.priority === 'high' && (
+                            <Badge variant="default" className="ml-2 text-xs">
+                              High
+                            </Badge>
+                          )}
+                        </h4>
+                      </div>
                       {!notification.read_at && (
                         <Button
                           variant="ghost"
@@ -207,6 +234,19 @@ export default function NotificationCenter() {
                       <p className="text-xs text-gray-600 mt-1 line-clamp-2">
                         {notification.body}
                       </p>
+                    )}
+                    {notification.action_url && notification.action_label && (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 mt-2 text-xs"
+                        onClick={() => {
+                          window.location.href = notification.action_url!;
+                          markAsRead(notification.id);
+                        }}
+                      >
+                        {notification.action_label} →
+                      </Button>
                     )}
                     <p className="text-xs text-gray-400 mt-2">
                       {formatDistanceToNow(new Date(notification.created_at), {

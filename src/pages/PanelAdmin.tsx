@@ -3,7 +3,7 @@ import { useSearchParams, Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Database, CheckCircle, UserCheck, Users, BarChart3 } from "lucide-react";
+import { Database, CheckCircle, UserCheck, Users, BarChart3, MessageSquare, HelpCircle } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { getAccessibleAdminTabs, canAccessAdminTab } from '@/lib/permissions';
 
@@ -13,6 +13,8 @@ import AdminFormasi from "./AdminFormasi";
 import AdminUsers from "./AdminUsers";
 import AdminReports from "./AdminReports";
 import Verifikasi from "./Verifikasi";
+import AdminConsultations from "./AdminConsultations";
+import AdminFAQ from "./AdminFAQ";
 
 export default function PanelAdmin() {
   const { user } = useAuth();
@@ -49,6 +51,8 @@ export default function PanelAdmin() {
       'verifikasi-usulan': CheckCircle,
       'user-management': Users,
       'statistik-laporan': BarChart3,
+      'konsultasi-tiket': MessageSquare,
+      'faq-management': HelpCircle,
     };
     return icons[tabId] || Database;
   };
@@ -185,6 +189,40 @@ export default function PanelAdmin() {
               </CardHeader>
               <CardContent>
                 <AdminReports />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="konsultasi-tiket" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Tiket Konsultasi
+                </CardTitle>
+                <CardDescription>
+                  Kelola tiket konsultasi dari pengguna
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdminConsultations />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="faq-management" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <HelpCircle className="w-5 h-5" />
+                  Kelola FAQ
+                </CardTitle>
+                <CardDescription>
+                  Kelola pertanyaan yang sering ditanyakan (FAQ)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdminFAQ />
               </CardContent>
             </Card>
           </TabsContent>
