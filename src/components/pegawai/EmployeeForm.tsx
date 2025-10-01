@@ -10,6 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DatePicker } from '@/components/ui/date-picker';
 import { X, Save, UserPlus } from 'lucide-react';
+import { employeeFormSchema, sanitizeText, sanitizeFilename } from '@/lib/validation';
+import { getUserFriendlyError } from '@/lib/security';
+import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
 
 interface Employee {
   id?: string;
@@ -48,8 +52,10 @@ interface EmployeeFormProps {
 
 export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFormProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [unitOptions, setUnitOptions] = useState<Array<{ id: string; nama_unit: string }>>([]);
   const [pangkatOptions] = useState([
     // Golongan I (Juru)
@@ -138,28 +144,100 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
     e.preventDefault();
     setLoading(true);
     setError('');
+    setValidationErrors({});
 
     try {
+      // Prepare data for validation
+      const dataToValidate = {
+        nama: sanitizeText(formData.nama),
+        nip: formData.nip?.trim() || undefined,
+        nik: formData.nik?.trim() || undefined,
+        email: formData.email?.trim().toLowerCase() || undefined,
+        handphone: formData.handphone?.trim() || undefined,
+        tempat_lahir: formData.tempat_lahir?.trim() || undefined,
+        tanggal_lahir: formData.tanggal_lahir ? new Date(formData.tanggal_lahir) : undefined,
+        jenis_kelamin: formData.jenis_kelamin === 'L' ? 'Laki-laki' as const : 'Perempuan' as const,
+        agama: formData.agama?.trim() || undefined,
+        status_pernikahan: formData.status_pernikahan as 'Belum Menikah' | 'Menikah' | 'Cerai' | undefined,
+        alamat: formData.alamat ? sanitizeText(formData.alamat) : undefined,
+        unit: formData.unit?.trim() || undefined,
+        jabatan: formData.jabatan?.trim() || undefined,
+        pangkat: formData.pangkat?.trim() || undefined,
+        pendidikan_terakhir: formData.pendidikan_terakhir?.trim() || undefined,
+        tmt_cpns: formData.tmt_cpns ? new Date(formData.tmt_cpns) : undefined,
+        tmt_pns: formData.tmt_pns ? new Date(formData.tmt_pns) : undefined,
+        tmt_jabatan_terakhir: formData.tmt_jabatan_terakhir ? new Date(formData.tmt_jabatan_terakhir) : undefined,
+        tmt_pangkat_terakhir: formData.tmt_pangkat_terakhir ? new Date(formData.tmt_pangkat_terakhir) : undefined,
+      };
+
+      // Validate with zod schema
+      const validatedData = employeeFormSchema.parse(dataToValidate);
+
+      // Prepare final data for database
+      const finalData = {
+        ...formData,
+        nama: validatedData.nama,
+        nip: validatedData.nip || null,
+        nik: validatedData.nik || null,
+        email: validatedData.email || null,
+        handphone: validatedData.handphone || null,
+        tempat_lahir: validatedData.tempat_lahir || null,
+        tanggal_lahir: validatedData.tanggal_lahir ? 
+          `${validatedData.tanggal_lahir.getFullYear()}-${String(validatedData.tanggal_lahir.getMonth() + 1).padStart(2, '0')}-${String(validatedData.tanggal_lahir.getDate()).padStart(2, '0')}` 
+          : null,
+        jenis_kelamin: validatedData.jenis_kelamin === 'Laki-laki' ? 'L' : 'P',
+        agama: validatedData.agama || null,
+        status_pernikahan: validatedData.status_pernikahan || null,
+        alamat: validatedData.alamat || null,
+        unit: validatedData.unit || null,
+        jabatan: validatedData.jabatan || null,
+        pangkat: validatedData.pangkat || null,
+      };
+
       if (employee?.id) {
         // Update existing employee
         const { error } = await supabase
           .from('employees')
-          .update(formData)
+          .update(finalData)
           .eq('id', employee.id);
         
         if (error) throw error;
+        
+        toast({
+          title: 'Berhasil',
+          description: 'Data pegawai berhasil diperbarui',
+        });
       } else {
         // Create new employee
         const { error } = await supabase
           .from('employees')
-          .insert([formData]);
+          .insert([finalData]);
         
         if (error) throw error;
+        
+        toast({
+          title: 'Berhasil',
+          description: 'Pegawai baru berhasil ditambahkan',
+        });
       }
 
       onSave();
     } catch (error: any) {
-      setError(error.message || 'Terjadi kesalahan saat menyimpan data');
+      console.error('Employee form error:', error);
+      
+      if (error instanceof z.ZodError) {
+        // Handle validation errors
+        const errors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            errors[err.path[0].toString()] = err.message;
+          }
+        });
+        setValidationErrors(errors);
+        setError('Mohon periksa kembali data yang Anda masukkan');
+      } else {
+        setError(getUserFriendlyError(error));
+      }
     } finally {
       setLoading(false);
     }
@@ -195,25 +273,39 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
                   value={formData.nama}
                   onChange={(e) => setFormData(prev => ({ ...prev, nama: e.target.value }))}
                   required
+                  className={validationErrors.nama ? 'border-red-500' : ''}
                 />
+                {validationErrors.nama && (
+                  <p className="text-sm text-red-600">{validationErrors.nama}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="nip">NIP</Label>
                 <Input
                   id="nip"
                   value={formData.nip || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, nip: e.target.value }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, nip: e.target.value.replace(/\D/g, '').slice(0, 18) }))}
                   placeholder="18 digit"
+                  maxLength={18}
+                  className={validationErrors.nip ? 'border-red-500' : ''}
                 />
+                {validationErrors.nip && (
+                  <p className="text-sm text-red-600">{validationErrors.nip}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="nik">NIK</Label>
                 <Input
                   id="nik"
                   value={formData.nik || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, nik: e.target.value }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, nik: e.target.value.replace(/\D/g, '').slice(0, 16) }))}
                   placeholder="16 digit"
+                  maxLength={16}
+                  className={validationErrors.nik ? 'border-red-500' : ''}
                 />
+                {validationErrors.nik && (
+                  <p className="text-sm text-red-600">{validationErrors.nik}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tempat_lahir">Tempat Lahir</Label>
@@ -330,7 +422,11 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
                     type="email"
                     value={formData.email || ''}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    className={validationErrors.email ? 'border-red-500' : ''}
                   />
+                  {validationErrors.email && (
+                    <p className="text-sm text-red-600">{validationErrors.email}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="handphone">Handphone</Label>
@@ -338,7 +434,12 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
                     id="handphone"
                     value={formData.handphone || ''}
                     onChange={(e) => setFormData(prev => ({ ...prev, handphone: e.target.value }))}
+                    placeholder="08xx atau +628xx"
+                    className={validationErrors.handphone ? 'border-red-500' : ''}
                   />
+                  {validationErrors.handphone && (
+                    <p className="text-sm text-red-600">{validationErrors.handphone}</p>
+                  )}
                 </div>
               </div>
             </div>

@@ -1009,9 +1009,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      archive_old_audit_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       can_edit_employee_unit: {
         Args: { employee_unit: string }
         Returns: boolean
+      }
+      cleanup_old_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       generate_nomor_usulan: {
         Args: Record<PropertyKey, never>
