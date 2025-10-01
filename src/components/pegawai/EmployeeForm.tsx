@@ -50,6 +50,7 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [unitOptions, setUnitOptions] = useState<Array<{ id: string; nama_unit: string }>>([]);
   const [pangkatOptions] = useState([
     // Golongan I (Juru)
     { id: '1', kode: 'I/a', nama_pangkat: 'Juru Muda' },
@@ -78,12 +79,6 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
     { id: '20', kode: 'VII', nama_pangkat: 'PPPK Golongan VII' },
     { id: '21', kode: 'IX', nama_pangkat: 'PPPK Golongan IX' },
   ]);
-  const [unitOptions] = useState([
-    { id: '1', nama_unit: 'BKPSDM' },
-    { id: '2', nama_unit: 'Dinas Pendidikan' },
-    { id: '3', nama_unit: 'Dinas Kesehatan' },
-    { id: '4', nama_unit: 'Dinas Perhubungan' },
-  ]);
   
   const [formData, setFormData] = useState<Employee>({
     nama: '',
@@ -111,6 +106,33 @@ export default function EmployeeForm({ employee, onSave, onCancel }: EmployeeFor
     masa_kerja: '',
     ...employee
   });
+
+  // Load work units from database
+  useEffect(() => {
+    const loadWorkUnits = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('work_units')
+          .select('id, name')
+          .eq('is_active', true)
+          .order('name');
+        
+        if (error) throw error;
+        
+        // Map to the expected format
+        const mappedUnits = (data || []).map(unit => ({
+          id: unit.id,
+          nama_unit: unit.name
+        }));
+        
+        setUnitOptions(mappedUnits);
+      } catch (error) {
+        console.error('Error loading work units:', error);
+      }
+    };
+
+    loadWorkUnits();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

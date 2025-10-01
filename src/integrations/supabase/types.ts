@@ -711,6 +711,36 @@ export type Database = {
         }
         Relationships: []
       }
+      work_units: {
+        Row: {
+          category: string
+          code: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          code?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          code?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       workflows: {
         Row: {
           actor_id: string
@@ -754,6 +784,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_edit_employee_unit: {
+        Args: { employee_unit: string }
+        Returns: boolean
+      }
       generate_nomor_usulan: {
         Args: Record<PropertyKey, never>
         Returns: string

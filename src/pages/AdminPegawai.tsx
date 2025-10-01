@@ -14,7 +14,9 @@ import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
-  Upload
+  Upload,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
@@ -95,6 +97,13 @@ export default function AdminPegawai() {
     units: 0
   });
 
+  // Helper function to check if user can edit an employee
+  const canEditEmployee = (employee: Employee): boolean => {
+    if (user?.role === 'admin_pusat') return true;
+    if (user?.role === 'admin_unit' && user?.unit === employee.unit) return true;
+    return false;
+  };
+
   useEffect(() => {
     loadEmployees();
   }, [searchTerm, unitFilter, pangkatFilter, statusFilter, currentPage]);
@@ -103,7 +112,7 @@ export default function AdminPegawai() {
     try {
       setLoading(true);
       
-      // Build base query
+      // Build base query - ALL authenticated users can now view ALL employees
       let baseQuery = supabase
         .from('employees')
         .select(`
@@ -114,10 +123,7 @@ export default function AdminPegawai() {
           created_at, updated_at
         `);
 
-      // For admin_unit, filter by their unit only
-      if (user?.role === 'admin_unit' && user?.unit) {
-        baseQuery = baseQuery.eq('unit', user.unit);
-      }
+      // No unit filter for viewing - all users can see all employees
 
       // Apply filters
       if (searchTerm) {
@@ -141,10 +147,7 @@ export default function AdminPegawai() {
         .from('employees')
         .select('*', { count: 'exact', head: true });
       
-      // Apply same unit filter for admin_unit
-      if (user?.role === 'admin_unit' && user?.unit) {
-        countQuery = countQuery.eq('unit', user.unit);
-      }
+      // No unit filter - all users can see all employees
       
       // Apply same filters as main query
       if (searchTerm) {
@@ -215,23 +218,26 @@ export default function AdminPegawai() {
 
   const loadStats = async () => {
     try {
-      // Get total count
+      // Get total count - all employees for transparency
       let totalQuery = supabase
         .from('employees')
         .select('*', { count: 'exact', head: true });
-      if (user?.role === 'admin_unit' && user?.unit) {
-        totalQuery = totalQuery.eq('unit', user.unit);
-      }
       const { count: totalCount } = await totalQuery;
+
+      // Get editable count for admin_unit
+      let editableQuery = supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true });
+      if (user?.role === 'admin_unit' && user?.unit) {
+        editableQuery = editableQuery.eq('unit', user.unit);
+      }
+      const { count: editableCount } = await editableQuery;
 
       // Get active count
       let activeQuery = supabase
         .from('employees')
         .select('*', { count: 'exact', head: true })
         .not('kriteria_asn', 'is', null);
-      if (user?.role === 'admin_unit' && user?.unit) {
-        activeQuery = activeQuery.eq('unit', user.unit);
-      }
       const { count: activeCount } = await activeQuery;
 
       // Get approaching retirement count
@@ -243,9 +249,6 @@ export default function AdminPegawai() {
         .not('tmt_pensiun', 'is', null)
         .lte('tmt_pensiun', twoYearsFromNow.toISOString().split('T')[0])
         .gt('tmt_pensiun', today.toISOString().split('T')[0]);
-      if (user?.role === 'admin_unit' && user?.unit) {
-        retirementQuery = retirementQuery.eq('unit', user.unit);
-      }
       const { count: retirementCount } = await retirementQuery;
 
       // Get unique units count
@@ -253,9 +256,6 @@ export default function AdminPegawai() {
         .from('employees')
         .select('unit')
         .not('unit', 'is', null);
-      if (user?.role === 'admin_unit' && user?.unit) {
-        unitQuery = unitQuery.eq('unit', user.unit);
-      }
       const { data: unitData } = await unitQuery;
       
       const uniqueUnits = new Set(unitData?.map(emp => emp.unit)).size;
@@ -273,11 +273,24 @@ export default function AdminPegawai() {
   };
 
   const handleEdit = (employee: Employee) => {
+    // Check if user can edit this employee
+    if (!canEditEmployee(employee)) {
+      setError(`Anda hanya dapat mengedit data pegawai dari unit ${user?.unit}`);
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
     setEditingEmployee(employee);
     setShowForm(true);
   };
 
   const handleDelete = async (employee: Employee) => {
+    // Check if user can delete this employee
+    if (!canEditEmployee(employee)) {
+      setError(`Anda hanya dapat menghapus data pegawai dari unit ${user?.unit}`);
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
     if (!confirm(`Apakah Anda yakin ingin menghapus data pegawai ${employee.nama}?`)) {
       return;
     }
@@ -378,6 +391,18 @@ export default function AdminPegawai() {
             <p className="text-gray-600 mt-2">
               Kelola data master pegawai dan informasi kepegawaian
             </p>
+            {user?.role === 'admin_unit' && (
+              <div className="mt-2 flex items-center gap-2">
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  <Unlock className="w-3 h-3 mr-1" />
+                  Dapat mengedit: Unit {user?.unit}
+                </Badge>
+                <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                  <Lock className="w-3 h-3 mr-1" />
+                  Dapat melihat: Semua unit
+                </Badge>
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <Button onClick={() => setShowExcelUpload(true)} variant="outline">
@@ -493,42 +518,67 @@ export default function AdminPegawai() {
                   <TableHead>Pangkat</TableHead>
                   <TableHead>Kriteria ASN</TableHead>
                   <TableHead>TMT Pensiun</TableHead>
+                  {user?.role === 'admin_unit' && <TableHead>Akses</TableHead>}
                   <TableHead>Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {employees.map((employee) => (
-                  <TableRow key={employee.id}>
-                    <TableCell className="font-medium">{employee.nama}</TableCell>
-                    <TableCell>{employee.nip || '-'}</TableCell>
-                    <TableCell>{employee.nik || '-'}</TableCell>
-                    <TableCell>{employee.unit || '-'}</TableCell>
-                    <TableCell>{employee.jabatan || '-'}</TableCell>
-                    <TableCell>{employee.pangkat || '-'}</TableCell>
-                    <TableCell>{getStatusBadge(employee)}</TableCell>
-                    <TableCell>
-                      {employee.tmt_pensiun ? new Date(employee.tmt_pensiun).toLocaleDateString('id-ID') : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleEdit(employee)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleDelete(employee)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {employees.map((employee) => {
+                  const canEdit = canEditEmployee(employee);
+                  return (
+                    <TableRow key={employee.id}>
+                      <TableCell className="font-medium">{employee.nama}</TableCell>
+                      <TableCell>{employee.nip || '-'}</TableCell>
+                      <TableCell>{employee.nik || '-'}</TableCell>
+                      <TableCell>{employee.unit || '-'}</TableCell>
+                      <TableCell>{employee.jabatan || '-'}</TableCell>
+                      <TableCell>{employee.pangkat || '-'}</TableCell>
+                      <TableCell>{getStatusBadge(employee)}</TableCell>
+                      <TableCell>
+                        {employee.tmt_pensiun ? new Date(employee.tmt_pensiun).toLocaleDateString('id-ID') : '-'}
+                      </TableCell>
+                      {user?.role === 'admin_unit' && (
+                        <TableCell>
+                          {canEdit ? (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                              <Unlock className="w-3 h-3 mr-1" />
+                              Dapat Diedit
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 text-xs">
+                              <Lock className="w-3 h-3 mr-1" />
+                              Hanya Lihat
+                            </Badge>
+                          )}
+                        </TableCell>
+                      )}
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleEdit(employee)}
+                            disabled={!canEdit}
+                            className={!canEdit ? 'opacity-50 cursor-not-allowed' : ''}
+                            title={!canEdit ? 'Anda hanya dapat mengedit data dari unit Anda' : 'Edit data pegawai'}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleDelete(employee)}
+                            disabled={!canEdit}
+                            className={!canEdit ? 'opacity-50 cursor-not-allowed' : ''}
+                            title={!canEdit ? 'Anda hanya dapat menghapus data dari unit Anda' : 'Hapus data pegawai'}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
