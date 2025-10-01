@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import Apps from "./pages/Apps";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import ChatDashboard from "./pages/ChatDashboard";
 
 // Application pages
 import PengajuanMutasi from "./pages/apps/PengajuanMutasi";
@@ -180,6 +181,15 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <StatusUsulan />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+
+            {/* Chat Dashboard - Admin Pusat only */}
+            <Route path="/chat-dashboard" element={
+              <ProtectedRoute requiredRole="admin_pusat">
+                <DashboardLayout>
+                  <ChatDashboard />
                 </DashboardLayout>
               </ProtectedRoute>
             } />

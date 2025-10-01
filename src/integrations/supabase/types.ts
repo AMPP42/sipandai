@@ -269,40 +269,67 @@ export type Database = {
       }
       chat_sessions: {
         Row: {
+          archived_at: string | null
+          assigned_at: string | null
           created_at: string
           ended_at: string | null
           feedback: string | null
           id: string
+          is_archived: boolean | null
+          metadata: Json | null
           officer_id: string | null
+          priority: string | null
+          queue_position: number | null
           rating: number | null
+          session_duration_seconds: number | null
           started_at: string
           status: string
+          topic: string | null
           updated_at: string
           user_id: string
+          wait_time_seconds: number | null
         }
         Insert: {
+          archived_at?: string | null
+          assigned_at?: string | null
           created_at?: string
           ended_at?: string | null
           feedback?: string | null
           id?: string
+          is_archived?: boolean | null
+          metadata?: Json | null
           officer_id?: string | null
+          priority?: string | null
+          queue_position?: number | null
           rating?: number | null
+          session_duration_seconds?: number | null
           started_at?: string
           status?: string
+          topic?: string | null
           updated_at?: string
           user_id: string
+          wait_time_seconds?: number | null
         }
         Update: {
+          archived_at?: string | null
+          assigned_at?: string | null
           created_at?: string
           ended_at?: string | null
           feedback?: string | null
           id?: string
+          is_archived?: boolean | null
+          metadata?: Json | null
           officer_id?: string | null
+          priority?: string | null
+          queue_position?: number | null
           rating?: number | null
+          session_duration_seconds?: number | null
           started_at?: string
           status?: string
+          topic?: string | null
           updated_at?: string
           user_id?: string
+          wait_time_seconds?: number | null
         }
         Relationships: []
       }
@@ -729,56 +756,180 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          app_enabled: boolean | null
+          created_at: string | null
+          email_enabled: boolean | null
+          id: string
+          notification_type: string
+          sms_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          app_enabled?: boolean | null
+          created_at?: string | null
+          email_enabled?: boolean | null
+          id?: string
+          notification_type: string
+          sms_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          app_enabled?: boolean | null
+          created_at?: string | null
+          email_enabled?: boolean | null
+          id?: string
+          notification_type?: string
+          sms_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
+          action_label: string | null
+          action_url: string | null
           body: string | null
+          channels: Json | null
           created_at: string
+          email_sent: boolean | null
+          email_sent_at: string | null
+          expires_at: string | null
           id: string
+          metadata: Json | null
+          notification_type: string | null
+          priority: string | null
           read_at: string | null
           recipient_id: string
+          sms_sent: boolean | null
+          sms_sent_at: string | null
           title: string
         }
         Insert: {
+          action_label?: string | null
+          action_url?: string | null
           body?: string | null
+          channels?: Json | null
           created_at?: string
+          email_sent?: boolean | null
+          email_sent_at?: string | null
+          expires_at?: string | null
           id?: string
+          metadata?: Json | null
+          notification_type?: string | null
+          priority?: string | null
           read_at?: string | null
           recipient_id: string
+          sms_sent?: boolean | null
+          sms_sent_at?: string | null
           title: string
         }
         Update: {
+          action_label?: string | null
+          action_url?: string | null
           body?: string | null
+          channels?: Json | null
           created_at?: string
+          email_sent?: boolean | null
+          email_sent_at?: string | null
+          expires_at?: string | null
           id?: string
+          metadata?: Json | null
+          notification_type?: string | null
+          priority?: string | null
           read_at?: string | null
           recipient_id?: string
+          sms_sent?: boolean | null
+          sms_sent_at?: string | null
           title?: string
         }
         Relationships: []
       }
+      officer_skills: {
+        Row: {
+          created_at: string | null
+          id: string
+          officer_id: string
+          proficiency_level: string | null
+          skill_category: string
+          skill_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          officer_id: string
+          proficiency_level?: string | null
+          skill_category: string
+          skill_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          officer_id?: string
+          proficiency_level?: string | null
+          skill_category?: string
+          skill_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "officer_skills_officer_id_fkey"
+            columns: ["officer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       officer_status: {
         Row: {
+          average_rating: number | null
           created_at: string
+          current_active_chats: number | null
           id: string
+          is_available: boolean | null
           last_seen: string
+          max_concurrent_chats: number | null
           officer_id: string
           status: string
+          total_chats_handled: number | null
           updated_at: string
         }
         Insert: {
+          average_rating?: number | null
           created_at?: string
+          current_active_chats?: number | null
           id?: string
+          is_available?: boolean | null
           last_seen?: string
+          max_concurrent_chats?: number | null
           officer_id: string
           status?: string
+          total_chats_handled?: number | null
           updated_at?: string
         }
         Update: {
+          average_rating?: number | null
           created_at?: string
+          current_active_chats?: number | null
           id?: string
+          is_available?: boolean | null
           last_seen?: string
+          max_concurrent_chats?: number | null
           officer_id?: string
           status?: string
+          total_chats_handled?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -1013,6 +1164,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      archive_old_chat_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      assign_chat_to_officer: {
+        Args: { session_id: string }
+        Returns: string
+      }
       can_edit_employee_unit: {
         Args: { employee_unit: string }
         Returns: boolean
@@ -1020,6 +1179,22 @@ export type Database = {
       cleanup_old_notifications: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      complete_chat_session: {
+        Args: { session_id: string }
+        Returns: undefined
+      }
+      create_notification: {
+        Args: {
+          p_action_label?: string
+          p_action_url?: string
+          p_body: string
+          p_priority?: string
+          p_recipient_id: string
+          p_title: string
+          p_type?: string
+        }
+        Returns: string
       }
       generate_nomor_usulan: {
         Args: Record<PropertyKey, never>
@@ -1043,6 +1218,10 @@ export type Database = {
       }
       recount_documents: {
         Args: { app_id: string }
+        Returns: undefined
+      }
+      update_chat_queue: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
     }
