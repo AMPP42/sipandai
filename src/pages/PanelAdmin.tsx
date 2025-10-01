@@ -3,7 +3,7 @@ import { useSearchParams, Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
-import { Database, CheckCircle, UserCheck, Users, BarChart3, MessageSquare, HelpCircle } from "lucide-react";
+import { Database, CheckCircle, UserCheck, Users, BarChart3, MessageSquare, HelpCircle, Calendar } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { getAccessibleAdminTabs, canAccessAdminTab } from '@/lib/permissions';
 
@@ -15,6 +15,7 @@ import AdminReports from "./AdminReports";
 import Verifikasi from "./Verifikasi";
 import AdminConsultations from "./AdminConsultations";
 import AdminFAQ from "./AdminFAQ";
+import AdminAppointments from "./AdminAppointments";
 
 export default function PanelAdmin() {
   const { user } = useAuth();
@@ -53,6 +54,7 @@ export default function PanelAdmin() {
       'statistik-laporan': BarChart3,
       'konsultasi-tiket': MessageSquare,
       'faq-management': HelpCircle,
+      'appointment-management': Calendar,
     };
     return icons[tabId] || Database;
   };
@@ -232,6 +234,23 @@ export default function PanelAdmin() {
               </CardHeader>
               <CardContent>
                 <AdminFAQ />
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === 'appointment-management' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  Kelola Appointment
+                </CardTitle>
+                <CardDescription>
+                  Kelola jadwal konsultasi tatap muka
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdminAppointments />
               </CardContent>
             </Card>
           )}

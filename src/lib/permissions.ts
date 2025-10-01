@@ -23,6 +23,7 @@ export const PERMISSIONS = {
   // Consultations and FAQ Management
   MANAGE_CONSULTATIONS: 'manage_consultations',
   MANAGE_FAQ: 'manage_faq',
+  MANAGE_APPOINTMENTS: 'manage_appointments',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -43,6 +44,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     PERMISSIONS.ACCESS_KONSULTASI_APP,
     PERMISSIONS.MANAGE_CONSULTATIONS,
     PERMISSIONS.MANAGE_FAQ,
+    PERMISSIONS.MANAGE_APPOINTMENTS,
   ],
   admin_unit: [
     PERMISSIONS.VIEW_DATABASE_PEGAWAI,
@@ -215,6 +217,12 @@ export const ADMIN_TABS: AdminTabDefinition[] = [
     id: 'faq-management',
     title: 'Kelola FAQ',
     requiredPermission: PERMISSIONS.MANAGE_FAQ,
+    availableForRoles: ['admin_pusat'],
+  },
+  {
+    id: 'appointment-management',
+    title: 'Kelola Appointment',
+    requiredPermission: PERMISSIONS.MANAGE_APPOINTMENTS,
     availableForRoles: ['admin_pusat'],
   },
 ];

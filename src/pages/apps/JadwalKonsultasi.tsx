@@ -14,6 +14,7 @@ import { id } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { EmployeeSelector } from "@/components/appointment/EmployeeSelector";
 
 interface AppointmentForm {
   nama_lengkap: string;
@@ -226,60 +227,63 @@ export default function JadwalKonsultasi() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nama_lengkap">Nama Lengkap *</Label>
-                    <Input
-                      id="nama_lengkap"
-                      value={formData.nama_lengkap}
-                      onChange={(e) => setFormData({...formData, nama_lengkap: e.target.value})}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="nip">NIP *</Label>
-                    <Input
-                      id="nip"
-                      value={formData.nip}
-                      onChange={(e) => setFormData({...formData, nip: e.target.value})}
-                      required
-                    />
-                  </div>
-                </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="unit_kerja">Unit Kerja *</Label>
-                  <Input
-                    id="unit_kerja"
-                    value={formData.unit_kerja}
-                    onChange={(e) => setFormData({...formData, unit_kerja: e.target.value})}
-                    required
+                  <Label>Pilih Pegawai *</Label>
+                  <EmployeeSelector
+                    value={formData.nip}
+                    onSelect={(employee) => {
+                      if (employee) {
+                        setFormData({
+                          ...formData,
+                          nama_lengkap: employee.nama,
+                          nip: employee.nip,
+                          unit_kerja: employee.unit || '',
+                          email: employee.email || '',
+                          nomor_hp: employee.handphone || ''
+                        });
+                      } else {
+                        setFormData({
+                          ...formData,
+                          nama_lengkap: '',
+                          nip: '',
+                          unit_kerja: '',
+                          email: '',
+                          nomor_hp: ''
+                        });
+                      }
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Pilih pegawai dari database untuk mengisi data otomatis
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      required
-                    />
+                {formData.nip && (
+                  <div className="p-4 bg-muted rounded-lg space-y-2">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Nama:</span>
+                        <p className="font-medium">{formData.nama_lengkap}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">NIP:</span>
+                        <p className="font-medium">{formData.nip}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Unit:</span>
+                        <p className="font-medium">{formData.unit_kerja}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Email:</span>
+                        <p className="font-medium">{formData.email}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">No. HP:</span>
+                        <p className="font-medium">{formData.nomor_hp}</p>
+                      </div>
+                    </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="nomor_hp">Nomor HP *</Label>
-                    <Input
-                      id="nomor_hp"
-                      value={formData.nomor_hp}
-                      onChange={(e) => setFormData({...formData, nomor_hp: e.target.value})}
-                      required
-                    />
-                  </div>
-                </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
