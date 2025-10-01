@@ -70,26 +70,35 @@ export default function PanelAdmin() {
 
         {/* Admin Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className={`grid w-full grid-cols-${accessibleTabs.length}`}>
-            {accessibleTabs.map((tab) => {
-              const Icon = getTabIcon(tab.id);
-              return (
-                <TabsTrigger 
-                  key={tab.id} 
-                  value={tab.id} 
-                  className="flex items-center gap-2"
-                >
-                  <Icon className="w-4 h-4" />
-                  {tab.title}
-                  {tab.id === 'database-pegawai' && user?.role === 'admin_unit' && user?.unit && (
-                    <Badge variant="secondary" className="ml-2 text-xs">
-                      {user.unit}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+          <div className="bg-muted/50 p-1 rounded-lg">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+              {accessibleTabs.map((tab) => {
+                const Icon = getTabIcon(tab.id);
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`
+                      flex items-center justify-center gap-2 px-4 py-3 rounded-md
+                      text-sm font-medium transition-all
+                      ${activeTab === tab.id 
+                        ? 'bg-background text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                      }
+                    `}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span className="hidden sm:inline">{tab.title}</span>
+                    {tab.id === 'database-pegawai' && user?.role === 'admin_unit' && user?.unit && (
+                      <Badge variant="secondary" className="ml-1 text-xs hidden lg:inline-flex">
+                        {user.unit}
+                      </Badge>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Tab Contents */}
           <TabsContent value="database-pegawai" className="space-y-4">
