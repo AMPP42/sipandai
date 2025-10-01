@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { MessageSquare, User, Calendar, CheckCircle, Clock, XCircle, Search, Filter } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
+import { AdminChatView } from '@/components/chat/AdminChatView';
 
 interface ConsultationTicket {
   id: string;
@@ -42,6 +43,7 @@ export default function AdminConsultations() {
   const [selectedTicket, setSelectedTicket] = useState<ConsultationTicket | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
+  const [chatTicket, setChatTicket] = useState<ConsultationTicket | null>(null);
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -451,6 +453,16 @@ export default function AdminConsultations() {
                             Tugaskan
                           </Button>
                         )}
+                        {(ticket.status === 'in_progress' || ticket.status === 'resolved') && (
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => setChatTicket(ticket)}
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Lihat Chat
+                          </Button>
+                        )}
                         {ticket.status !== 'closed' && ticket.status !== 'resolved' && (
                           <Button
                             size="sm"
@@ -469,6 +481,21 @@ export default function AdminConsultations() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Chat View Dialog */}
+      <Dialog open={!!chatTicket} onOpenChange={(open) => !open && setChatTicket(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          {chatTicket && (
+            <AdminChatView
+              ticketId={chatTicket.id}
+              ticketNumber={chatTicket.nomor_ticket}
+              ticketTitle={chatTicket.judul}
+              userName={chatTicket.user_name}
+              onClose={() => setChatTicket(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Assign Officer Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
