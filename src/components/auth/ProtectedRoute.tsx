@@ -1,13 +1,22 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
+import { hasPermission, hasAnyPermission, Permission } from '@/lib/permissions';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'admin_pusat' | 'admin_unit';
+  requiredRole?: 'admin_pusat' | 'admin_unit' | ('admin_pusat' | 'admin_unit')[];
+  requiredPermission?: Permission;
+  requireAnyPermission?: Permission[];
+  fallbackPath?: string;
 }
 
-export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export default function ProtectedRoute({ 
+  children, 
+  requiredRole, 
+  requiredPermission,
+  requireAnyPermission,
+  fallbackPath = '/dashboard'
+}: ProtectedRouteProps) {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -25,8 +34,22 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     return <Navigate to="/auth" replace />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to="/dashboard" replace />;
+  // Check role-based access
+  if (requiredRole) {
+    const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    if (!allowedRoles.includes(user.role as any)) {
+      return <Navigate to={fallbackPath} replace />;
+    }
+  }
+
+  // Check permission-based access
+  if (requiredPermission && !hasPermission(user, requiredPermission)) {
+    return <Navigate to={fallbackPath} replace />;
+  }
+
+  // Check if user has any of the required permissions
+  if (requireAnyPermission && !hasAnyPermission(user, requireAnyPermission)) {
+    return <Navigate to={fallbackPath} replace />;
   }
 
   return <>{children}</>;

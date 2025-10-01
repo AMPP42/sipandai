@@ -150,9 +150,9 @@ const App = () => (
               </ProtectedRoute>
             } />
 
-            {/* Main Admin Panel route */}
+            {/* Main Admin Panel route - accessible by both admin_pusat and admin_unit */}
             <Route path="/panel-admin" element={
-              <ProtectedRoute requiredRole="admin_pusat">
+              <ProtectedRoute requiredRole={['admin_pusat', 'admin_unit']}>
                 <DashboardLayout>
                   <PanelAdmin />
                 </DashboardLayout>
