@@ -484,7 +484,11 @@ export default function AdminConsultations() {
 
       {/* Chat View Dialog */}
       <Dialog open={!!chatTicket} onOpenChange={(open) => !open && setChatTicket(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0" aria-describedby="chat-description">
+          <DialogTitle className="sr-only">Percakapan Live Chat</DialogTitle>
+          <DialogDescription id="chat-description" className="sr-only">
+            Lihat dan balas percakapan chat dengan user
+          </DialogDescription>
           {chatTicket && (
             <AdminChatView
               ticketId={chatTicket.id}

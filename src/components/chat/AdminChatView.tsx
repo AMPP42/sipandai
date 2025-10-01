@@ -74,10 +74,22 @@ export const AdminChatView: React.FC<AdminChatViewProps> = ({
   const loadChatSession = async () => {
     setIsLoading(true);
     try {
+      // First, get the user_id from the ticket
+      const { data: ticketData, error: ticketError } = await supabase
+        .from('consultation_tickets')
+        .select('user_id')
+        .eq('id', ticketId)
+        .single();
+
+      if (ticketError) throw ticketError;
+
+      // Find the most recent chat session from this user
+      // Can be linked to ticket or not
       const { data, error } = await supabase
         .from('chat_sessions')
         .select('*')
-        .eq('ticket_id', ticketId)
+        .eq('user_id', ticketData.user_id)
+        .in('status', ['waiting', 'active'])
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -85,10 +97,22 @@ export const AdminChatView: React.FC<AdminChatViewProps> = ({
       if (error) throw error;
 
       if (data) {
-        setSession({
+        const sessionData = {
           ...data,
           status: data.status as 'waiting' | 'active' | 'ended',
-        });
+        };
+        
+        // If session doesn't have ticket_id, link it to this ticket
+        if (!data.ticket_id) {
+          await supabase
+            .from('chat_sessions')
+            .update({ ticket_id: ticketId })
+            .eq('id', data.id);
+          
+          sessionData.ticket_id = ticketId;
+        }
+        
+        setSession(sessionData);
       }
     } catch (error) {
       console.error('Error loading chat session:', error);
@@ -156,23 +180,23 @@ export const AdminChatView: React.FC<AdminChatViewProps> = ({
     setNewMessage('');
 
     try {
-      // Update session to active and assign officer if not assigned
-      if (session.status === 'waiting' || !session.officer_id) {
-        await supabase
-          .from('chat_sessions')
-          .update({
-            status: 'active',
-            officer_id: user.id,
-            assigned_at: new Date().toISOString(),
-          })
-          .eq('id', session.id);
-
-        setSession({
-          ...session,
+      // Update session to active and assign officer (always update when admin replies)
+      await supabase
+        .from('chat_sessions')
+        .update({
           status: 'active',
           officer_id: user.id,
-        });
-      }
+          assigned_at: new Date().toISOString(),
+          ticket_id: session.ticket_id || ticketId, // Ensure ticket_id is set
+        })
+        .eq('id', session.id);
+
+      setSession({
+        ...session,
+        status: 'active',
+        officer_id: user.id,
+        ticket_id: session.ticket_id || ticketId,
+      });
 
       await supabase.from('chat_messages').insert({
         session_id: session.id,
