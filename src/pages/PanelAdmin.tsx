@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Badge } from "@/components/ui/badge";
 import { Database, CheckCircle, UserCheck, Users, BarChart3, MessageSquare, HelpCircle } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
@@ -68,40 +68,40 @@ export default function PanelAdmin() {
           </p>
         </div>
 
-        {/* Admin Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <div className="bg-muted/50 p-1 rounded-lg">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-              {accessibleTabs.map((tab) => {
-                const Icon = getTabIcon(tab.id);
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`
-                      flex items-center justify-center gap-2 px-4 py-3 rounded-md
-                      text-sm font-medium transition-all
-                      ${activeTab === tab.id 
-                        ? 'bg-background text-foreground shadow-sm' 
-                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                      }
-                    `}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span className="hidden sm:inline">{tab.title}</span>
-                    {tab.id === 'database-pegawai' && user?.role === 'admin_unit' && user?.unit && (
-                      <Badge variant="secondary" className="ml-1 text-xs hidden lg:inline-flex">
-                        {user.unit}
-                      </Badge>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+        {/* Admin Tabs Navigation */}
+        <div className="bg-muted/50 p-1 rounded-lg">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            {accessibleTabs.map((tab) => {
+              const Icon = getTabIcon(tab.id);
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`
+                    flex items-center justify-center gap-2 px-4 py-3 rounded-md
+                    text-sm font-medium transition-all
+                    ${activeTab === tab.id 
+                      ? 'bg-background text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                    }
+                  `}
+                >
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span className="hidden sm:inline truncate">{tab.title}</span>
+                  {tab.id === 'database-pegawai' && user?.role === 'admin_unit' && user?.unit && activeTab === tab.id && (
+                    <Badge variant="secondary" className="ml-1 text-xs hidden lg:inline-flex">
+                      {user.unit}
+                    </Badge>
+                  )}
+                </button>
+              );
+            })}
           </div>
+        </div>
 
-          {/* Tab Contents */}
-          <TabsContent value="database-pegawai" className="space-y-4">
+        {/* Tab Contents */}
+        <div className="space-y-4">
+          {activeTab === 'database-pegawai' && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -124,9 +124,9 @@ export default function PanelAdmin() {
                 <AdminPegawai />
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          <TabsContent value="verifikasi-usulan" className="space-y-4">
+          {activeTab === 'verifikasi-usulan' && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -149,9 +149,9 @@ export default function PanelAdmin() {
                 <Verifikasi />
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          <TabsContent value="formasi-jabatan" className="space-y-4">
+          {activeTab === 'formasi-jabatan' && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -166,9 +166,9 @@ export default function PanelAdmin() {
                 <AdminFormasi />
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          <TabsContent value="user-management" className="space-y-4">
+          {activeTab === 'user-management' && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -183,9 +183,9 @@ export default function PanelAdmin() {
                 <AdminUsers />
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          <TabsContent value="statistik-laporan" className="space-y-4">
+          {activeTab === 'statistik-laporan' && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -200,9 +200,9 @@ export default function PanelAdmin() {
                 <AdminReports />
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          <TabsContent value="konsultasi-tiket" className="space-y-4">
+          {activeTab === 'konsultasi-tiket' && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -217,9 +217,9 @@ export default function PanelAdmin() {
                 <AdminConsultations />
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          <TabsContent value="faq-management" className="space-y-4">
+          {activeTab === 'faq-management' && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -234,8 +234,8 @@ export default function PanelAdmin() {
                 <AdminFAQ />
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
     </div>
   );
