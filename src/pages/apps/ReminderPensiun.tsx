@@ -13,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation, useNavigate } from 'react-router-dom';
 import DocumentVerificationStatus from "@/components/applications/DocumentVerificationStatus";
+import RevisionSubmissionModal from "@/components/verifikasi/RevisionSubmissionModal";
+import type { Database } from '@/integrations/supabase/types';
 import { 
   Calendar, 
   Clock, 
@@ -115,6 +117,9 @@ export default function ReminderPensiun() {
     sms: true,
     whatsapp: true
   });
+  const [rawApplications, setRawApplications] = useState<Database['public']['Tables']['applications']['Row'][]>([]);
+  const [selectedApplicationForResubmit, setSelectedApplicationForResubmit] = useState<Database['public']['Tables']['applications']['Row'] | null>(null);
+  const [isResubmitModalOpen, setIsResubmitModalOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const location = useLocation();
@@ -211,6 +216,9 @@ export default function ReminderPensiun() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Store raw data for revision modal
+      setRawApplications(apps || []);
 
       const transformedApps: RetirementApplication[] = (apps || []).map(app => ({
         id: app.id,
@@ -1633,17 +1641,34 @@ export default function ReminderPensiun() {
                               <p className="text-xs text-orange-700 mb-3">
                                 Pengajuan Anda perlu diperbaiki sesuai catatan dari Admin Pusat. Silakan edit dan ajukan ulang.
                               </p>
-                              <Button 
-                                onClick={() => {
-                                  // Navigate to edit mode
-                                  navigate(`/apps/reminder-pensiun?edit=${app.id}`);
-                                }}
-                                size="sm"
-                                className="bg-orange-600 hover:bg-orange-700 text-white"
-                              >
-                                <FileText className="w-3 h-3 mr-1" />
-                                Edit & Ajukan Ulang
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button 
+                                  onClick={() => {
+                                    // Navigate to edit mode
+                                    navigate(`/apps/reminder-pensiun?edit=${app.id}`);
+                                  }}
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-orange-600 text-orange-700 hover:bg-orange-50"
+                                >
+                                  <FileText className="w-3 h-3 mr-1" />
+                                  Edit Dokumen
+                                </Button>
+                                <Button 
+                                  onClick={() => {
+                                    const rawApp = rawApplications.find(a => a.id === app.id);
+                                    if (rawApp) {
+                                      setSelectedApplicationForResubmit(rawApp);
+                                      setIsResubmitModalOpen(true);
+                                    }
+                                  }}
+                                  size="sm"
+                                  className="bg-orange-600 hover:bg-orange-700 text-white"
+                                >
+                                  <Send className="w-3 h-3 mr-1" />
+                                  Kirim Ulang Perbaikan
+                                </Button>
+                              </div>
                             </div>
                           )}
 
@@ -1978,6 +2003,24 @@ export default function ReminderPensiun() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Revision Submission Modal */}
+      {selectedApplicationForResubmit && (
+        <RevisionSubmissionModal
+          open={isResubmitModalOpen}
+          onOpenChange={setIsResubmitModalOpen}
+          application={selectedApplicationForResubmit}
+          onRevisionSubmitted={() => {
+            setIsResubmitModalOpen(false);
+            setSelectedApplicationForResubmit(null);
+            fetchApplications();
+            toast({
+              title: "Berhasil",
+              description: "Perbaikan telah dikirim ulang untuk diverifikasi"
+            });
+          }}
+        />
+      )}
     </div>
   );
 }
