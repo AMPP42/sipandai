@@ -52,55 +52,6 @@ interface Position {
 }
 
 
-const WORK_UNITS = [
-  'Sekretariat Direktorat Jenderal Pembinaan Pelatihan Vokasi dan Produktivitas',
-  'Direktorat Bina Standarisasi Kompetensi dan Program Pelatihan',
-  'Direktorat Bina Instruktur dan Tenaga Pelatihan',
-  'Direktorat Bina Kelembagaan Pelatihan Vokasi',
-  'Direktorat Bina Penyelenggaraan Pelatihan Vokasi dan Pemagangan',
-  'Direktorat Bina Peningkatan Produktivitas',
-  'Sekretariat Badan Nasional Sertifikasi Profesi',
-  'Balai Besar Pelatihan Vokasi dan Produktivitas Bandung',
-  'Balai Besar Pelatihan Vokasi dan Produktivitas Bekasi',
-  'Balai Besar Pelatihan Vokasi dan Produktivitas Serang',
-  'Balai Besar Pelatihan Vokasi dan Produktivitas Medan',
-  'Balai Besar Pelatihan Vokasi dan Produktivitas Semarang',
-  'Balai Besar Pelatihan Vokasi dan Produktivitas Makassar',
-  'Balai Pelatihan Vokasi dan Produktivitas Surakarta',
-  'Balai Pelatihan Vokasi dan Produktivitas Banda Aceh',
-  'Balai Pelatihan Vokasi dan Produktivitas Samarinda',
-  'Balai Pelatihan Vokasi dan Produktivitas Sorong',
-  'Balai Pelatihan Vokasi dan Produktivitas Ternate',
-  'Balai Pelatihan Vokasi dan Produktivitas Kendari',
-  'Balai Pelatihan Vokasi dan Produktivitas Padang',
-  'Balai Pelatihan Vokasi dan Produktivitas Ambon',
-  'Balai Pelatihan Vokasi dan Produktivitas Bandung Barat',
-  'Balai Pelatihan Vokasi dan Produktivitas Lombok Timur',
-  'Balai Pelatihan Vokasi dan Produktivitas Bantaeng',
-  'Balai Pelatihan Vokasi dan Produktivitas Sidoarjo',
-  'Balai Pelatihan Vokasi dan Produktivitas Pangkajene Kepulauan',
-  'Balai Pelatihan Vokasi dan Produktivitas Belitung'
-];
-
-const DOCUMENT_REQUIREMENTS = [
-  'Surat Pernyataan Lolos Butuh dari PPK Instansi Asal (Asli)',
-  'Surat Keterangan Tidak Sedang Menjalani Hukuman Disiplin (Asli)',
-  'Surat Keterangan Tidak Sedang Menjalani Tugas Belajar/Ikatan Dinas (Asli)',
-  'Surat Keterangan Tidak Mempunyai Hutang Piutang dengan Pihak Bank (Asli)',
-  'Surat Pernyataan Bebas Temuan yang Diterbitkan oleh ITJEN (Asli)',
-  'ANJAB dan ABK yang ditandatangani oleh PPK Instansi Asal (Bila Pindah Antar Kementerian)',
-  'SK CPNS (Fotokopi legalisir)',
-  'SK PNS (Fotokopi legalisir)',
-  'SK Pangkat Terakhir (Fotokopi legalisir)',
-  'SK Jabatan Terakhir (Fotokopi legalisir)',
-  'KARPEG (Fotokopi legalisir)',
-  'Ijazah dan Transkrip Nilai Universitas (Fotokopi legalisir)',
-  'SKP 2 tahun terakhir (Fotokopi legalisir)',
-  'Surat permohonan mutasi dari ybs',
-  'Daftar Riwayat Hidup (DRH) sesuai Keputusan Kepala BKN Nomor 11 Tahun 2002',
-  'Nota Dinas Usulan Mutasi yang telah ditandatangani'
-];
-
 export default function PengajuanMutasiTerpadu() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -119,12 +70,44 @@ export default function PengajuanMutasiTerpadu() {
   const [isEmployeeDialogOpen, setIsEmployeeDialogOpen] = useState(false);
   const [isPositionDialogOpen, setIsPositionDialogOpen] = useState(false);
   const [isUnitDialogOpen, setIsUnitDialogOpen] = useState(false);
+  const [workUnits, setWorkUnits] = useState<string[]>([]);
+  const [documentRequirements, setDocumentRequirements] = useState<string[]>([]);
 
   useEffect(() => {
+    loadReferenceData();
     loadEmployees();
     loadPositions();
-    loadApplications();
-  }, []);
+    if (activeTab === 'list') {
+      loadApplications();
+    }
+  }, [activeTab]);
+
+  const loadReferenceData = async () => {
+    try {
+      // Load work units
+      const { data: units, error: unitsError } = await supabase
+        .from('work_units')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (unitsError) throw unitsError;
+      setWorkUnits(units?.map(u => u.name) || []);
+
+      // Load document requirements
+      const { data: docs, error: docsError } = await supabase
+        .from('document_types')
+        .select('name')
+        .eq('is_active', true)
+        .eq('category', 'mutasi_terpadu')
+        .order('name');
+      
+      if (docsError) throw docsError;
+      setDocumentRequirements(docs?.map(d => d.name) || []);
+    } catch (error: any) {
+      console.error('Error loading reference data:', error);
+    }
+  };
 
   const loadEmployees = async () => {
     try {
@@ -299,7 +282,7 @@ export default function PengajuanMutasiTerpadu() {
     emp.nip.includes(searchEmployee)
   );
 
-  const filteredUnits = WORK_UNITS.filter(unit => 
+  const filteredUnits = workUnits.filter(unit => 
     unit.toLowerCase().includes(searchUnit.toLowerCase())
   );
 
@@ -606,7 +589,7 @@ export default function PengajuanMutasiTerpadu() {
                       Dokumen yang perlu disiapkan (akan diupload pada tahap selanjutnya):
                     </p>
                     <div className="grid grid-cols-1 gap-2">
-                      {DOCUMENT_REQUIREMENTS.map((doc, index) => (
+                      {documentRequirements.map((doc, index) => (
                         <div key={index} className="flex items-start gap-2 text-sm">
                           <span className="font-medium text-primary min-w-6">
                             {index + 1}.

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,31 +30,43 @@ const initialFormData: FormData = {
   alasan_mutasi: ''
 };
 
-const jenisMutasiOptions = [
-  { value: 'promosi', label: 'Promosi' },
-  { value: 'rotasi', label: 'Rotasi' },
-  { value: 'demosi', label: 'Demosi' },
-  { value: 'pindah_unit', label: 'Pindah Unit' }
-];
-
-const unitKerjaOptions = [
-  'BKPSDM',
-  'Dinas Pendidikan',
-  'Dinas Kesehatan',
-  'Dinas Perhubungan',
-  'Dinas Sosial',
-  'Dinas Pertanian',
-  'Dinas Perindustrian',
-  'Bagian Umum',
-  'Bagian Keuangan',
-  'Bagian Hukum'
-];
-
 export default function BuatUsulanMutasi() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [loading, setLoading] = useState(false);
+  const [jenisMutasiOptions, setJenisMutasiOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [unitKerjaOptions, setUnitKerjaOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    loadReferenceData();
+  }, []);
+
+  const loadReferenceData = async () => {
+    try {
+      // Load mutation types
+      const { data: mutationTypes, error: mtError } = await supabase
+        .from('mutation_types')
+        .select('code, name')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (mtError) throw mtError;
+      setJenisMutasiOptions(mutationTypes?.map(mt => ({ value: mt.code, label: mt.name })) || []);
+
+      // Load work units
+      const { data: units, error: unitsError } = await supabase
+        .from('work_units')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (unitsError) throw unitsError;
+      setUnitKerjaOptions(units?.map(u => u.name) || []);
+    } catch (error: any) {
+      console.error('Error loading reference data:', error);
+    }
+  };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

@@ -51,18 +51,12 @@ const timeSlots = [
   "15:00", "15:30", "16:00"
 ];
 
-const jenisKonsultasi = [
-  { value: "mutasi", label: "Mutasi" },
-  { value: "kenaikan_pangkat", label: "Kenaikan Pangkat" },
-  { value: "pensiun", label: "Pensiun" },
-  { value: "lainnya", label: "Lainnya" }
-];
-
 export default function JadwalKonsultasi() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [jenisKonsultasi, setJenisKonsultasi] = useState<Array<{ value: string; label: string }>>([]);
   const [formData, setFormData] = useState<AppointmentForm>({
     nama_lengkap: "",
     nip: "",
@@ -76,8 +70,25 @@ export default function JadwalKonsultasi() {
   });
 
   useEffect(() => {
+    loadReferenceData();
     fetchAppointments();
   }, []);
+
+  const loadReferenceData = async () => {
+    try {
+      // Load consultation types
+      const { data: types, error } = await supabase
+        .from('consultation_types')
+        .select('code, name')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      setJenisKonsultasi(types?.map(t => ({ value: t.code, label: t.name })) || []);
+    } catch (error: any) {
+      console.error('Error loading consultation types:', error);
+    }
+  };
 
   const fetchAppointments = async () => {
     try {

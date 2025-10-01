@@ -74,20 +74,9 @@ export default function AdminPegawai() {
   const [pangkatFilter, setPangkatFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   
-  // Reference data - using static data for now
-  const [unitOptions] = useState([
-    { id: '1', nama_unit: 'BKPSDM' },
-    { id: '2', nama_unit: 'Dinas Pendidikan' },
-    { id: '3', nama_unit: 'Dinas Kesehatan' },
-    { id: '4', nama_unit: 'Dinas Perhubungan' },
-  ]);
-  const [pangkatOptions] = useState([
-    { id: '1', kode: 'I/a', nama_pangkat: 'Juru Muda' },
-    { id: '2', kode: 'I/b', nama_pangkat: 'Juru Muda Tingkat I' },
-    { id: '3', kode: 'II/a', nama_pangkat: 'Pengatur Muda' },
-    { id: '4', kode: 'III/a', nama_pangkat: 'Penata Muda' },
-    { id: '5', kode: 'IV/a', nama_pangkat: 'Pembina' },
-  ]);
+  // Reference data - loaded dynamically from database
+  const [unitOptions, setUnitOptions] = useState<Array<{ id: string; nama_unit: string }>>([]);
+  const [pangkatOptions, setPangkatOptions] = useState<Array<{ id: string; kode: string; nama_pangkat: string }>>([]);
   
   // Stats
   const [stats, setStats] = useState({
@@ -105,8 +94,37 @@ export default function AdminPegawai() {
   };
 
   useEffect(() => {
+    loadReferenceData();
     loadEmployees();
   }, [searchTerm, unitFilter, pangkatFilter, statusFilter, currentPage]);
+
+  const loadReferenceData = async () => {
+    try {
+      // Load work units
+      const { data: units, error: unitsError } = await supabase
+        .from('work_units')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (unitsError) throw unitsError;
+      
+      setUnitOptions(units?.map(u => ({ id: u.id, nama_unit: u.name })) || []);
+
+      // Load ranks/pangkat
+      const { data: ranks, error: ranksError } = await supabase
+        .from('ranks')
+        .select('id, code, name')
+        .eq('is_active', true)
+        .order('level');
+      
+      if (ranksError) throw ranksError;
+      
+      setPangkatOptions(ranks?.map(r => ({ id: r.id, kode: r.code, nama_pangkat: r.name })) || []);
+    } catch (error: any) {
+      console.error('Error loading reference data:', error);
+    }
+  };
 
   const loadEmployees = async () => {
     try {
