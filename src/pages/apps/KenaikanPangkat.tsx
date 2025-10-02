@@ -63,13 +63,21 @@ export default function KenaikanPangkat() {
 
   const loadEmployees = async () => {
     try {
-      const { data, error } = await supabase
+      // Build query with unit filter for admin_unit
+      let query = supabase
         .from('employees')
-        .select('*')
-        .order('nama');
+        .select('*');
+      
+      // Filter by user's unit if user is admin_unit
+      if (user?.role === 'admin_unit' && user?.unit) {
+        query = query.eq('unit', user.unit);
+      }
+      
+      const { data, error } = await query.order('nama');
 
       if (error) throw error;
       setEmployees(data || []);
+      console.log('Loaded employees:', data?.length, 'for unit:', user?.unit);
     } catch (error: any) {
       console.error('Error loading employees:', error);
       toast({
@@ -262,9 +270,14 @@ export default function KenaikanPangkat() {
   };
   const getDocumentRequirements = (kategori: string) => {
     // Filter document requirements by category
+    // Support both formats: "kenaikan_pangkat_reguler" and "reguler"
     const filtered = documentRequirements.filter(doc => 
-      doc.category === `kenaikan_pangkat_${kategori}`
+      doc.category === `kenaikan_pangkat_${kategori}` || 
+      doc.category === kategori ||
+      doc.category?.includes(kategori)
     );
+    
+    console.log('Document requirements for', kategori, ':', filtered);
     
     return filtered.map(doc => ({
       nama: doc.name,
@@ -634,11 +647,14 @@ export default function KenaikanPangkat() {
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {pangkatData.filter(pegawai => pegawai.nama.toLowerCase().includes(searchEmployee.toLowerCase()) || pegawai.nip.includes(searchEmployee)).map(pegawai => <TableRow key={pegawai.id}>
+                                 {pangkatData.filter(pegawai => pegawai.nama.toLowerCase().includes(searchEmployee.toLowerCase()) || pegawai.nip.includes(searchEmployee)).map(pegawai => {
+                                   // Find the actual employee data to get unit and jabatan
+                                   const employeeData = employees.find(e => e.id === pegawai.id);
+                                   return <TableRow key={pegawai.id}>
                                     <TableCell className="font-medium">{pegawai.nama}</TableCell>
                                     <TableCell>{pegawai.nip}</TableCell>
-                                    <TableCell>Balai Besar Pelatihan Vokasi dan Produktivitas Bandung</TableCell>
-                                    <TableCell>Pengadministrasi Perkantoran</TableCell>
+                                    <TableCell>{employeeData?.unit || '-'}</TableCell>
+                                    <TableCell>{employeeData?.jabatan || '-'}</TableCell>
                                     <TableCell>
                                       <Button size="sm" onClick={() => {
                                   setSelectedPegawai(pegawai.id);
@@ -647,7 +663,8 @@ export default function KenaikanPangkat() {
                                         Pilih
                                       </Button>
                                     </TableCell>
-                                  </TableRow>)}
+                                  </TableRow>
+                                 })}
                               </TableBody>
                             </Table>
                           </div>
