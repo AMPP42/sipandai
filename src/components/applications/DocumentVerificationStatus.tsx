@@ -20,9 +20,10 @@ interface DocumentVerification {
 interface Props {
   applicationId: string;
   applicationStatus: string;
+  compact?: boolean; // New prop for compact display in tables
 }
 
-export default function DocumentVerificationStatus({ applicationId, applicationStatus }: Props) {
+export default function DocumentVerificationStatus({ applicationId, applicationStatus, compact }: Props) {
   const [documentVerifications, setDocumentVerifications] = useState<DocumentVerification[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -117,6 +118,100 @@ export default function DocumentVerificationStatus({ applicationId, applicationS
   const summary = getVerificationSummary();
   if (!summary) return null;
 
+  // Compact view for tables
+  if (compact) {
+    return (
+      <>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <CheckCircle className="w-3 h-3 text-green-600" />
+            <span className="text-xs font-medium">{summary.approved}</span>
+          </div>
+          {summary.needsFix > 0 && (
+            <div className="flex items-center gap-1">
+              <XCircle className="w-3 h-3 text-red-600" />
+              <span className="text-xs font-medium text-red-600">{summary.needsFix}</span>
+            </div>
+          )}
+          {summary.pending > 0 && (
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3 text-yellow-600" />
+              <span className="text-xs font-medium">{summary.pending}</span>
+            </div>
+          )}
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="h-6 px-2 text-xs"
+            onClick={() => setShowDetailsModal(true)}
+          >
+            <Eye className="w-3 h-3 mr-1" />
+            Detail
+          </Button>
+        </div>
+
+        {/* Details Modal - shared between compact and full view */}
+        <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" />
+                Detail Verifikasi Dokumen
+              </DialogTitle>
+              <DialogDescription>
+                Status verifikasi untuk setiap persyaratan dokumen
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {documentVerifications.map((verification) => (
+                <Card key={verification.id} className="border">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          {getStatusIcon(verification.status)}
+                          <h4 className="font-medium">{verification.document_name}</h4>
+                          {getStatusBadge(verification.status)}
+                        </div>
+                        
+                        {verification.admin_notes && (
+                          <div className="mt-2 p-2 bg-gray-50 rounded border-l-4 border-l-blue-200">
+                            <p className="text-sm text-muted-foreground mb-1">Catatan Verifikator:</p>
+                            <p className="text-sm">{verification.admin_notes}</p>
+                          </div>
+                        )}
+
+                        {verification.verified_at && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Diverifikasi pada {new Date(verification.verified_at).toLocaleDateString('id-ID', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => setShowDetailsModal(false)}>
+                Tutup
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  // Full view for detail pages
   return (
     <>
       <Card className="border-l-4 border-l-blue-200">

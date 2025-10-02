@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,8 +26,9 @@ import {
   User,
   Building
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
+import DocumentVerificationStatus from '@/components/applications/DocumentVerificationStatus';
 
 type Application = Database['public']['Tables']['applications']['Row'];
 type ApplicationInsert = Database['public']['Tables']['applications']['Insert'];
@@ -55,7 +56,12 @@ interface Position {
 export default function PengajuanMutasiTerpadu() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('create');
+  const location = useLocation();
+  
+  // Check URL params for tab
+  const urlParams = new URLSearchParams(location.search);
+  const tabParam = urlParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam || 'create');
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -275,7 +281,7 @@ export default function PengajuanMutasiTerpadu() {
 
       toast({
         title: "Berhasil",
-        description: "Draft pengajuan mutasi terpadu berhasil dibuat. Silakan lengkapi dokumen untuk melanjutkan.",
+        description: "Draft pengajuan mutasi terpadu berhasil dibuat. Silakan lengkapi dokumen persyaratan.",
         variant: "default"
       });
 
@@ -324,7 +330,6 @@ export default function PengajuanMutasiTerpadu() {
     emp.nama.toLowerCase().includes(searchEmployee.toLowerCase()) ||
     emp.nip.includes(searchEmployee)
   );
-
   const filteredUnits = workUnits.filter(unit => 
     unit.toLowerCase().includes(searchUnit.toLowerCase())
   );
@@ -333,12 +338,6 @@ export default function PengajuanMutasiTerpadu() {
     const matchesSearch = pos.unit.toLowerCase().includes(searchPosition.toLowerCase()) ||
       pos.jabatan.toLowerCase().includes(searchPosition.toLowerCase());
     const matchesSelectedUnit = selectedUnit ? pos.unit === selectedUnit : true;
-    
-    console.log(`Position: ${pos.jabatan} at ${pos.unit}`);
-    console.log(`  - matchesSearch: ${matchesSearch}`);
-    console.log(`  - matchesSelectedUnit: ${matchesSelectedUnit} (selectedUnit: ${selectedUnit})`);
-    console.log(`  - final match: ${matchesSearch && matchesSelectedUnit}`);
-    
     return matchesSearch && matchesSelectedUnit;
   });
 
@@ -564,11 +563,6 @@ export default function PengajuanMutasiTerpadu() {
                         variant="outline" 
                         className="w-full" 
                         disabled={!selectedUnit || positions.length === 0}
-                        onClick={() => {
-                          console.log('Button clicked - selectedUnit:', selectedUnit);
-                          console.log('Button clicked - positions.length:', positions.length);
-                          console.log('Button clicked - isPositionDialogOpen:', isPositionDialogOpen);
-                        }}
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         {!selectedUnit ? 'Pilih Unit Kerja Tujuan Terlebih Dahulu' : 
@@ -709,6 +703,9 @@ export default function PengajuanMutasiTerpadu() {
           <Card>
             <CardHeader>
               <CardTitle>Daftar Pengajuan Mutasi Terpadu</CardTitle>
+              <CardDescription>
+                Semua pengajuan mutasi terpadu yang telah dibuat beserta status verifikasi dokumen
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -730,14 +727,18 @@ export default function PengajuanMutasiTerpadu() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Judul</TableHead>
+                      <TableHead>Nomor Usulan</TableHead>
+                      <TableHead>Pegawai</TableHead>
+                      <TableHead>Unit Tujuan</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Status Dokumen</TableHead>
                       <TableHead>Tanggal</TableHead>
                       <TableHead>Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                      {applications.map((app) => {
+                       const employeeData = app.estimasi ? JSON.parse(app.estimasi) : {};
                        const getStatusTimestamp = (application: Application) => {
                          if (application.status === 'submitted' && application.tanggal_pengajuan) {
                            return new Date(application.tanggal_pengajuan).toLocaleDateString('id-ID', {
@@ -785,14 +786,37 @@ export default function PengajuanMutasiTerpadu() {
                        <TableRow key={app.id}>
                           <TableCell>
                             <div>
-                              <p className="font-medium">{app.judul}</p>
+                              <p className="font-medium">{employeeData.nomor_usulan || '-'}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {app.id.slice(0, 8)}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{employeeData.employee_name || '-'}</p>
                               <p className="text-sm text-muted-foreground">
-                                {app.estimasi && JSON.parse(app.estimasi).nomor_usulan}
+                                NIP: {employeeData.employee_nip || '-'}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="text-sm">{employeeData.unit_tujuan || '-'}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {employeeData.jabatan_tujuan || '-'}
                               </p>
                             </div>
                           </TableCell>
                           <TableCell>
                             {getStatusBadge(app.status)}
+                          </TableCell>
+                          <TableCell>
+                            <DocumentVerificationStatus 
+                              applicationId={app.id} 
+                              applicationStatus={app.status}
+                              compact={true}
+                            />
                           </TableCell>
                           <TableCell>
                             {getStatusTimestamp(app)}

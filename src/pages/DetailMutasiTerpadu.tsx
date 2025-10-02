@@ -378,7 +378,7 @@ export default function DetailMutasiTerpadu() {
 
         if (updateError) throw updateError;
 
-        // Reset document verifications for admin to re-verify
+        // Reset document verifications for admin to re-verify (must delete first due to FK constraint)
         const { error: deleteVerificationError } = await supabase
           .from('document_verifications')
           .delete()
@@ -386,16 +386,19 @@ export default function DetailMutasiTerpadu() {
 
         if (deleteVerificationError) {
           console.error('Error deleting old verifications:', deleteVerificationError);
-          // Don't throw error, just log it since this is cleanup
+          throw deleteVerificationError; // Throw error to prevent FK constraint violation
         }
 
-        // Delete existing documents
+        // Delete existing documents (after verifications are deleted)
         const { error: deleteDocsError } = await supabase
           .from('documents')
           .delete()
           .eq('application_id', id);
 
-        if (deleteDocsError) throw deleteDocsError;
+        if (deleteDocsError) {
+          console.error('Error deleting old documents:', deleteDocsError);
+          throw deleteDocsError;
+        }
 
         // Insert new documents
         const documentInserts = Object.entries(documents)
@@ -435,13 +438,13 @@ export default function DetailMutasiTerpadu() {
 
         setApplicationSubmitted(true);
 
-        // Clear edit state and navigate back
+        // Clear edit state and navigate back to list
         setIsEditing(false);
         setDocumentVerificationStatus({});
         setFixedDocuments(new Set());
         setDocuments({});
         setAdditionalNotes('');
-        navigate('/status'); // Navigate to status page instead of creation page
+        navigate('/apps/pengajuan-mutasi-terpadu?tab=list');
 
       } else {
         // Submit new application
@@ -487,7 +490,7 @@ export default function DetailMutasiTerpadu() {
         });
 
         setApplicationSubmitted(true);
-        navigate('/status'); // Navigate to status page
+        navigate('/apps/pengajuan-mutasi-terpadu?tab=list');
       }
 
     } catch (error: any) {
