@@ -144,11 +144,22 @@ export default function ReminderPensiun() {
     try {
       setLoading(true);
       console.log('Loading pension data for user:', user?.unit);
-      const { data: employees, error } = await supabase
+      
+      // Build query based on user role
+      let query = supabase
         .from('employees')
         .select('id, nama, nip, tanggal_lahir, tmt_pensiun, unit, jabatan, pangkat, masa_kerja, handphone, email')
         .not('tmt_pensiun', 'is', null)
         .order('tmt_pensiun', { ascending: true });
+      
+      // If user is admin_unit, filter by their unit
+      if (user?.role === 'admin_unit' && user?.unit) {
+        query = query.eq('unit', user.unit);
+        console.log('Filtering pension data by unit:', user.unit);
+      }
+      // If user is admin_pusat, load all employees (no filter)
+      
+      const { data: employees, error } = await query;
 
       if (error) {
         console.error('Error fetching employee data:', error);

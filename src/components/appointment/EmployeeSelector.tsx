@@ -15,6 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Employee {
   id: string;
@@ -31,6 +32,7 @@ interface EmployeeSelectorProps {
 }
 
 export function EmployeeSelector({ value, onSelect }: EmployeeSelectorProps) {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,15 +40,25 @@ export function EmployeeSelector({ value, onSelect }: EmployeeSelectorProps) {
 
   useEffect(() => {
     loadEmployees();
-  }, []);
+  }, [user]);
 
   const loadEmployees = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Build query based on user role
+      let query = supabase
         .from('employees')
         .select('id, nama, nip, unit, email, handphone')
         .order('nama');
+      
+      // If user is admin_unit, filter by their unit
+      if (user?.role === 'admin_unit' && user?.unit) {
+        query = query.eq('unit', user.unit);
+      }
+      // If user is admin_pusat, load all employees (no filter)
+      
+      const { data, error } = await query;
 
       if (error) throw error;
       setEmployees(data || []);

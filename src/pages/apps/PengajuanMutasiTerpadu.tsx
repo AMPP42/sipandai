@@ -80,7 +80,7 @@ export default function PengajuanMutasiTerpadu() {
     if (activeTab === 'list') {
       loadApplications();
     }
-  }, [activeTab]);
+  }, [activeTab, user]);
 
   const loadReferenceData = async () => {
     try {
@@ -92,7 +92,9 @@ export default function PengajuanMutasiTerpadu() {
         .order('name');
       
       if (unitsError) throw unitsError;
-      setWorkUnits(units?.map(u => u.name) || []);
+      const unitNames = units?.map(u => u.name) || [];
+      console.log('Loaded work units:', unitNames);
+      setWorkUnits(unitNames);
 
       // Load document requirements
       const { data: docs, error: docsError } = await supabase
@@ -112,10 +114,21 @@ export default function PengajuanMutasiTerpadu() {
   const loadEmployees = async () => {
     try {
       console.log('Loading employees for user:', user?.unit);
-      const { data, error } = await supabase
+      
+      // Build query based on user role
+      let query = supabase
         .from('employees')
         .select('*')
         .order('nama');
+      
+      // If user is admin_unit, filter by their unit
+      if (user?.role === 'admin_unit' && user?.unit) {
+        query = query.eq('unit', user.unit);
+        console.log('Filtering employees by unit:', user.unit);
+      }
+      // If user is admin_pusat, load all employees (no filter)
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error('Error loading employees:', error);
@@ -136,21 +149,51 @@ export default function PengajuanMutasiTerpadu() {
 
   const loadPositions = async () => {
     try {
-      const { data, error } = await supabase
+      console.log('Loading positions from positions table...');
+      
+      // Load positions from the actual positions table
+      const { data: positionsData, error } = await supabase
         .from('positions')
         .select('*')
-        .gt('gap', 0)
         .order('unit', { ascending: true });
       
-      if (error) throw error;
-      setPositions(data || []);
+      if (error) {
+        console.error('Error loading positions:', error);
+        throw error;
+      }
+      
+      console.log('Loaded positions:', positionsData?.length || 0);
+      
+      // Show all positions for now, not just those with gap > 0
+      // This allows users to see all available positions regardless of current gap
+      const availablePositions = positionsData || [];
+      setPositions(availablePositions);
+      
+      console.log('All positions loaded:', availablePositions.length);
+      
+      // Log positions for debugging
+      console.log('=== POSITIONS DEBUG ===');
+      availablePositions.forEach((pos, index) => {
+        console.log(`${index + 1}. Position: ${pos.jabatan} at ${pos.unit} - Gap: ${pos.gap} - ID: ${pos.id}`);
+      });
+      console.log('=== END POSITIONS DEBUG ===');
+      
+      // Show warning if no positions available
+      if (availablePositions.length === 0) {
+        toast({
+          title: "Peringatan",
+          description: "Tidak ada formasi jabatan yang tersedia. Silakan hubungi admin untuk mengisi data formasi.",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error('Error loading positions:', error);
       toast({
         title: "Error",
-        description: "Gagal memuat data formasi jabatan",
+        description: `Gagal memuat data formasi: ${error.message}`,
         variant: "destructive"
       });
+      setPositions([]);
     }
   };
 
@@ -290,8 +333,22 @@ export default function PengajuanMutasiTerpadu() {
     const matchesSearch = pos.unit.toLowerCase().includes(searchPosition.toLowerCase()) ||
       pos.jabatan.toLowerCase().includes(searchPosition.toLowerCase());
     const matchesSelectedUnit = selectedUnit ? pos.unit === selectedUnit : true;
+    
+    console.log(`Position: ${pos.jabatan} at ${pos.unit}`);
+    console.log(`  - matchesSearch: ${matchesSearch}`);
+    console.log(`  - matchesSelectedUnit: ${matchesSelectedUnit} (selectedUnit: ${selectedUnit})`);
+    console.log(`  - final match: ${matchesSearch && matchesSelectedUnit}`);
+    
     return matchesSearch && matchesSelectedUnit;
   });
+
+  // Debug logging
+  console.log('=== COMPONENT STATE DEBUG ===');
+  console.log('selectedUnit:', selectedUnit);
+  console.log('positions.length:', positions.length);
+  console.log('filteredPositions.length:', filteredPositions.length);
+  console.log('isPositionDialogOpen:', isPositionDialogOpen);
+  console.log('=== END COMPONENT STATE DEBUG ===');
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -506,10 +563,16 @@ export default function PengajuanMutasiTerpadu() {
                       <Button 
                         variant="outline" 
                         className="w-full" 
-                        disabled={!selectedUnit}
+                        disabled={!selectedUnit || positions.length === 0}
+                        onClick={() => {
+                          console.log('Button clicked - selectedUnit:', selectedUnit);
+                          console.log('Button clicked - positions.length:', positions.length);
+                          console.log('Button clicked - isPositionDialogOpen:', isPositionDialogOpen);
+                        }}
                       >
                         <Plus className="w-4 h-4 mr-2" />
-                        Pilih Formasi Jabatan
+                        {!selectedUnit ? 'Pilih Unit Kerja Tujuan Terlebih Dahulu' : 
+                         positions.length === 0 ? 'Tidak Ada Formasi Tersedia' : 'Pilih Formasi Jabatan'}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-4xl">
@@ -526,42 +589,58 @@ export default function PengajuanMutasiTerpadu() {
                           />
                         </div>
                         <div className="max-h-96 overflow-y-auto">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Unit</TableHead>
-                                <TableHead>Jabatan</TableHead>
-                                <TableHead>Existing</TableHead>
-                                <TableHead>Kebutuhan</TableHead>
-                                <TableHead>Gap</TableHead>
-                                <TableHead>Aksi</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {filteredPositions.map((position) => (
-                                <TableRow key={position.id}>
-                                  <TableCell>{position.unit}</TableCell>
-                                  <TableCell className="font-medium">{position.jabatan}</TableCell>
-                                  <TableCell>{position.existing}</TableCell>
-                                  <TableCell>{position.kebutuhan}</TableCell>
-                                  <TableCell className="font-medium text-destructive">
-                                    {position.gap}
-                                  </TableCell>
-                                  <TableCell>
-                                    <Button
-                                      size="sm"
-                                      onClick={() => {
-                                        setSelectedPosition(position);
-                                        setIsPositionDialogOpen(false);
-                                      }}
-                                    >
-                                      Pilih
-                                    </Button>
-                                  </TableCell>
+                          {filteredPositions.length === 0 ? (
+                            <div className="text-center py-8">
+                              <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                              <p className="text-muted-foreground mb-2">
+                                {positions.length === 0 
+                                  ? "Tidak ada formasi jabatan yang tersedia" 
+                                  : "Tidak ada formasi jabatan yang cocok dengan filter"}
+                              </p>
+                              {positions.length === 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                  Silakan hubungi admin untuk mengisi data formasi jabatan
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Unit</TableHead>
+                                  <TableHead>Jabatan</TableHead>
+                                  <TableHead>Existing</TableHead>
+                                  <TableHead>Kebutuhan</TableHead>
+                                  <TableHead>Gap</TableHead>
+                                  <TableHead>Aksi</TableHead>
                                 </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
+                              </TableHeader>
+                              <TableBody>
+                                {filteredPositions.map((position) => (
+                                  <TableRow key={position.id}>
+                                    <TableCell>{position.unit}</TableCell>
+                                    <TableCell className="font-medium">{position.jabatan}</TableCell>
+                                    <TableCell>{position.existing}</TableCell>
+                                    <TableCell>{position.kebutuhan}</TableCell>
+                                    <TableCell className="font-medium text-destructive">
+                                      {position.gap}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Button
+                                        size="sm"
+                                        onClick={() => {
+                                          setSelectedPosition(position);
+                                          setIsPositionDialogOpen(false);
+                                        }}
+                                      >
+                                        Pilih
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          )}
                         </div>
                       </div>
                     </DialogContent>
