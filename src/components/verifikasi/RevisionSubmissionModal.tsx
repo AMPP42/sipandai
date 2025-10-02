@@ -30,17 +30,25 @@ export default function RevisionSubmissionModal({
     try {
       setLoading(true);
 
-      // Update application status back to submitted for re-verification
+      // Use the new submit_application_revision function
       const { error } = await supabase
-        .from('applications')
-        .update({
-          status: 'submitted',
-          keterangan: `Perbaikan - Diajukan Ulang${revisionNotes ? `: ${revisionNotes}` : ''}`,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', application.id);
+        .rpc('submit_application_revision', {
+          application_id: application.id
+        });
 
       if (error) throw error;
+
+      // If there are revision notes, update the application with them
+      if (revisionNotes) {
+        const { error: updateError } = await supabase
+          .from('applications')
+          .update({
+            keterangan: `Perbaikan - Diajukan Ulang: ${revisionNotes}`,
+          })
+          .eq('id', application.id);
+
+        if (updateError) throw updateError;
+      }
 
       toast({
         title: "Berhasil",

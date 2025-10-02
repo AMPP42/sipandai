@@ -13,5 +13,16 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  }
+  },
+  global: {
+    // Add fetch options for better reliability
+    fetch: (url, options) => {
+      const fetchOptions = {
+        ...options,
+        // Add timeout to prevent hanging requests
+        signal: AbortSignal.timeout(15000), // 15 second timeout
+      };
+      return fetch(url, fetchOptions);
+    },
+  },
 });

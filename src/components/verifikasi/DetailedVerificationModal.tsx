@@ -353,15 +353,16 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
 
       // Update application status based on verification results
       const newStatus = allApproved ? 'approved' : 'revision_needed';
+      const statusNote = allApproved 
+        ? 'Semua dokumen telah diverifikasi dan disetujui'
+        : `${docsNeedingFix.length} dokumen perlu diperbaiki`;
       
       if (application.type === 'usulan_mutasi') {
         const { error } = await supabase
           .from('usulan_mutasi')
           .update({
             status: newStatus,
-            catatan_reviewer: allApproved 
-              ? 'Semua dokumen telah diverifikasi dan disetujui'
-              : `${docsNeedingFix.length} dokumen perlu diperbaiki`,
+            catatan_reviewer: statusNote,
             reviewed_by: user?.id,
             reviewed_at: new Date().toISOString()
           })
@@ -372,7 +373,9 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
         const { error } = await supabase
           .from('applications')
           .update({
-            status: newStatus
+            status: newStatus,
+            keterangan: statusNote,
+            updated_at: new Date().toISOString()
           })
           .eq('id', application.id);
 
@@ -386,9 +389,7 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
             from_status: application.status as any,
             to_status: newStatus,
             actor_id: user?.id,
-            note: allApproved 
-              ? 'Semua dokumen telah diverifikasi dan disetujui'
-              : `${docsNeedingFix.length} dokumen perlu diperbaiki`
+            note: statusNote
           });
       }
 
