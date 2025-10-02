@@ -77,7 +77,6 @@ export default function KenaikanPangkat() {
 
       if (error) throw error;
       setEmployees(data || []);
-      console.log('Loaded employees:', data?.length, 'for unit:', user?.unit);
     } catch (error: any) {
       console.error('Error loading employees:', error);
       toast({
@@ -270,14 +269,9 @@ export default function KenaikanPangkat() {
   };
   const getDocumentRequirements = (kategori: string) => {
     // Filter document requirements by category
-    // Support both formats: "kenaikan_pangkat_reguler" and "reguler"
     const filtered = documentRequirements.filter(doc => 
-      doc.category === `kenaikan_pangkat_${kategori}` || 
-      doc.category === kategori ||
-      doc.category?.includes(kategori)
+      doc.category === `kenaikan_pangkat_${kategori}`
     );
-    
-    console.log('Document requirements for', kategori, ':', filtered);
     
     return filtered.map(doc => ({
       nama: doc.name,
