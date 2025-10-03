@@ -923,13 +923,32 @@ export default function DetailMutasiTerpadu() {
                 {(() => {
                   const createdAt = application?.created_at ? new Date(application.created_at) : null;
                   const submittedAt = application?.tanggal_pengajuan ? new Date(application.tanggal_pengajuan) : application?.updated_at ? new Date(application.updated_at) : null;
-                  const approvedAt = application?.status === 'approved' && application?.updated_at ? new Date(application.updated_at) : null;
+                  
+                  // Get approved timestamp from workflows table
+                  const getApprovedTimestamp = () => {
+                    // First check if we have workflow data for approved status
+                    const workflowData = Object.entries(workflowLinks).find(([key]) => key === 'approved');
+                    if (workflowData && application?.status === 'approved') {
+                      return application?.updated_at ? new Date(application.updated_at) : null;
+                    }
+                    // If status is approved or beyond, use updated_at
+                    if (application?.status === 'approved' || application?.nota_dinas_uploaded_at || 
+                        application?.status === 'biro_osdma_submitted' || application?.status === 'biro_osdma_review' || 
+                        application?.status === 'completed') {
+                      return application?.updated_at ? new Date(application.updated_at) : null;
+                    }
+                    return null;
+                  };
+                  
+                  const approvedAt = getApprovedTimestamp();
                   const notaDinasUploadedAt = application?.nota_dinas_uploaded_at ? new Date(application.nota_dinas_uploaded_at) : null;
                   const biroDecisionAt = application?.biro_osdma_decision_at ? new Date(application.biro_osdma_decision_at) : null;
                   const skUploadedAt = application?.sk_uploaded_at ? new Date(application.sk_uploaded_at) : null;
                   
                   const isSubmitted = application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed' || application?.nota_dinas_uploaded_at;
-                  const isApproved = application?.status === 'approved' || application?.nota_dinas_uploaded_at;
+                  const isApproved = application?.status === 'approved' || application?.nota_dinas_uploaded_at || 
+                                     application?.status === 'biro_osdma_submitted' || application?.status === 'biro_osdma_review' || 
+                                     application?.status === 'completed';
 
                   const calculateDuration = (start: Date | null, end: Date | null) => {
                     if (!start || !end) return null;
@@ -1035,7 +1054,7 @@ export default function DetailMutasiTerpadu() {
                         {isApproved ? (
                           <>
                             <h4 className="text-sm font-semibold text-gray-900 mb-1">Disetujui & Diproses</h4>
-                            {approvedAt && (
+                            {approvedAt ? (
                               <>
                                 <p className="text-xs text-gray-600">
                                   {approvedAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -1044,17 +1063,8 @@ export default function DetailMutasiTerpadu() {
                                   {approvedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                               </>
-                            )}
-                            {workflowLinks['approved'] && (
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="mt-2 h-7 text-xs"
-                                onClick={() => window.open(workflowLinks['approved'], '_blank')}
-                              >
-                                <ExternalLink className="w-3 h-3 mr-1" />
-                                Lihat Bukti
-                              </Button>
+                            ) : (
+                              <p className="text-xs text-gray-500">Waktu tidak tersedia</p>
                             )}
                           </>
                         ) : application?.status === 'revision_needed' ? (
