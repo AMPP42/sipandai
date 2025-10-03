@@ -1123,11 +1123,13 @@ export default function DetailMutasiTerpadu() {
 
                   // Step 5: Status Biro OSDMA
                   const duration5 = calculateDuration(biroDecisionAt, skUploadedAt);
+                  const isBiroReview = application.status === 'biro_osdma_review';
                   steps.push(
                     <div key="biro-decision" className="flex flex-col items-center relative flex-1 min-w-[180px]">
                       <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 z-10 relative ${
                         application.biro_osdma_status === 'approved' ? 'bg-green-500' : 
                         application.biro_osdma_status === 'rejected' ? 'bg-red-500' : 
+                        isBiroReview ? 'bg-green-500' :
                         'bg-gray-300'
                       }`}>
                         {application.biro_osdma_status === 'approved' ? <CheckCircle className="w-7 h-7 text-white" /> : 
