@@ -513,15 +513,16 @@ export default function ReminderPensiun() {
               <div className="space-y-4">
                 <Label className="text-base font-semibold">2. Pilih Kategori Pensiun</Label>
                 <Select value={selectedKategori} onValueChange={setSelectedKategori}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Pilih kategori pensiun" />
                   </SelectTrigger>
-                  <SelectContent className="z-50">
-                    {Object.entries(retirementCategories).map(([key, value]) => (
-                      <SelectItem key={key} value={key}>
-                        {value.label}
-                      </SelectItem>
-                    ))}
+                  <SelectContent className="z-[100] bg-popover border shadow-lg">
+                    <SelectItem value="pensiun_reguler">
+                      Pensiun Reguler
+                    </SelectItem>
+                    <SelectItem value="pensiun_janda_duda">
+                      Pensiun Janda/Duda (PNS Meninggal)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
