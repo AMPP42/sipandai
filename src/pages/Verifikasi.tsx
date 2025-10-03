@@ -165,13 +165,16 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
     // Filter by status
     if (statusFilter !== 'all') {
       filtered = filtered.filter(app => {
+        const isRevisionResubmitted = (app.status === 'submitted' || app.status === 'in_review') && 
+          (app.keterangan?.includes('Perbaikan - Diajukan Ulang') || app.catatan_reviewer);
+        
         switch (statusFilter) {
           case 'menunggu_verifikasi':
-            return app.status === 'submitted' && !app.catatan_reviewer;
+            return app.status === 'submitted' && !isRevisionResubmitted;
           case 'perlu_perbaikan':
             return app.status === 'revision_needed';
-          case 'perbaikan_diajukan':
-            return app.status === 'submitted' && app.catatan_reviewer;
+          case 'sudah_diperbaiki':
+            return isRevisionResubmitted;
           case 'diproses':
             return app.status === 'approved';
           case 'disetujui':
@@ -272,26 +275,31 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
 
   const getStatusBadge = (status: string, application?: ApplicationItem) => {
     // Check if this is a resubmitted application (revision submitted)
-    const isRevisionSubmitted = status === 'submitted' && application?.catatan_reviewer;
+    const isRevisionSubmitted = (status === 'submitted' || status === 'in_review') && 
+      (application?.keterangan?.includes('Perbaikan - Diajukan Ulang') || 
+       application?.catatan_reviewer);
     
     switch (status) {
       case 'draft':
         return <Badge className="bg-gray-100 text-gray-700">Draft</Badge>;
       case 'submitted':
         if (isRevisionSubmitted) {
-          return <Badge className="bg-green-100 text-green-700">Perbaikan Diajukan</Badge>;
+          return <Badge className="bg-green-100 text-green-700">✓ Sudah Diperbaiki</Badge>;
         }
-        return <Badge className="bg-gray-100 text-gray-700">Menunggu Verifikasi</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-700">⏳ Menunggu Verifikasi</Badge>;
       case 'in_review':
-        return <Badge className="bg-orange-100 text-orange-700">Sudah Diperbaiki</Badge>;
+        if (isRevisionSubmitted) {
+          return <Badge className="bg-green-100 text-green-700">✓ Sudah Diperbaiki</Badge>;
+        }
+        return <Badge className="bg-orange-100 text-orange-700">Dalam Review</Badge>;
       case 'revision_needed':
-        return <Badge className="bg-yellow-100 text-yellow-700">Perlu Perbaikan</Badge>;
+        return <Badge className="bg-red-100 text-red-700">✗ Perlu Perbaikan</Badge>;
       case 'approved':
-        return <Badge className="bg-blue-100 text-blue-700">Diproses</Badge>;
+        return <Badge className="bg-blue-100 text-blue-700">✓ Diproses</Badge>;
       case 'rejected':
-        return <Badge className="bg-red-100 text-red-700">Ditolak</Badge>;
+        return <Badge className="bg-red-100 text-red-700">✗ Ditolak</Badge>;
       case 'completed':
-        return <Badge className="bg-purple-100 text-purple-700">Selesai</Badge>;
+        return <Badge className="bg-purple-100 text-purple-700">✓ Selesai</Badge>;
       default:
         return <Badge>Unknown</Badge>;
     }
@@ -340,7 +348,8 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
     let label: string;
 
     // Check if this is a resubmitted application (revision submitted)
-    const isRevisionSubmitted = app.status === 'submitted' && app.catatan_reviewer;
+    const isRevisionSubmitted = (app.status === 'submitted' || app.status === 'in_review') && 
+      (app.keterangan?.includes('Perbaikan - Diajukan Ulang') || app.catatan_reviewer);
 
     switch (app.status) {
       case 'draft':
@@ -351,19 +360,24 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
         if (isRevisionSubmitted) {
           // For revision submissions, use updated_at as the revision submission date
           timestamp = app.updated_at || app.created_at;
-          label = 'Perbaikan Diajukan';
+          label = 'Diperbaiki & Diajukan Ulang';
         } else {
           timestamp = app.tanggal_usulan || app.tanggal_pengajuan || app.created_at;
           label = 'Diajukan';
         }
         break;
       case 'in_review':
-        timestamp = app.updated_at || app.created_at;
-        label = 'Dalam Review';
+        if (isRevisionSubmitted) {
+          timestamp = app.updated_at || app.created_at;
+          label = 'Diperbaiki & Diajukan Ulang';
+        } else {
+          timestamp = app.updated_at || app.created_at;
+          label = 'Dalam Review';
+        }
         break;
       case 'revision_needed':
         timestamp = app.updated_at || app.created_at;
-        label = 'Perlu Revisi';
+        label = 'Perlu Perbaikan';
         break;
       case 'approved':
         timestamp = app.updated_at || app.created_at;
@@ -603,11 +617,11 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
                 </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Semua Status</SelectItem>
-                    <SelectItem value="menunggu_verifikasi">Menunggu Verifikasi</SelectItem>
-                    <SelectItem value="perlu_perbaikan">Perlu Perbaikan</SelectItem>
-                    <SelectItem value="perbaikan_diajukan">Perbaikan Diajukan</SelectItem>
-                    <SelectItem value="diproses">Diproses</SelectItem>
-                    <SelectItem value="disetujui">Disetujui</SelectItem>
+                    <SelectItem value="menunggu_verifikasi">⏳ Menunggu Verifikasi (Baru)</SelectItem>
+                    <SelectItem value="sudah_diperbaiki">✓ Sudah Diperbaiki</SelectItem>
+                    <SelectItem value="perlu_perbaikan">✗ Perlu Perbaikan</SelectItem>
+                    <SelectItem value="diproses">✓ Diproses</SelectItem>
+                    <SelectItem value="disetujui">✓ Disetujui</SelectItem>
                   </SelectContent>
               </Select>
             </div>
