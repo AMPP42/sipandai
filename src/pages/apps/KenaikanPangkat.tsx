@@ -6,75 +6,75 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TrendingUp, CheckCircle, AlertTriangle, Calendar, User, FileText, Clock, Search, Plus } from "lucide-react";
+import { 
+  ArrowLeft,
+  Plus,
+  Search,
+  FileText,
+  Eye,
+  User,
+  TrendingUp
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import DocumentRevisionModal from "@/components/verifikasi/DocumentRevisionModal";
+import { useNavigate } from 'react-router-dom';
+import DocumentVerificationStatus from "@/components/applications/DocumentVerificationStatus";
 import type { Database } from '@/integrations/supabase/types';
+
 type Application = Database['public']['Tables']['applications']['Row'];
-interface PangkatData {
+type ApplicationInsert = Database['public']['Tables']['applications']['Insert'];
+
+interface Employee {
   id: string;
   nama: string;
-  nip: string;
-  pangkatSekarang: string;
-  golonganSekarang: string;
-  pangkatTujuan: string;
-  golonganTujuan: string;
-  masaKerja: {
-    tahun: number;
-    bulan: number;
-  };
-  syaratTerpenuhi: boolean;
-  statusPengajuan: 'eligible' | 'not_eligible' | 'submitted' | 'approved' | 'rejected';
-  tanggalTerakhirNaik: string;
+  nip: string | null;
+  unit: string | null;
+  jabatan: string | null;
+  pangkat: string | null;
+  tmt_cpns: string | null;
+  tmt_pangkat_terakhir: string | null;
+  masa_kerja: string | null;
 }
-type ApplicationInsert = Database['public']['Tables']['applications']['Insert'];
+
 export default function KenaikanPangkat() {
-  const {
-    user
-  } = useAuth();
-  const [activeTab, setActiveTab] = useState("submit");
-  const [selectedPegawai, setSelectedPegawai] = useState("");
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  const [activeTab, setActiveTab] = useState("create");
+  const [loading, setLoading] = useState(false);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [searchEmployee, setSearchEmployee] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [selectedKategori, setSelectedKategori] = useState("");
   const [selectedPeriode, setSelectedPeriode] = useState("");
   const [isEmployeeDialogOpen, setIsEmployeeDialogOpen] = useState(false);
-  const [searchEmployee, setSearchEmployee] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [documentLinks, setDocumentLinks] = useState<{
-    [key: string]: string;
-  }>({});
-  const [catatanTambahan, setCatatanTambahan] = useState("");
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [selectedApplicationForRevision, setSelectedApplicationForRevision] = useState<Application | null>(null);
-  const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
-  const [filterPeriode, setFilterPeriode] = useState("");
-  const [employees, setEmployees] = useState<any[]>([]);
   const [documentRequirements, setDocumentRequirements] = useState<any[]>([]);
 
   useEffect(() => {
-    loadApplications();
     loadEmployees();
     loadDocumentRequirements();
-  }, [user?.id]);
+    if (activeTab === 'list') {
+      loadApplications();
+    }
+  }, [activeTab, user]);
 
   const loadEmployees = async () => {
     try {
-      // Build query with unit filter for admin_unit
       let query = supabase
         .from('employees')
-        .select('*');
+        .select('*')
+        .order('nama');
       
-      // Filter by user's unit if user is admin_unit
       if (user?.role === 'admin_unit' && user?.unit) {
         query = query.eq('unit', user.unit);
       }
       
-      const { data, error } = await query.order('nama');
-
+      const { data, error } = await query;
+      
       if (error) throw error;
       setEmployees(data || []);
     } catch (error: any) {
@@ -111,20 +111,16 @@ export default function KenaikanPangkat() {
     if (!user?.id) return;
     try {
       setLoading(true);
-      console.log('Loading applications for user:', user.id, 'unit:', user.unit);
-      const {
-        data,
-        error
-      } = await supabase.from('applications').select('*').eq('jenis', 'kenaikan_pangkat').eq('submitter_id', user.id).order('created_at', {
-        ascending: false
-      });
-      if (error) {
-        console.error('Error loading applications:', error);
-        throw error;
-      }
-      console.log('Loaded applications:', data?.length || 0);
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('jenis', 'kenaikan_pangkat')
+        .eq('submitter_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
       setApplications(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading applications:', error);
       toast({
         title: "Error",
@@ -136,139 +132,23 @@ export default function KenaikanPangkat() {
     }
   };
 
-  // Transform employees data to pangkat data format
-  const pangkatData: PangkatData[] = employees.map(emp => {
-    // Calculate masa kerja from tmt_cpns or use existing masa_kerja
-    let masaKerjaTahun = 0;
-    let masaKerjaBulan = 0;
-    
-    if (emp.tmt_cpns) {
-      const tmtCpns = new Date(emp.tmt_cpns);
-      const today = new Date();
-      const diffTime = Math.abs(today.getTime() - tmtCpns.getTime());
-      const diffMonths = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 30.44));
-      masaKerjaTahun = Math.floor(diffMonths / 12);
-      masaKerjaBulan = diffMonths % 12;
-    } else if (emp.masa_kerja) {
-      // Parse existing masa_kerja string (e.g., "15 tahun 6 bulan")
-      const match = emp.masa_kerja.match(/(\d+)\s*tahun\s*(\d+)\s*bulan/);
-      if (match) {
-        masaKerjaTahun = parseInt(match[1]);
-        masaKerjaBulan = parseInt(match[2]);
-      }
-    }
+  const kategoriOptions = {
+    "reguler": "Kenaikan Pangkat Reguler (Jabatan Pelaksana)",
+    "fungsional": "Kenaikan Pangkat Jabatan Fungsional",
+    "struktural": "Kenaikan Pangkat Jabatan Struktural",
+    "pertama_kali": "Kenaikan Pangkat Pertama Kali",
+    "penyesuaian_ijazah": "Kenaikan Pangkat Penyesuaian Ijazah",
+    "iid_ke_iiia": "Kenaikan Pangkat Golongan II/d ke III/a"
+  };
 
-    // Determine if eligible based on masa kerja (at least 4 years)
-    const syaratTerpenuhi = masaKerjaTahun >= 4;
+  const periodeOptions = [
+    "April 2025",
+    "Oktober 2025",
+    "April 2026",
+    "Oktober 2026"
+  ];
 
-    return {
-      id: emp.id,
-      nama: emp.nama,
-      nip: emp.nip || '-',
-      pangkatSekarang: emp.pangkat || '-',
-      golonganSekarang: '-', // Can be extracted from pangkat if needed
-      pangkatTujuan: '-', // Would need additional logic
-      golonganTujuan: '-',
-      masaKerja: {
-        tahun: masaKerjaTahun,
-        bulan: masaKerjaBulan
-      },
-      syaratTerpenuhi,
-      statusPengajuan: syaratTerpenuhi ? 'eligible' as const : 'not_eligible' as const,
-      tanggalTerakhirNaik: emp.tmt_pangkat_terakhir || '-'
-    };
-  });
-  const persyaratanPangkat = [{
-    nama: "Masa Kerja Minimal",
-    deskripsi: "4 tahun dalam pangkat terakhir",
-    completed: true
-  }, {
-    nama: "Pendidikan Minimum",
-    deskripsi: "Sesuai dengan pangkat yang diajukan",
-    completed: true
-  }, {
-    nama: "DP3/SKP",
-    deskripsi: "Nilai minimal Baik selama 2 tahun terakhir",
-    completed: true
-  }, {
-    nama: "Diklat Struktural",
-    deskripsi: "Sesuai jenjang jabatan",
-    completed: false
-  }, {
-    nama: "Tidak Ada Hukuman Disiplin",
-    deskripsi: "Dalam 1 tahun terakhir",
-    completed: true
-  }, {
-    nama: "Tes Kompetensi",
-    deskripsi: "Lulus tes kompetensi jabatan",
-    completed: false
-  }];
-  const getStatusBadge = (status: string) => {
-    const statusMap = {
-      draft: {
-        label: "Draft",
-        className: "bg-gray-100 text-gray-700"
-      },
-      submitted: {
-        label: "Menunggu Verifikasi",
-        className: "bg-gray-100 text-gray-700"
-      },
-      revision_needed: {
-        label: "Perlu Perbaikan",
-        className: "bg-yellow-100 text-yellow-700"
-      },
-      approved: {
-        label: "Diproses",
-        className: "bg-blue-100 text-blue-700"
-      },
-      completed: {
-        label: "Terbit",
-        className: "bg-green-100 text-green-700"
-      },
-      in_review: {
-        label: "Sudah Diperbaiki",
-        className: "bg-orange-100 text-orange-700"
-      },
-      rejected: {
-        label: "Ditolak",
-        className: "bg-red-100 text-red-700"
-      },
-      eligible: {
-        label: "Memenuhi Syarat",
-        className: "bg-green-100 text-green-700"
-      },
-      not_eligible: {
-        label: "Belum Memenuhi Syarat",
-        className: "bg-red-100 text-red-700"
-      }
-    };
-    const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.not_eligible;
-    return <Badge className={statusInfo.className}>{statusInfo.label}</Badge>;
-  };
-  const hitungProgressMasaKerja = (masaKerja: {
-    tahun: number;
-    bulan: number;
-  }) => {
-    const totalBulan = masaKerja.tahun * 12 + masaKerja.bulan;
-    const minimalBulan = 4 * 12; // 4 tahun = 48 bulan
-    const progress = Math.min(totalBulan / minimalBulan * 100, 100);
-    return Math.round(progress);
-  };
-  const getKategoriName = (kategori: string) => {
-    const kategoriMap: {
-      [key: string]: string;
-    } = {
-      reguler: "Kenaikan Pangkat Reguler (Jabatan Pelaksana)",
-      fungsional: "Kenaikan Pangkat Jabatan Fungsional",
-      struktural: "Kenaikan Pangkat Jabatan Struktural",
-      pertama_kali: "Kenaikan Pangkat Pertama Kali",
-      penyesuaian_ijazah: "Kenaikan Pangkat Penyesuaian Ijazah",
-      iid_ke_iiia: "Kenaikan Pangkat Golongan II/d ke III/a"
-    };
-    return kategoriMap[kategori] || kategori;
-  };
   const getDocumentRequirements = (kategori: string) => {
-    // Filter document requirements by category
     const filtered = documentRequirements.filter(doc => 
       doc.category === `kenaikan_pangkat_${kategori}`
     );
@@ -278,8 +158,9 @@ export default function KenaikanPangkat() {
       catatan: doc.description
     }));
   };
-  const handleSubmitPengajuan = async () => {
-    if (!selectedPegawai || !selectedKategori || !selectedPeriode) {
+
+  const handleSubmitApplication = async () => {
+    if (!selectedEmployee || !selectedKategori || !selectedPeriode) {
       toast({
         title: "Error",
         description: "Mohon lengkapi semua data yang diperlukan",
@@ -287,674 +168,408 @@ export default function KenaikanPangkat() {
       });
       return;
     }
-    const selectedEmployee = pangkatData.find(p => p.id === selectedPegawai);
-    if (!selectedEmployee) {
-      toast({
-        title: "Error",
-        description: "Data pegawai tidak ditemukan",
-        variant: "destructive"
-      });
-      return;
-    }
+
     try {
       setLoading(true);
-
-      // Generate application number
+      
       const currentYear = new Date().getFullYear();
-      const {
-        data: existingApps
-      } = await supabase.from('applications').select('id').eq('jenis', 'kenaikan_pangkat').gte('created_at', `${currentYear}-01-01`);
+      const { data: existingApps } = await supabase
+        .from('applications')
+        .select('id')
+        .eq('jenis', 'kenaikan_pangkat')
+        .gte('created_at', `${currentYear}-01-01`);
+      
       const sequence = String(existingApps?.length + 1 || 1).padStart(4, '0');
       const nomorUsulan = `KP/${currentYear}/${sequence}`;
+
       const applicationData: ApplicationInsert = {
         jenis: 'kenaikan_pangkat' as const,
         judul: `Pengajuan Kenaikan Pangkat - ${selectedEmployee.nama}`,
         submitter_id: user?.id || '',
         submitter_name: user?.name || '',
         submitter_unit: user?.unit || '',
-        status: 'submitted' as const,
+        status: 'draft' as const,
         estimasi: JSON.stringify({
           employee_id: selectedEmployee.id,
           employee_name: selectedEmployee.nama,
           employee_nip: selectedEmployee.nip,
-          pangkat_sekarang: selectedEmployee.pangkatSekarang,
-          golongan_sekarang: selectedEmployee.golonganSekarang,
-          pangkat_tujuan: selectedEmployee.pangkatTujuan,
-          golongan_tujuan: selectedEmployee.golonganTujuan,
           kategori: selectedKategori,
-          kategori_name: getKategoriName(selectedKategori),
+          kategori_name: kategoriOptions[selectedKategori as keyof typeof kategoriOptions],
           periode: selectedPeriode,
-          masa_kerja: selectedEmployee.masaKerja,
-          syarat_terpenuhi: selectedEmployee.syaratTerpenuhi,
           nomor_usulan: nomorUsulan,
-          document_links: documentLinks,
-          catatan_tambahan: catatanTambahan
+          unit: selectedEmployee.unit,
+          jabatan: selectedEmployee.jabatan,
+          pangkat: selectedEmployee.pangkat
         })
       };
-      const {
-        error
-      } = await supabase.from('applications').insert(applicationData);
+
+      const { data: insertedApp, error } = await supabase
+        .from('applications')
+        .insert(applicationData)
+        .select()
+        .single();
+
       if (error) throw error;
+
       toast({
         title: "Berhasil",
-        description: `Pengajuan kenaikan pangkat untuk ${selectedEmployee.nama} berhasil disubmit dan dapat dilihat di tab Status Usulan!`
+        description: "Draft pengajuan kenaikan pangkat berhasil dibuat. Silakan lengkapi dokumen persyaratan.",
+        variant: "default"
       });
 
-      // Reset form
-      setSelectedPegawai("");
-      setSelectedKategori("");
-      setSelectedPeriode("");
-      setDocumentLinks({});
-      setCatatanTambahan("");
+      navigate(`/detail-mutasi-terpadu/${insertedApp.id}`);
 
-      // Refresh applications after successful submission
-      await loadApplications();
-
-      // Redirect to status tab
-      setActiveTab("status");
     } catch (error: any) {
       console.error('Error submitting application:', error);
       toast({
         title: "Error",
-        description: error.message || "Gagal mengajukan kenaikan pangkat",
+        description: error.message || "Gagal menyimpan pengajuan",
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-  return <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              <TrendingUp className="w-8 h-8 text-primary" />
-              Pengajuan Kenaikan Pangkat
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Validasi syarat otomatis dan checklist dokumen persyaratan kenaikan pangkat
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Badge className="bg-green-100 text-green-700">
-              {pangkatData.filter(p => p.syaratTerpenuhi).length} Memenuhi Syarat
-            </Badge>
-            <Badge className="bg-red-100 text-red-700">
-              {pangkatData.filter(p => !p.syaratTerpenuhi).length} Belum Memenuhi
-            </Badge>
-          </div>
+
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, "default" | "secondary" | "destructive" | "outline" | "warning"> = {
+      'draft': 'secondary',
+      'submitted': 'default',
+      'in_review': 'outline',
+      'approved': 'default',
+      'rejected': 'destructive',
+      'revision_needed': 'warning'
+    };
+
+    const labels: Record<string, string> = {
+      'draft': 'Draft',
+      'submitted': 'Diajukan',
+      'in_review': 'Dalam Review',
+      'approved': 'Disetujui',
+      'rejected': 'Ditolak',
+      'revision_needed': 'Perlu perbaikan'
+    };
+
+    return (
+      <Badge variant={variants[status] || 'outline'}>
+        {labels[status] || status}
+      </Badge>
+    );
+  };
+
+  const filteredEmployees = employees.filter(emp => 
+    emp.nama.toLowerCase().includes(searchEmployee.toLowerCase()) ||
+    (emp.nip && emp.nip.includes(searchEmployee))
+  );
+
+  return (
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="outline" size="sm" onClick={() => navigate('/apps')}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Kembali
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <TrendingUp className="w-8 h-8 text-primary" />
+            Pengajuan Kenaikan Pangkat
+          </h1>
+          <p className="text-muted-foreground">
+            Sistem pengajuan kenaikan pangkat pegawai
+          </p>
         </div>
+      </div>
 
-        {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="submit" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Ajukan Kenaikan
-            </TabsTrigger>
-            <TabsTrigger value="status" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Status Usulan
-            </TabsTrigger>
-          </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="create">Buat Pengajuan</TabsTrigger>
+          <TabsTrigger value="list">Daftar Pengajuan</TabsTrigger>
+        </TabsList>
 
-          {/* Tab: Check Eligibility */}
-          <TabsContent value="check" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Cek Kelayakan Kenaikan Pangkat</CardTitle>
-                <CardDescription>
-                  Pilih pegawai untuk melakukan pengecekan kelayakan kenaikan pangkat secara otomatis
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="pegawai">Pilih Pegawai</Label>
-                  <Select value={selectedPegawai} onValueChange={setSelectedPegawai}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih pegawai dari database" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {pangkatData.map(pegawai => <SelectItem key={pegawai.id} value={pegawai.id}>
-                          {pegawai.nama} - {pegawai.nip}
-                        </SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {selectedPegawai && <div className="space-y-6">
-                    {(() => {
-                  const pegawai = pangkatData.find(p => p.id === selectedPegawai);
-                  if (!pegawai) return null;
-                  return <>
-                          {/* Data Pegawai */}
-                          <Card className="bg-muted/50">
-                            <CardContent className="p-4">
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                  <p className="text-sm text-muted-foreground">Nama Pegawai</p>
-                                  <p className="font-semibold">{pegawai.nama}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-muted-foreground">NIP</p>
-                                  <p className="font-mono">{pegawai.nip}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-muted-foreground">Status Kelayakan</p>
-                                  {getStatusBadge(pegawai.statusPengajuan)}
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-
-                          {/* Current vs Target Position */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Card>
-                              <CardHeader className="pb-3">
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                  <User className="w-5 h-5" />
-                                  Pangkat Saat Ini
-                                </CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                <div className="space-y-2">
-                                  <p className="text-2xl font-bold text-foreground">{pegawai.pangkatSekarang}</p>
-                                  <p className="text-lg text-muted-foreground">Golongan {pegawai.golonganSekarang}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    Terakhir naik: {new Date(pegawai.tanggalTerakhirNaik).toLocaleDateString('id-ID')}
-                                  </p>
-                                </div>
-                              </CardContent>
-                            </Card>
-
-                            <Card>
-                              <CardHeader className="pb-3">
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                  <TrendingUp className="w-5 h-5" />
-                                  Pangkat Tujuan
-                                </CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                <div className="space-y-2">
-                                  <p className="text-2xl font-bold text-primary">{pegawai.pangkatTujuan}</p>
-                                  <p className="text-lg text-muted-foreground">Golongan {pegawai.golonganTujuan}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    Naik 1 tingkat dari pangkat saat ini
-                                  </p>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </div>
-
-                          {/* Masa Kerja Progress */}
-                          <Card>
-                            <CardHeader>
-                              <CardTitle className="flex items-center gap-2">
-                                <Calendar className="w-5 h-5" />
-                                Masa Kerja dalam Pangkat
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="space-y-4">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm text-muted-foreground">
-                                    {pegawai.masaKerja.tahun} tahun {pegawai.masaKerja.bulan} bulan
-                                  </span>
-                                  <span className="text-sm font-medium">
-                                    {hitungProgressMasaKerja(pegawai.masaKerja)}% dari syarat minimum
-                                  </span>
-                                </div>
-                                <Progress value={hitungProgressMasaKerja(pegawai.masaKerja)} className="h-2" />
-                                <p className="text-xs text-muted-foreground">
-                                  Minimum 4 tahun masa kerja dalam pangkat untuk kenaikan pangkat
-                                </p>
-                              </div>
-                            </CardContent>
-                          </Card>
-
-                          {/* Requirements Checklist */}
-                          <Card>
-                            <CardHeader>
-                              <CardTitle>Checklist Persyaratan</CardTitle>
-                              <CardDescription>
-                                Validasi otomatis berdasarkan data pegawai di database
-                              </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="space-y-3">
-                                {persyaratanPangkat.map((syarat, index) => <div key={index} className="flex items-start gap-3 p-3 rounded-lg border">
-                                    {syarat.completed ? <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" /> : <AlertTriangle className="w-5 h-5 text-yellow-500 mt-0.5" />}
-                                    <div className="flex-1">
-                                      <p className="font-medium text-sm">{syarat.nama}</p>
-                                      <p className="text-xs text-muted-foreground">{syarat.deskripsi}</p>
-                                    </div>
-                                    <Badge className={syarat.completed ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}>
-                                      {syarat.completed ? "Terpenuhi" : "Belum"}
-                                    </Badge>
-                                  </div>)}
-                              </div>
-                              
-                              <div className="mt-6 p-4 bg-muted rounded-lg">
-                                <div className="flex items-center gap-2 mb-2">
-                                  {pegawai.syaratTerpenuhi ? <CheckCircle className="w-5 h-5 text-green-500" /> : <AlertTriangle className="w-5 h-5 text-yellow-500" />}
-                                  <span className="font-semibold">
-                                    {pegawai.syaratTerpenuhi ? "Memenuhi Syarat" : "Belum Memenuhi Syarat"}
-                                  </span>
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                  {pegawai.syaratTerpenuhi ? "Pegawai ini memenuhi semua persyaratan untuk kenaikan pangkat dan dapat mengajukan permohonan." : "Pegawai ini belum memenuhi beberapa persyaratan. Lengkapi persyaratan yang kurang sebelum mengajukan."}
-                                </p>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </>;
-                })()}
-                  </div>}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Tab: Submit Application */}
-          <TabsContent value="submit" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pengajuan Usulan Kenaikan Pangkat</CardTitle>
-                <CardDescription>
-                  Form pengajuan usulan kenaikan pangkat dengan kategori dan dokumen persyaratan
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Pilih Periode */}
-                <div className="space-y-2">
-                  <Label htmlFor="periode-kenaikan">Periode Kenaikan Pangkat</Label>
-                  <Select value={selectedPeriode} onValueChange={setSelectedPeriode}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih periode kenaikan pangkat" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="januari">Januari</SelectItem>
-                      <SelectItem value="februari">Februari</SelectItem>
-                      <SelectItem value="maret">Maret</SelectItem>
-                      <SelectItem value="april">April</SelectItem>
-                      <SelectItem value="mei">Mei</SelectItem>
-                      <SelectItem value="juni">Juni</SelectItem>
-                      <SelectItem value="juli">Juli</SelectItem>
-                      <SelectItem value="agustus">Agustus</SelectItem>
-                      <SelectItem value="september">September</SelectItem>
-                      <SelectItem value="oktober">Oktober</SelectItem>
-                      <SelectItem value="november">November</SelectItem>
-                      <SelectItem value="desember">Desember</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Pilih Pegawai */}
-                <div className="space-y-4">
-                  <Label className="text-base font-semibold">Pilih Pegawai</Label>
-                  {selectedPegawai ? <Card className="bg-muted/50">
-                      <CardContent className="p-4">
-                        {(() => {
-                      const pegawai = pangkatData.find(p => p.id === selectedPegawai);
-                      if (!pegawai) return null;
-                      return <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <User className="w-5 h-5 text-primary" />
-                                <div>
-                                  <p className="font-medium">{pegawai.nama}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    NIP: {pegawai.nip} | {pegawai.pangkatSekarang} ({pegawai.golonganSekarang})
-                                  </p>
-                                </div>
-                              </div>
-                              <Button variant="outline" size="sm" onClick={() => setSelectedPegawai("")}>
-                                Ubah
-                              </Button>
-                            </div>;
-                    })()}
-                      </CardContent>
-                    </Card> : <Dialog open={isEmployeeDialogOpen} onOpenChange={setIsEmployeeDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" className="w-full">
-                          <Plus className="w-4 h-4 mr-2" />
-                          Pilih Pegawai
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl">
-                        <DialogHeader>
-                          <DialogTitle>Pilih Pegawai</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-2">
-                            <Search className="w-4 h-4" />
-                            <Input placeholder="Cari nama atau NIP..." value={searchEmployee} onChange={e => setSearchEmployee(e.target.value)} />
-                          </div>
-                          <div className="max-h-96 overflow-y-auto">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Nama</TableHead>
-                                  <TableHead>NIP</TableHead>
-                                  <TableHead>Unit</TableHead>
-                                  <TableHead>Jabatan</TableHead>
-                                  <TableHead>Aksi</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                 {pangkatData.filter(pegawai => pegawai.nama.toLowerCase().includes(searchEmployee.toLowerCase()) || pegawai.nip.includes(searchEmployee)).map(pegawai => {
-                                   // Find the actual employee data to get unit and jabatan
-                                   const employeeData = employees.find(e => e.id === pegawai.id);
-                                   return <TableRow key={pegawai.id}>
-                                    <TableCell className="font-medium">{pegawai.nama}</TableCell>
-                                    <TableCell>{pegawai.nip}</TableCell>
-                                    <TableCell>{employeeData?.unit || '-'}</TableCell>
-                                    <TableCell>{employeeData?.jabatan || '-'}</TableCell>
-                                    <TableCell>
-                                      <Button size="sm" onClick={() => {
-                                  setSelectedPegawai(pegawai.id);
-                                  setIsEmployeeDialogOpen(false);
-                                }}>
-                                        Pilih
-                                      </Button>
-                                    </TableCell>
-                                  </TableRow>
-                                 })}
-                              </TableBody>
-                            </Table>
+        <TabsContent value="create" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Form Pengajuan Kenaikan Pangkat</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Employee Selection */}
+              <div className="space-y-4">
+                <Label className="text-base font-semibold">1. Pilih Pegawai</Label>
+                {selectedEmployee ? (
+                  <Card className="bg-muted/50">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <User className="w-5 h-5 text-primary" />
+                          <div>
+                            <p className="font-medium">{selectedEmployee.nama}</p>
+                            <p className="text-sm text-muted-foreground">
+                              NIP: {selectedEmployee.nip || '-'} | {selectedEmployee.unit || '-'} | {selectedEmployee.jabatan || '-'}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Pangkat: {selectedEmployee.pangkat || '-'} | Masa Kerja: {selectedEmployee.masa_kerja || '-'}
+                            </p>
                           </div>
                         </div>
-                      </DialogContent>
-                    </Dialog>}
-                </div>
+                        <Button variant="outline" size="sm" onClick={() => setSelectedEmployee(null)}>
+                          Ubah
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Dialog open={isEmployeeDialogOpen} onOpenChange={setIsEmployeeDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Pilih Pegawai
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl">
+                      <DialogHeader>
+                        <DialogTitle>Pilih Pegawai</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Search className="w-4 h-4" />
+                          <Input
+                            placeholder="Cari nama atau NIP..."
+                            value={searchEmployee}
+                            onChange={(e) => setSearchEmployee(e.target.value)}
+                          />
+                        </div>
+                        <div className="max-h-96 overflow-y-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Nama</TableHead>
+                                <TableHead>NIP</TableHead>
+                                <TableHead>Unit</TableHead>
+                                <TableHead>Pangkat</TableHead>
+                                <TableHead>Aksi</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {filteredEmployees.map((employee) => (
+                                <TableRow key={employee.id}>
+                                  <TableCell className="font-medium">{employee.nama}</TableCell>
+                                  <TableCell>{employee.nip || '-'}</TableCell>
+                                  <TableCell>{employee.unit || '-'}</TableCell>
+                                  <TableCell>{employee.pangkat || '-'}</TableCell>
+                                  <TableCell>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedEmployee(employee);
+                                        setIsEmployeeDialogOpen(false);
+                                      }}
+                                    >
+                                      Pilih
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
 
-                {/* Employee Summary Card */}
-                {selectedPegawai && <Card className="bg-muted/50">
+              {/* Category Selection */}
+              <div className="space-y-4">
+                <Label className="text-base font-semibold">2. Pilih Kategori Kenaikan Pangkat</Label>
+                <Select value={selectedKategori} onValueChange={setSelectedKategori}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih kategori kenaikan pangkat" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(kategoriOptions).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Periode Selection */}
+              <div className="space-y-4">
+                <Label className="text-base font-semibold">3. Pilih Periode Kenaikan Pangkat</Label>
+                <Select value={selectedPeriode} onValueChange={setSelectedPeriode}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih periode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {periodeOptions.map((periode) => (
+                      <SelectItem key={periode} value={periode}>
+                        {periode}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Document Requirements */}
+              {selectedKategori && (
+                <div className="space-y-4">
+                  <Label className="text-base font-semibold">4. Persyaratan Dokumen</Label>
+                  <Card>
                     <CardContent className="p-4">
-                      {(() => {
-                    const pegawai = pangkatData.find(p => p.id === selectedPegawai);
-                    if (!pegawai) return null;
-                    return <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div>
-                                <p className="text-sm text-muted-foreground">Nama Pegawai</p>
-                                <p className="font-semibold">{pegawai.nama}</p>
-                                <p className="text-sm text-muted-foreground">NIP: {pegawai.nip}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground">Pangkat Saat Ini</p>
-                                <p className="font-semibold">{pegawai.pangkatSekarang}</p>
-                                <p className="text-sm text-muted-foreground">Golongan {pegawai.golonganSekarang}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground">Pangkat Tujuan</p>
-                                <p className="font-semibold text-primary">{pegawai.pangkatTujuan}</p>
-                                <p className="text-sm text-muted-foreground">Golongan {pegawai.golonganTujuan}</p>
-                              </div>
-                            </div>
-                            
-                            {/* Masa Kerja dalam Pangkat */}
-                            <div className="border-t pt-4">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Calendar className="w-4 h-4 text-muted-foreground" />
-                                <span className="text-sm font-medium">Masa Kerja dalam Pangkat</span>
-                              </div>
-                              <div className="space-y-2">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm text-muted-foreground">
-                                    {pegawai.masaKerja.tahun} tahun {pegawai.masaKerja.bulan} bulan
-                                  </span>
-                                  
-                                </div>
-                                
-                                
-                              </div>
-                            </div>
-                          </div>;
-                  })()}
-                    </CardContent>
-                  </Card>}
-
-                {/* Kategori Kenaikan Pangkat */}
-                <div className="space-y-2">
-                  <Label htmlFor="kategori-pangkat">Jenis/Kategori Kenaikan Pangkat</Label>
-                  <Select value={selectedKategori} onValueChange={setSelectedKategori}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih kategori kenaikan pangkat" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="reguler">Kenaikan Pangkat Reguler (Jabatan Pelaksana)</SelectItem>
-                      <SelectItem value="fungsional">Kenaikan Pangkat Jabatan Fungsional</SelectItem>
-                      <SelectItem value="struktural">Kenaikan Pangkat Jabatan Struktural</SelectItem>
-                      <SelectItem value="pertama_kali">Kenaikan Pangkat Pertama Kali</SelectItem>
-                      <SelectItem value="penyesuaian_ijazah">Kenaikan Pangkat Penyesuaian Ijazah</SelectItem>
-                      <SelectItem value="iid_ke_iiia">Kenaikan Pangkat Golongan II/d ke III/a</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Document Requirements Section */}
-                {selectedKategori && <Card>
-                    <CardHeader>
-                      <CardTitle>Dokumen Persyaratan - {getKategoriName(selectedKategori)}</CardTitle>
-                      <CardDescription>
-                        Silakan upload link Google Drive untuk setiap dokumen yang diperlukan
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {getDocumentRequirements(selectedKategori).map((doc, index) => <div key={index} className="space-y-2">
-                          <Label htmlFor={`doc-${index}`}>
-                            {index + 1}. {doc.nama}
-                            {doc.catatan && <span className="text-sm text-muted-foreground block mt-1">
-                                Catatan: {doc.catatan}
-                              </span>}
-                          </Label>
-                          <div className="flex gap-2">
-                            <Input id={`doc-${index}`} placeholder="Masukkan link Google Drive dokumen..." className="flex-1" value={documentLinks[`doc-${index}`] || ''} onChange={e => setDocumentLinks(prev => ({
-                        ...prev,
-                        [`doc-${index}`]: e.target.value
-                      }))} />
-                          </div>
-                        </div>)}
-                    </CardContent>
-                  </Card>}
-
-                {/* Catatan Tambahan */}
-                <div className="space-y-2">
-                  <Label htmlFor="catatan-tambahan">Catatan Tambahan (Opsional)</Label>
-                  <textarea id="catatan-tambahan" className="w-full min-h-[100px] px-3 py-2 border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none rounded-md" placeholder="Masukkan catatan atau keterangan tambahan jika diperlukan..." value={catatanTambahan} onChange={e => setCatatanTambahan(e.target.value)} />
-                </div>
-
-                {/* Informasi Penting */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <div className="flex items-start space-x-3">
-                    <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <h4 className="text-sm font-medium text-yellow-800 mb-1">Informasi Penting</h4>
-                      <p className="text-sm text-yellow-700">
-                        Pastikan semua dokumen yang diunggah sesuai dengan persyaratan dan dapat diakses melalui link Google Drive yang diberikan. Dokumen yang tidak lengkap atau tidak dapat diakses akan menyebabkan pengajuan dikembalikan untuk perbaikan.
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Dokumen yang perlu disiapkan (akan diupload pada tahap selanjutnya):
                       </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex justify-end space-x-3 pt-4">
-                  <Button variant="outline" className="flex items-center gap-2" onClick={() => setActiveTab("status")}>
-                    <FileText className="w-4 h-4" />
-                    Lihat Status Pengajuan
-                  </Button>
-                  <Button className="flex items-center gap-2" onClick={handleSubmitPengajuan} disabled={loading}>
-                    <TrendingUp className="w-4 h-4" />
-                    {loading ? "Mengirim..." : "Submit Pengajuan"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Tab: Status Usulan */}
-          <TabsContent value="status" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Status Usulan Kenaikan Pangkat</CardTitle>
-                <CardDescription>
-                  Pantau status pengajuan usulan kenaikan pangkat yang telah disubmit
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-6">
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <Label htmlFor="filter-periode">Filter berdasarkan Periode</Label>
-                      <Select value={filterPeriode} onValueChange={setFilterPeriode}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Semua periode" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Semua periode</SelectItem>
-                          <SelectItem value="januari">Januari</SelectItem>
-                          <SelectItem value="februari">Februari</SelectItem>
-                          <SelectItem value="maret">Maret</SelectItem>
-                          <SelectItem value="april">April</SelectItem>
-                          <SelectItem value="mei">Mei</SelectItem>
-                          <SelectItem value="juni">Juni</SelectItem>
-                          <SelectItem value="juli">Juli</SelectItem>
-                          <SelectItem value="agustus">Agustus</SelectItem>
-                          <SelectItem value="september">September</SelectItem>
-                          <SelectItem value="oktober">Oktober</SelectItem>
-                          <SelectItem value="november">November</SelectItem>
-                          <SelectItem value="desember">Desember</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-                {loading ? <div className="text-center py-12">
-                    <Clock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Memuat Data...</h3>
-                    <p className="text-muted-foreground">
-                      Sedang memuat data pengajuan kenaikan pangkat
-                    </p>
-                  </div> : applications.length === 0 ? <div className="text-center py-12">
-                    <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Belum Ada Pengajuan</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Anda belum memiliki pengajuan kenaikan pangkat yang disubmit.
-                    </p>
-                    <Button onClick={() => setActiveTab("submit")}>
-                      <TrendingUp className="w-4 h-4 mr-2" />
-                      Buat Pengajuan Baru
-                    </Button>
-                  </div> : <div className="space-y-4">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          
-                          <TableHead>Nama Pegawai</TableHead>
-                          <TableHead>Kategori</TableHead>
-                          <TableHead>Periode</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Tanggal Pengajuan</TableHead>
-                          <TableHead>Aksi</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {applications.filter(app => {
-                      if (!filterPeriode || filterPeriode === "all") return true;
-                      const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
-                      return estimasiData.periode?.toLowerCase() === filterPeriode.toLowerCase();
-                    }).map(app => {
-                      const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
-                      return <TableRow key={app.id}>
-                              
-                              <TableCell className="font-medium">
-                                {estimasiData.employee_name || 'N/A'}
-                              </TableCell>
-                              <TableCell>
-                                {estimasiData.kategori_name || 'N/A'}
-                              </TableCell>
-                              <TableCell className="capitalize">
-                                {estimasiData.periode || 'N/A'}
-                              </TableCell>
-                              <TableCell>
-                                {getStatusBadge(app.status)}
-                              </TableCell>
-                              <TableCell>
-                                {new Date(app.created_at).toLocaleDateString('id-ID')}
-                              </TableCell>
-                              <TableCell>
-                                <Button variant="outline" size="sm" onClick={() => {
-                            setSelectedApplicationForRevision(app);
-                            setIsRevisionModalOpen(true);
-                          }}>
-                                  <FileText className="w-4 h-4 mr-2" />
-                                  Detail
-                                </Button>
-                              </TableCell>
-                            </TableRow>;
-                    })}
-                      </TableBody>
-                    </Table>
-                  </div>}
-              </CardContent>
-            </Card>
-
-            {/* Recent Timeline */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Timeline Terbaru</CardTitle>
-                <CardDescription>
-                  Aktivitas terbaru terkait pengajuan kenaikan pangkat
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {applications.length > 0 ? <div className="space-y-4">
-                    {applications.slice(0, 5).map(app => {
-                  const estimasiData = app.estimasi ? JSON.parse(app.estimasi) : {};
-                  return <div key={app.id} className="flex items-start gap-4 pb-4 border-b last:border-b-0">
-                          <div className="flex-shrink-0">
-                            {app.status === 'submitted' && <Clock className="w-5 h-5 text-yellow-500" />}
-                            {app.status === 'approved' && <CheckCircle className="w-5 h-5 text-blue-500" />}
-                            {app.status === 'completed' && <CheckCircle className="w-5 h-5 text-green-500" />}
-                            {app.status === 'revision_needed' && <AlertTriangle className="w-5 h-5 text-red-500" />}
-                            {app.status === 'in_review' && <Clock className="w-5 h-5 text-orange-500" />}
+                      <div className="grid grid-cols-1 gap-2">
+                        {getDocumentRequirements(selectedKategori).map((doc, index) => (
+                          <div key={index} className="flex items-start gap-2 text-sm">
+                            <span className="font-medium text-primary min-w-6">
+                              {index + 1}.
+                            </span>
+                            <div>
+                              <span className="font-medium">{doc.nama}</span>
+                              {doc.catatan && (
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  Catatan: {doc.catatan}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">
-                              Pengajuan kenaikan pangkat untuk {estimasiData.employee_name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(app.created_at).toLocaleDateString('id-ID', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                            </p>
-                          </div>
-                          <div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <div className="flex justify-end gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedEmployee(null);
+                    setSelectedKategori('');
+                    setSelectedPeriode('');
+                  }}
+                >
+                  Reset
+                </Button>
+                <Button
+                  onClick={handleSubmitApplication}
+                  disabled={loading || !selectedEmployee || !selectedKategori || !selectedPeriode}
+                >
+                  {loading ? 'Menyimpan...' : 'Buat Pengajuan'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="list" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Daftar Pengajuan Kenaikan Pangkat</CardTitle>
+              <CardDescription>
+                Semua pengajuan kenaikan pangkat yang telah dibuat beserta status verifikasi dokumen
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-8">
+                  <p>Memuat data pengajuan...</p>
+                </div>
+              ) : applications.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Belum ada pengajuan kenaikan pangkat</p>
+                  <Button 
+                    className="mt-4" 
+                    onClick={() => setActiveTab('create')}
+                  >
+                    Buat Pengajuan Pertama
+                  </Button>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nomor Usulan</TableHead>
+                      <TableHead>Pegawai</TableHead>
+                      <TableHead>Kategori</TableHead>
+                      <TableHead>Periode</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Status Dokumen</TableHead>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                     {applications.map((app) => {
+                       const employeeData = app.estimasi ? JSON.parse(app.estimasi) : {};
+                       return (
+                       <TableRow key={app.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{employeeData.nomor_usulan || '-'}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {app.id.slice(0, 8)}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{employeeData.employee_name || '-'}</p>
+                              <p className="text-sm text-muted-foreground">
+                                NIP: {employeeData.employee_nip || '-'}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <p className="text-sm">{employeeData.kategori_name || '-'}</p>
+                          </TableCell>
+                          <TableCell>
+                            <p className="text-sm">{employeeData.periode || '-'}</p>
+                          </TableCell>
+                          <TableCell>
                             {getStatusBadge(app.status)}
-                          </div>
-                        </div>;
-                })}
-                  </div> : <div className="text-center py-8">
-                    <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-muted-foreground">
-                      Timeline akan ditampilkan setelah pengajuan dibuat
-                    </p>
-                  </div>}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-        </Tabs>
-
-        {/* Document Revision Modal */}
-        {selectedApplicationForRevision && <DocumentRevisionModal open={isRevisionModalOpen} onOpenChange={setIsRevisionModalOpen} application={selectedApplicationForRevision} onRevisionSubmitted={() => {
-        loadApplications();
-        setSelectedApplicationForRevision(null);
-      }} />}
-      </div>
-    </div>;
+                          </TableCell>
+                          <TableCell>
+                            <DocumentVerificationStatus 
+                              applicationId={app.id} 
+                              applicationStatus={app.status}
+                              compact={true}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {new Date(app.created_at).toLocaleDateString('id-ID', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/detail-mutasi-terpadu/${app.id}`)}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              Detail
+                            </Button>
+                          </TableCell>
+                       </TableRow>
+                       );
+                     })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 }

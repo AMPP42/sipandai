@@ -30,11 +30,14 @@ export default function RevisionSubmissionModal({
     try {
       setLoading(true);
 
-      // Use the new submit_application_revision function
+      // Update application status to submitted for re-verification
       const { error } = await supabase
-        .rpc('submit_application_revision', {
-          application_id: application.id
-        });
+        .from('applications')
+        .update({
+          status: 'submitted',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', application.id);
 
       if (error) throw error;
 
