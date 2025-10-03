@@ -259,6 +259,17 @@ export default function ReminderPensiun() {
       }
     }
     
+    // Additional status badges for completed workflow
+    if (status === 'biro_osdma_submitted' || app.biro_osdma_status === 'submitted') {
+      return <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">Berkas di Ajukan ke Biro OSDMA</Badge>;
+    }
+    if (status === 'biro_osdma_review' || app.biro_osdma_status === 'in_progress') {
+      return <Badge className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">Dalam Review Biro OSDMA</Badge>;
+    }
+    if (status === 'completed' || app.biro_osdma_status === 'approved') {
+      return <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">Selesai - SK Terbit</Badge>;
+    }
+    
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline" | "warning"> = {
       'draft': 'secondary',
       'submitted': 'default',
@@ -274,7 +285,7 @@ export default function ReminderPensiun() {
       const labels: Record<string, string> = {
         'draft': 'Draft',
         'in_review': 'Dalam Review',
-        'approved': 'Disetujui',
+        'approved': 'Diproses',
         'rejected': 'Ditolak',
         'revision_needed': 'Perlu Perbaikan'
       };
