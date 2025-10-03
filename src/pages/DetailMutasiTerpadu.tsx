@@ -900,7 +900,7 @@ export default function DetailMutasiTerpadu() {
                   );
                 })()}
                 
-                {/* Calculate timeline steps and render */}
+                {/* Calculate timeline steps and render - All steps always visible */}
                 {(() => {
                   const steps = [];
                   const createdAt = application?.created_at ? new Date(application.created_at) : null;
@@ -909,12 +909,15 @@ export default function DetailMutasiTerpadu() {
                   const notaDinasUploadedAt = application?.nota_dinas_uploaded_at ? new Date(application.nota_dinas_uploaded_at) : null;
                   const biroDecisionAt = application?.biro_osdma_decision_at ? new Date(application.biro_osdma_decision_at) : null;
                   const skUploadedAt = application?.sk_uploaded_at ? new Date(application.sk_uploaded_at) : null;
+                  
+                  const isSubmitted = application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed' || application?.nota_dinas_uploaded_at;
+                  const isApproved = application?.status === 'approved' || application?.nota_dinas_uploaded_at;
 
                   // Step 1: Pengajuan dibuat
                   steps.push(
                     <div key="created" className="flex flex-col items-center z-20 bg-white px-6 relative">
                       {/* Connector line - green if next step completed */}
-                      <div className={`absolute left-full top-6 w-32 h-0.5 ${submittedAt ? 'bg-green-500' : 'bg-gray-200'}`}></div>
+                      <div className={`absolute left-full top-6 w-32 h-0.5 ${submittedAt ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                       
                       <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mb-2">
                         <CheckCircle className="w-6 h-6 text-white" />
@@ -934,11 +937,10 @@ export default function DetailMutasiTerpadu() {
                   );
 
                   // Step 2: Data diajukan
-                  const isSubmitted = application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed' || application?.nota_dinas_uploaded_at;
                   steps.push(
                     <div key="submitted" className="flex flex-col items-center z-20 bg-white px-6 relative">
                       {/* Connector line */}
-                      <div className={`absolute left-full top-6 w-32 h-0.5 ${approvedAt ? 'bg-green-500' : 'bg-gray-200'}`}></div>
+                      <div className={`absolute left-full top-6 w-32 h-0.5 ${approvedAt ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                       
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${isSubmitted ? 'bg-green-500' : 'bg-gray-300'}`}>
                         {isSubmitted ? <Send className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
@@ -960,16 +962,14 @@ export default function DetailMutasiTerpadu() {
                   // Step 3: Disetujui & Diproses
                   steps.push(
                     <div key="approved" className="flex flex-col items-center z-20 bg-white px-6 relative">
-                      {/* Connector line */}
-                      {(application?.status === 'approved' || application?.nota_dinas_uploaded_at) && (
-                        <div className={`absolute left-full top-6 w-32 h-0.5 ${notaDinasUploadedAt ? 'bg-green-500' : 'bg-gray-200'}`}></div>
-                      )}
+                      {/* Connector line - always show */}
+                      <div className={`absolute left-full top-6 w-32 h-0.5 ${notaDinasUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                       
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${application?.status === 'approved' || application?.nota_dinas_uploaded_at ? 'bg-green-500' : application?.status === 'revision_needed' ? 'bg-yellow-500' : 'bg-gray-300'}`}>
-                        {application?.status === 'approved' || application?.nota_dinas_uploaded_at ? <CheckCircle className="w-6 h-6 text-white" /> : application?.status === 'revision_needed' ? <AlertTriangle className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${isApproved ? 'bg-green-500' : application?.status === 'revision_needed' ? 'bg-yellow-500' : 'bg-gray-300'}`}>
+                        {isApproved ? <CheckCircle className="w-6 h-6 text-white" /> : application?.status === 'revision_needed' ? <AlertTriangle className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
                       </div>
                       <div className="text-center min-w-0 max-w-40">
-                        {application?.status === 'approved' || application?.nota_dinas_uploaded_at ? <>
+                        {isApproved ? <>
                           <h4 className="text-sm font-semibold text-gray-900 mb-1">Disetujui & Diproses</h4>
                           {approvedAt && <>
                             <p className="text-xs text-gray-600 break-words">
@@ -992,45 +992,38 @@ export default function DetailMutasiTerpadu() {
                     </div>
                   );
 
-                  // Show remaining steps only if approved
-                  if (application?.status === 'approved' || application?.nota_dinas_uploaded_at) {
-                    // Step 4: Berkas diajukan ke Biro OSDMA
-                    steps.push(
-                      <div key="biro-submitted" className="flex flex-col items-center z-20 bg-white px-6 relative">
-                        {/* Connector line */}
-                        {notaDinasUploadedAt && (
-                          <div className={`absolute left-full top-6 w-32 h-0.5 ${
-                            application.biro_osdma_status === 'approved' ? 'bg-green-500' : 
-                            application.biro_osdma_status === 'rejected' ? 'bg-red-500' : 
-                            'bg-gray-200'
-                          }`}></div>
-                        )}
+                  // Step 4: Berkas diajukan ke Biro OSDMA - Always show
+                  steps.push(
+                    <div key="biro-submitted" className="flex flex-col items-center z-20 bg-white px-6 relative">
+                      {/* Connector line - always show */}
+                      <div className={`absolute left-full top-6 w-32 h-0.5 ${
+                        application.biro_osdma_status === 'approved' ? 'bg-green-500' : 
+                        application.biro_osdma_status === 'rejected' ? 'bg-red-500' : 
+                        'bg-gray-300'
+                      }`}></div>
                         
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${notaDinasUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}>
-                          {notaDinasUploadedAt ? <FileCheck className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
-                        </div>
-                        <div className="text-center min-w-0 max-w-40">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-1">Berkas Diajukan ke Biro OSDMA</h4>
-                          {notaDinasUploadedAt ? <>
-                            <p className="text-xs text-gray-600 break-words">
-                              {notaDinasUploadedAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {notaDinasUploadedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          </> : <p className="text-xs text-gray-500">Belum diajukan</p>}
-                        </div>
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${notaDinasUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}>
+                        {notaDinasUploadedAt ? <FileCheck className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
                       </div>
-                    );
+                      <div className="text-center min-w-0 max-w-40">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-1">Berkas Diajukan ke Biro OSDMA</h4>
+                        {notaDinasUploadedAt ? <>
+                          <p className="text-xs text-gray-600 break-words">
+                            {notaDinasUploadedAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {notaDinasUploadedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </> : <p className="text-xs text-gray-500">Belum diajukan</p>}
+                      </div>
+                    </div>
+                  );
 
-                    if (notaDinasUploadedAt) {
-                      // Step 5: Status Biro OSDMA
-                      steps.push(
-                        <div key="biro-decision" className="flex flex-col items-center z-20 bg-white px-6 relative">
-                          {/* Connector line */}
-                          {application.biro_osdma_status === 'approved' && (
-                            <div className={`absolute left-full top-6 w-32 h-0.5 ${skUploadedAt ? 'bg-green-500' : 'bg-gray-200'}`}></div>
-                          )}
+                  // Step 5: Status Biro OSDMA - Always show
+                  steps.push(
+                    <div key="biro-decision" className="flex flex-col items-center z-20 bg-white px-6 relative">
+                      {/* Connector line - always show */}
+                      <div className={`absolute left-full top-6 w-32 h-0.5 ${skUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                           
                           <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
                             application.biro_osdma_status === 'approved' ? 'bg-green-500' : 
@@ -1074,37 +1067,34 @@ export default function DetailMutasiTerpadu() {
                             </>}
                           </div>
                         </div>
-                      );
+                      </div>
+                    );
 
-                      if (application.biro_osdma_status === 'approved') {
-                        // Step 6: SK Terbit
-                        steps.push(
-                          <div key="sk-published" className="flex flex-col items-center z-20 bg-white px-6">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${skUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}>
-                              {skUploadedAt ? <CheckCircle className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
-                            </div>
-                            <div className="text-center min-w-0 max-w-40">
-                              <h4 className="text-sm font-semibold text-gray-900 mb-1">SK Telah Terbit</h4>
-                              {skUploadedAt ? <>
-                                <p className="text-xs text-gray-600 break-words">
-                                  {skUploadedAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {skUploadedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                                </p>
-                                {application.sk_url && (
-                                  <Button size="sm" variant="outline" className="mt-2" onClick={() => window.open(application.sk_url!, '_blank')}>
-                                    <Eye className="w-4 h-4 mr-2" />
-                                    Lihat SK
-                                  </Button>
-                                )}
-                              </> : <p className="text-xs text-gray-500">Belum terbit</p>}
-                            </div>
-                          </div>
-                        );
-                      }
-                    }
-                  }
+                  // Step 6: SK Terbit - Always show
+                  steps.push(
+                    <div key="sk-published" className="flex flex-col items-center z-20 bg-white px-6">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${skUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}>
+                        {skUploadedAt ? <CheckCircle className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
+                      </div>
+                      <div className="text-center min-w-0 max-w-40">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-1">SK Telah Terbit</h4>
+                        {skUploadedAt ? <>
+                          <p className="text-xs text-gray-600 break-words">
+                            {skUploadedAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {skUploadedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                          {application.sk_url && (
+                            <Button size="sm" variant="outline" className="mt-2" onClick={() => window.open(application.sk_url!, '_blank')}>
+                              <Eye className="w-4 h-4 mr-2" />
+                              Lihat SK
+                            </Button>
+                          )}
+                        </> : <p className="text-xs text-gray-500">Belum terbit</p>}
+                      </div>
+                    </div>
+                  );
 
                   return steps;
                 })()}
@@ -1472,5 +1462,6 @@ export default function DetailMutasiTerpadu() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>;
+    </div>
+  );
 }
