@@ -534,18 +534,28 @@ export default function DetailMutasiTerpadu() {
 
         toast({
           title: "Berhasil",
-          description: `Perbaikan usulan mutasi untuk ${application.employee_data.employee_name} berhasil dikirim ulang!`,
+          description: `Perbaikan usulan untuk ${application.employee_data.employee_name} berhasil dikirim ulang!`,
         });
 
         setApplicationSubmitted(true);
 
-        // Clear edit state and navigate back to list
+        // Clear edit state
         setIsEditing(false);
         setDocumentVerificationStatus({});
         setFixedDocuments(new Set());
         setDocuments({});
         setAdditionalNotes('');
-        navigate('/apps/pengajuan-mutasi-terpadu?tab=list');
+        
+        // Navigate to appropriate list page based on application type
+        setTimeout(() => {
+          if (application.jenis === 'kenaikan_pangkat') {
+            navigate('/apps/kenaikan-pangkat?tab=list');
+          } else if (application.jenis === 'pensiun') {
+            navigate('/apps/reminder-pensiun?tab=list');
+          } else {
+            navigate('/apps/pengajuan-mutasi-terpadu?tab=list');
+          }
+        }, 1000);
 
       } else {
         // Submit new application
@@ -592,11 +602,21 @@ export default function DetailMutasiTerpadu() {
 
         toast({
           title: "Berhasil",
-          description: `Pengajuan mutasi untuk ${application.employee_data.employee_name} berhasil disubmit dan sedang menunggu verifikasi!`,
+          description: `Pengajuan untuk ${application.employee_data.employee_name} berhasil disubmit dan sedang menunggu verifikasi!`,
         });
 
         setApplicationSubmitted(true);
-        navigate('/apps/pengajuan-mutasi-terpadu?tab=list');
+        
+        // Navigate to appropriate list page based on application type
+        setTimeout(() => {
+          if (application.jenis === 'kenaikan_pangkat') {
+            navigate('/apps/kenaikan-pangkat?tab=list');
+          } else if (application.jenis === 'pensiun') {
+            navigate('/apps/reminder-pensiun?tab=list');
+          } else {
+            navigate('/apps/pengajuan-mutasi-terpadu?tab=list');
+          }
+        }, 1000);
       }
 
     } catch (error: any) {
