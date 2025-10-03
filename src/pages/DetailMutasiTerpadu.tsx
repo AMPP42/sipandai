@@ -740,7 +740,8 @@ export default function DetailMutasiTerpadu() {
     };
     return urls[application.jenis] || '/apps';
   };
-  return <div className="container mx-auto py-6 space-y-6">
+  return (
+    <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="outline" size="sm" onClick={() => navigate(getBackUrl())}>
@@ -1067,7 +1068,6 @@ export default function DetailMutasiTerpadu() {
                             </>}
                           </div>
                         </div>
-                      </div>
                     );
 
                   // Step 6: SK Terbit - Always show
@@ -1157,8 +1157,7 @@ export default function DetailMutasiTerpadu() {
           <CardContent className="space-y-4">
             {application.employee_data && <>
                 <div>
-                  <Label className="text-sm font-medium">Pegawai yang Diusulkan
-              </Label>
+                  <Label className="text-sm font-medium">Pegawai yang Diusulkan</Label>
                   <p className="mt-1 font-medium">{application.employee_data.employee_name}</p>
                   <p className="text-sm text-muted-foreground">
                     NIP: {application.employee_data.employee_nip}
