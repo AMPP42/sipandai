@@ -861,9 +861,7 @@ export default function DetailMutasiTerpadu() {
                     if (!start || !end) return null;
                     const diffMs = end.getTime() - start.getTime();
                     const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    if (days > 0) return `${days} hari ${hours} jam`;
-                    return `${hours} jam`;
+                    return days > 0 ? `${days} hari` : '< 1 hari';
                   };
 
                   // Step 1: Pengajuan dibuat
@@ -992,12 +990,6 @@ export default function DetailMutasiTerpadu() {
                             </p>
                           </> : <p className="text-xs text-gray-500">Belum diajukan</p>}
                         </div>
-                        {!notaDinasUploadedAt && user?.role === 'admin_pusat' && (
-                          <Button size="sm" className="mt-2" onClick={() => setShowUploadNotaDinasDialog(true)}>
-                            <Upload className="w-4 h-4 mr-2" />
-                            Upload Nota Dinas
-                          </Button>
-                        )}
                       </div>
                     );
 
@@ -1058,11 +1050,6 @@ export default function DetailMutasiTerpadu() {
                               <p className="text-xs text-gray-500">Dalam proses review</p>
                             </>}
                           </div>
-                          {!application.biro_osdma_status && user?.role === 'admin_pusat' && (
-                            <Button size="sm" className="mt-2" onClick={() => setShowUpdateBiroStatusDialog(true)}>
-                              Update Status
-                            </Button>
-                          )}
                         </div>
                       );
 
@@ -1102,12 +1089,6 @@ export default function DetailMutasiTerpadu() {
                                 )}
                               </> : <p className="text-xs text-gray-500">Belum terbit</p>}
                             </div>
-                            {!skUploadedAt && user?.role === 'admin_pusat' && (
-                              <Button size="sm" className="mt-2" onClick={() => setShowUploadSKDialog(true)}>
-                                <Upload className="w-4 h-4 mr-2" />
-                                Upload SK
-                              </Button>
-                            )}
                           </div>
                         );
                       }
