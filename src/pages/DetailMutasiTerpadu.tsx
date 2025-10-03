@@ -87,11 +87,12 @@ export default function DetailMutasiTerpadu() {
     }
   }, [id]);
 
-  // Reload application when window gains focus to get latest status
+  // Reload application and workflow links when window gains focus to get latest status
   useEffect(() => {
     const handleFocus = () => {
       if (id && !isEditing) {
         loadApplication();
+        loadWorkflowLinks();
       }
     };
     
