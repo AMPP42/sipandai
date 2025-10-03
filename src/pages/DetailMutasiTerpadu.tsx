@@ -1307,7 +1307,7 @@ export default function DetailMutasiTerpadu() {
                   <>
                     <Separator />
                     
-                    {application.status === 'biro_osdma_submitted' && workflowLinks['biro_osdma_submitted'] && (
+                    {workflowLinks['biro_osdma_submitted'] && (
                       <div>
                         <Label className="text-sm font-medium">Bukti Berkas Diajukan ke Biro OSDMA</Label>
                         <div className="mt-2 flex items-center gap-2">
@@ -1324,7 +1324,7 @@ export default function DetailMutasiTerpadu() {
                       </div>
                     )}
 
-                    {application.status === 'biro_osdma_review' && workflowLinks['biro_osdma_review'] && (
+                    {workflowLinks['biro_osdma_review'] && (
                       <div>
                         <Label className="text-sm font-medium">Bukti Proses Review Biro OSDMA</Label>
                         <div className="mt-2 flex items-center gap-2">
@@ -1341,7 +1341,7 @@ export default function DetailMutasiTerpadu() {
                       </div>
                     )}
 
-                    {application.status === 'completed' && workflowLinks['completed'] && (
+                    {workflowLinks['completed'] && (
                       <div>
                         <Label className="text-sm font-medium">Bukti SK Telah Terbit</Label>
                         <div className="mt-2 flex items-center gap-2">
