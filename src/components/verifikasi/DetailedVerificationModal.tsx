@@ -87,35 +87,26 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
     try {
       let documents: ActualDocument[] = [];
       
-      // For Kenaikan Pangkat applications, extract documents from estimasi JSON
-      if (application.jenis === 'kenaikan_pangkat' && application.estimasi) {
-        try {
-          const estimasiData = JSON.parse(application.estimasi);
-          if (estimasiData.document_links) {
-            // Create document objects from the links in estimasi
-            documents = Object.entries(estimasiData.document_links).map(([key, link], index) => ({
-              id: `${application.id}-${key}`,
-              title: getKenaikanPangkatDocumentName(key, estimasiData.kategori),
-              drive_link: link as string,
-              document_category: 'kenaikan_pangkat',
-              document_index: index,
-              created_at: application.created_at
-            }));
-          }
-        } catch (parseError) {
-          console.error('Error parsing estimasi JSON:', parseError);
-        }
-      } else {
-        // For other applications, load from documents table
-        const { data: documentsData, error: documentsError } = await supabase
-          .from('documents')
-          .select('*')
-          .eq('application_id', application.id)
-          .order('document_index');
+      // Load from documents table for all application types
+      const { data: documentsData, error: documentsError } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('application_id', application.id)
+        .order('document_index');
 
-        if (documentsError) throw documentsError;
-        documents = (documentsData || []) as ActualDocument[];
+      if (documentsError) {
+        console.error('Error loading documents:', documentsError);
+        throw documentsError;
       }
+      
+      documents = (documentsData || []) as ActualDocument[];
+      
+      console.log('Loaded documents from database:', {
+        applicationId: application.id,
+        applicationType: application.jenis,
+        documentsCount: documents.length,
+        documents: documents
+      });
 
       setActualDocuments(documents);
 
@@ -126,11 +117,26 @@ export default function DetailedVerificationModal({ open, onOpenChange, applicat
         .eq('application_id', application.id)
         .order('document_type');
 
-      if (verificationsError) throw verificationsError;
+      if (verificationsError) {
+        console.error('Error loading verifications:', verificationsError);
+        throw verificationsError;
+      }
+
+      console.log('Loaded verifications:', {
+        applicationId: application.id,
+        verificationsCount: verifications?.length || 0,
+        verifications: verifications
+      });
 
       // If no verifications exist, create initial ones based on actual uploaded documents
       if (!verifications || verifications.length === 0) {
-        await initializeDocumentVerifications(documents || []);
+        if (documents.length > 0) {
+          console.log('No verifications found, initializing with documents:', documents.length);
+          await initializeDocumentVerifications(documents);
+        } else {
+          console.log('No documents found to initialize verifications');
+          toast.error('Tidak ada dokumen yang ditemukan untuk usulan ini');
+        }
       } else {
         setDocumentVerifications(verifications as DocumentVerification[]);
       }
