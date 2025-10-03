@@ -888,10 +888,9 @@ export default function DetailMutasiTerpadu() {
                   const duration1 = calculateDuration(createdAt, submittedAt);
                   if (submittedAt && duration1) {
                     steps.push(
-                      <div key="dur1" className="flex items-center justify-center px-2 z-20 bg-white">
-                        <div className="w-px h-12 bg-green-500"></div>
-                        <p className="text-xs text-green-600 font-medium px-2">{duration1}</p>
-                        <div className="w-px h-12 bg-green-500"></div>
+                      <div key="dur1" className="flex flex-col items-center justify-center px-4 z-20 bg-white">
+                        <div className="w-16 h-0.5 bg-green-500"></div>
+                        <p className="text-xs text-green-600 font-medium mt-1">{duration1}</p>
                       </div>
                     );
                   }
@@ -921,10 +920,9 @@ export default function DetailMutasiTerpadu() {
                   const duration2 = calculateDuration(submittedAt, approvedAt);
                   if (approvedAt && duration2) {
                     steps.push(
-                      <div key="dur2" className="flex items-center justify-center px-2 z-20 bg-white">
-                        <div className="w-px h-12 bg-green-500"></div>
-                        <p className="text-xs text-green-600 font-medium px-2">{duration2}</p>
-                        <div className="w-px h-12 bg-green-500"></div>
+                      <div key="dur2" className="flex flex-col items-center justify-center px-4 z-20 bg-white">
+                        <div className="w-16 h-0.5 bg-green-500"></div>
+                        <p className="text-xs text-green-600 font-medium mt-1">{duration2}</p>
                       </div>
                     );
                   }
@@ -965,10 +963,9 @@ export default function DetailMutasiTerpadu() {
                     const duration3 = calculateDuration(approvedAt, notaDinasUploadedAt);
                     if (notaDinasUploadedAt && duration3) {
                       steps.push(
-                        <div key="dur3" className="flex items-center justify-center px-2 z-20 bg-white">
-                          <div className="w-px h-12 bg-green-500"></div>
-                          <p className="text-xs text-green-600 font-medium px-2">{duration3}</p>
-                          <div className="w-px h-12 bg-green-500"></div>
+                        <div key="dur3" className="flex flex-col items-center justify-center px-4 z-20 bg-white">
+                          <div className="w-16 h-0.5 bg-green-500"></div>
+                          <p className="text-xs text-green-600 font-medium mt-1">{duration3}</p>
                         </div>
                       );
                     }
@@ -998,10 +995,9 @@ export default function DetailMutasiTerpadu() {
                       const duration4 = calculateDuration(notaDinasUploadedAt, biroDecisionAt);
                       if (biroDecisionAt && duration4) {
                         steps.push(
-                          <div key="dur4" className="flex items-center justify-center px-2 z-20 bg-white">
-                            <div className={`w-px h-12 ${application.biro_osdma_status === 'approved' ? 'bg-green-500' : application.biro_osdma_status === 'rejected' ? 'bg-red-500' : 'bg-gray-300'}`}></div>
-                            {duration4 && <p className={`text-xs font-medium px-2 ${application.biro_osdma_status === 'approved' ? 'text-green-600' : application.biro_osdma_status === 'rejected' ? 'text-red-600' : 'text-gray-500'}`}>{duration4}</p>}
-                            <div className={`w-px h-12 ${application.biro_osdma_status === 'approved' ? 'bg-green-500' : application.biro_osdma_status === 'rejected' ? 'bg-red-500' : 'bg-gray-300'}`}></div>
+                          <div key="dur4" className="flex flex-col items-center justify-center px-4 z-20 bg-white">
+                            <div className={`w-16 h-0.5 ${application.biro_osdma_status === 'approved' ? 'bg-green-500' : application.biro_osdma_status === 'rejected' ? 'bg-red-500' : 'bg-gray-300'}`}></div>
+                            {duration4 && <p className={`text-xs font-medium mt-1 ${application.biro_osdma_status === 'approved' ? 'text-green-600' : application.biro_osdma_status === 'rejected' ? 'text-red-600' : 'text-gray-500'}`}>{duration4}</p>}
                           </div>
                         );
                       }
@@ -1058,10 +1054,9 @@ export default function DetailMutasiTerpadu() {
                         const duration5 = calculateDuration(biroDecisionAt, skUploadedAt);
                         if (skUploadedAt && duration5) {
                           steps.push(
-                            <div key="dur5" className="flex items-center justify-center px-2 z-20 bg-white">
-                              <div className="w-px h-12 bg-green-500"></div>
-                              <p className="text-xs text-green-600 font-medium px-2">{duration5}</p>
-                              <div className="w-px h-12 bg-green-500"></div>
+                            <div key="dur5" className="flex flex-col items-center justify-center px-4 z-20 bg-white">
+                              <div className="w-16 h-0.5 bg-green-500"></div>
+                              <p className="text-xs text-green-600 font-medium mt-1">{duration5}</p>
                             </div>
                           );
                         }
