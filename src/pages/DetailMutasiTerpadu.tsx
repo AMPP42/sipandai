@@ -86,6 +86,18 @@ export default function DetailMutasiTerpadu() {
       loadWorkflowLinks();
     }
   }, [id]);
+
+  // Reload application when window gains focus to get latest status
+  useEffect(() => {
+    const handleFocus = () => {
+      if (id && !isEditing) {
+        loadApplication();
+      }
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [id, isEditing]);
   useEffect(() => {
     if (application) {
       loadDocumentRequirements();
@@ -96,6 +108,12 @@ export default function DetailMutasiTerpadu() {
       // Check if we're in edit mode or if status is revision_needed
       const urlParams = new URLSearchParams(location.search);
       const editMode = urlParams.get('edit');
+      
+      // Load existing documents first to preserve them
+      if (application.status !== 'draft') {
+        loadDocumentsForViewing();
+      }
+      
       if (editMode || application.status === 'revision_needed') {
         setIsEditing(true);
         loadApplicationForEdit();
@@ -703,8 +721,25 @@ export default function DetailMutasiTerpadu() {
         className: "bg-yellow-100 text-yellow-700"
       }
     };
-    const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.draft;
+      const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.draft;
     return <Badge className={statusInfo.className}>{statusInfo.label}</Badge>;
+  };
+  
+  // Additional status badges for Biro OSDMA workflow
+  const getBiroOsdmaStatusBadge = () => {
+    if (!application) return null;
+    
+    if (application.status === 'biro_osdma_submitted' || application.biro_osdma_status === 'submitted') {
+      return <Badge className="bg-purple-100 text-purple-700">Berkas di Ajukan ke Biro OSDMA</Badge>;
+    }
+    if (application.status === 'biro_osdma_review' || application.biro_osdma_status === 'in_progress') {
+      return <Badge className="bg-indigo-100 text-indigo-700">Dalam Review Biro OSDMA</Badge>;
+    }
+    if (application.status === 'completed' || application.biro_osdma_status === 'approved') {
+      return <Badge className="bg-green-100 text-green-700">Selesai - SK Terbit</Badge>;
+    }
+    
+    return null;
   };
   const getVerificationStatusBadge = (status: string) => {
     switch (status) {
@@ -796,7 +831,7 @@ export default function DetailMutasiTerpadu() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {getStatusBadge(application.status, application.keterangan)}
+          {getBiroOsdmaStatusBadge() || getStatusBadge(application.status, application.keterangan)}
           {application.status === 'revision_needed' && !isEditing && <Button onClick={() => setIsEditing(true)} variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Edit Usulan
