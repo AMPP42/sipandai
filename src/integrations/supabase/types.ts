@@ -1128,6 +1128,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          unit: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          unit?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          unit?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       usulan_mutasi: {
         Row: {
           alasan_mutasi: string
@@ -1310,6 +1334,17 @@ export type Database = {
           total_applications: number
         }[]
       }
+      get_user_unit: {
+        Args: { _user_id: string }
+        Returns: string
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_admin_pusat: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1362,6 +1397,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin_pusat" | "admin_unit"
       application_status:
         | "draft"
         | "submitted"
@@ -1505,6 +1541,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin_pusat", "admin_unit"],
       application_status: [
         "draft",
         "submitted",
