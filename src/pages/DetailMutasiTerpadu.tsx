@@ -1343,68 +1343,98 @@ export default function DetailMutasiTerpadu() {
                   </p>
                 </div>
 
-                {/* Supporting Documents for Advanced Timeline Stages */}
-                {(() => {
-                  console.log('Current application status:', application.status);
-                  console.log('Available workflow links:', workflowLinks);
-                  return null;
-                })()}
-                {(application.status === 'biro_osdma_submitted' || 
+                {/* Workflow Supporting Documents */}
+                {(application.status === 'approved' || 
+                  application.status === 'biro_osdma_submitted' || 
                   application.status === 'biro_osdma_review' || 
                   application.status === 'completed') && (
                   <>
                     <Separator />
                     
-                    {workflowLinks['biro_osdma_submitted'] && (
-                      <div>
-                        <Label className="text-sm font-medium">Bukti Berkas Diajukan ke Biro OSDMA</Label>
-                        <div className="mt-2 flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open(workflowLinks['biro_osdma_submitted'], '_blank')}
-                            className="gap-2"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                            Lihat Bukti Pengajuan
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+                    <div>
+                      <Label className="text-sm font-medium mb-3 block">Bukti Dukung Proses</Label>
+                      <div className="space-y-2">
+                        {/* Bukti Disetujui */}
+                        {(application.status === 'approved' || 
+                          application.status === 'biro_osdma_submitted' || 
+                          application.status === 'biro_osdma_review' || 
+                          application.status === 'completed') && workflowLinks['approved'] && (
+                          <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg">
+                            <span className="text-sm text-green-800">Bukti Usulan Disetujui</span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(workflowLinks['approved'], '_blank')}
+                              className="h-8 gap-2 border-green-300 hover:bg-green-100"
+                            >
+                              <Eye className="w-3 h-3" />
+                              Lihat
+                            </Button>
+                          </div>
+                        )}
 
-                    {workflowLinks['biro_osdma_review'] && (
-                      <div>
-                        <Label className="text-sm font-medium">Bukti Proses Review Biro OSDMA</Label>
-                        <div className="mt-2 flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open(workflowLinks['biro_osdma_review'], '_blank')}
-                            className="gap-2"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                            Lihat Bukti Review
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+                        {/* Bukti Berkas Diajukan ke Biro OSDMA */}
+                        {(application.status === 'biro_osdma_submitted' || 
+                          application.status === 'biro_osdma_review' || 
+                          application.status === 'completed') && workflowLinks['biro_osdma_submitted'] && (
+                          <div className="flex items-center justify-between p-2 bg-purple-50 border border-purple-200 rounded-lg">
+                            <span className="text-sm text-purple-800">Bukti Pengajuan ke Biro OSDMA</span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(workflowLinks['biro_osdma_submitted'], '_blank')}
+                              className="h-8 gap-2 border-purple-300 hover:bg-purple-100"
+                            >
+                              <Eye className="w-3 h-3" />
+                              Lihat
+                            </Button>
+                          </div>
+                        )}
 
-                    {workflowLinks['completed'] && (
-                      <div>
-                        <Label className="text-sm font-medium">Bukti SK Telah Terbit</Label>
-                        <div className="mt-2 flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open(workflowLinks['completed'], '_blank')}
-                            className="gap-2"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                            Lihat Bukti SK
-                          </Button>
-                        </div>
+                        {/* Bukti Review Biro OSDMA */}
+                        {(application.status === 'biro_osdma_review' || 
+                          application.status === 'completed') && workflowLinks['biro_osdma_review'] && (
+                          <div className="flex items-center justify-between p-2 bg-indigo-50 border border-indigo-200 rounded-lg">
+                            <span className="text-sm text-indigo-800">Bukti Review Biro OSDMA</span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(workflowLinks['biro_osdma_review'], '_blank')}
+                              className="h-8 gap-2 border-indigo-300 hover:bg-indigo-100"
+                            >
+                              <Eye className="w-3 h-3" />
+                              Lihat
+                            </Button>
+                          </div>
+                        )}
+
+                        {/* Bukti SK Terbit */}
+                        {application.status === 'completed' && workflowLinks['completed'] && (
+                          <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg">
+                            <span className="text-sm text-green-800">Bukti SK Telah Terbit</span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(workflowLinks['completed'], '_blank')}
+                              className="h-8 gap-2 border-green-300 hover:bg-green-100"
+                            >
+                              <Eye className="w-3 h-3" />
+                              Lihat
+                            </Button>
+                          </div>
+                        )}
+
+                        {/* Show message if no workflow links available yet */}
+                        {!workflowLinks['approved'] && 
+                         !workflowLinks['biro_osdma_submitted'] && 
+                         !workflowLinks['biro_osdma_review'] && 
+                         !workflowLinks['completed'] && (
+                          <p className="text-sm text-muted-foreground italic">
+                            Belum ada bukti dukung yang diupload
+                          </p>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </>
                 )}
               </>}
