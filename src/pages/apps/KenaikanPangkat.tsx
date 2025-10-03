@@ -142,10 +142,18 @@ export default function KenaikanPangkat() {
   };
 
   const periodeOptions = [
-    "April 2025",
-    "Oktober 2025",
-    "April 2026",
-    "Oktober 2026"
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember"
   ];
 
   const getDocumentRequirements = (kategori: string) => {
