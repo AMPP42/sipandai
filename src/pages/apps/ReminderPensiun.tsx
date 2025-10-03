@@ -64,8 +64,7 @@ export default function ReminderPensiun() {
     try {
       const { data, error } = await supabase
         .from('employees')
-        .select('*')
-        .not('tmt_pensiun', 'is', null)
+        .select('id,nama,nip,tanggal_lahir,tmt_pensiun,unit,jabatan,pangkat,masa_kerja')
         .order('nama');
       
       if (error) throw error;
@@ -155,6 +154,17 @@ export default function ReminderPensiun() {
         "Surat Keterangan Sekolah / Kuliah (bila terdapat anak yang masih menjadi tanggungan)"
       ]
     }
+  };
+
+  // Helper: compute retirement date from tmt_pensiun or tanggal_lahir (+60 years)
+  const getRetirementDate = (emp: Employee): Date | null => {
+    if (emp.tmt_pensiun) return new Date(emp.tmt_pensiun);
+    if (emp.tanggal_lahir) {
+      const d = new Date(emp.tanggal_lahir);
+      d.setFullYear(d.getFullYear() + 60);
+      return d;
+    }
+    return null;
   };
 
   const handleSubmitApplication = async () => {
@@ -304,8 +314,8 @@ export default function ReminderPensiun() {
             </CardHeader>
             <CardContent>
               {employees.filter(emp => {
-                if (!emp.tmt_pensiun) return false;
-                const pensiunDate = new Date(emp.tmt_pensiun);
+                const pensiunDate = getRetirementDate(emp);
+                if (!pensiunDate) return false;
                 const today = new Date();
                 const monthsUntilRetirement = (pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30);
                 return monthsUntilRetirement > 0 && monthsUntilRetirement <= 12;
