@@ -246,8 +246,18 @@ export default function ReminderPensiun() {
 
   const getStatusBadge = (app: Application) => {
     const status = app.status;
-    const estimasi = app.estimasi ? JSON.parse(app.estimasi) : {};
-    const isResubmission = estimasi.is_resubmission || false;
+    let isResubmission = false;
+    if (app.estimasi) {
+      const trimmed = app.estimasi.trim();
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+          const parsed: any = JSON.parse(trimmed);
+          isResubmission = Boolean(parsed?.is_resubmission);
+        } catch {
+          // ignore malformed JSON and treat as no resubmission flag
+        }
+      }
+    }
     
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline" | "warning"> = {
       'draft': 'secondary',
@@ -257,7 +267,6 @@ export default function ReminderPensiun() {
       'rejected': 'destructive',
       'revision_needed': 'warning'
     };
-
     const getLabel = () => {
       if (status === 'submitted') {
         return isResubmission ? 'Menunggu Verifikasi Ulang' : 'Menunggu Verifikasi';
