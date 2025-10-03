@@ -118,10 +118,11 @@ export default function UpdateStatusModal({
 
         if (error) throw error;
       } else {
+        // Update application status
         const { error } = await supabase
           .from('applications')
           .update({
-            status: selectedStatus as 'approved' | 'completed' | 'draft' | 'in_review' | 'rejected' | 'revision_needed' | 'submitted'
+            status: selectedStatus as any
           })
           .eq('id', application.id);
 

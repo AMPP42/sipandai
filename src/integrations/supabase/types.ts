@@ -1370,6 +1370,8 @@ export type Database = {
         | "approved"
         | "rejected"
         | "completed"
+        | "biro_osdma_submitted"
+        | "biro_osdma_review"
       application_type:
         | "mutasi"
         | "kenaikan_pangkat"
@@ -1511,6 +1513,8 @@ export const Constants = {
         "approved",
         "rejected",
         "completed",
+        "biro_osdma_submitted",
+        "biro_osdma_review",
       ],
       application_type: [
         "mutasi",
