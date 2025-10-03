@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
 import { 
   FileText, 
   Clock, 
@@ -438,7 +439,16 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
   };
 
   const handleDeleteApplication = async (application: ApplicationItem) => {
-    if (!user || user.role !== 'admin_pusat') return;
+    // Allow admin_pusat to delete all, admin_unit to delete from their unit
+    if (!user) return;
+    
+    const isAdminPusat = user.role === 'admin_pusat';
+    const isAdminUnit = user.role === 'admin_unit' && user.unit === application.submitter_unit;
+    
+    if (!isAdminPusat && !isAdminUnit) {
+      toast.error("Anda tidak memiliki izin untuk menghapus usulan ini");
+      return;
+    }
 
     if (!confirm(`Apakah Anda yakin ingin menghapus usulan "${getApplicationTitle(application)}"?`)) {
       return;
