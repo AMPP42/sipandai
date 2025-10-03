@@ -1438,25 +1438,38 @@ export default function DetailMutasiTerpadu() {
               const isFixed = fixedDocuments.has(docKey);
               const documentLink = documents[docKey];
 
-              // View mode for approved applications - show green with preview
-              if (!canEdit && application?.status === 'approved' && documentLink) {
-                return <div key={index} className="space-y-2 bg-green-50 border border-green-200 rounded-lg p-3">
+              // View mode - show only eye icon for viewing saved documents
+              if (!canEdit && documentLink) {
+                const statusColor = isApproved ? 'green' : 'blue';
+                return <div key={index} className={`space-y-2 bg-${statusColor}-50 border border-${statusColor}-200 rounded-lg p-3`}>
                       <div className="flex items-center justify-between">
-                        <Label className="text-sm font-medium text-green-800">
+                        <Label className={`text-sm font-medium text-${statusColor}-800`}>
                           {index + 1}. {requirement}
                         </Label>
-                        <Badge className="bg-green-100 text-green-700">✓ Disetujui</Badge>
+                        {verificationStatus && getVerificationStatusBadge(verificationStatus.status)}
                       </div>
-                      <p className="text-xs text-green-700 mb-2">Dokumen telah disetujui</p>
+                      {isApproved && <p className="text-xs text-green-700 mb-2">Dokumen telah disetujui</p>}
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={() => window.open(documentLink, '_blank')}
-                        className="w-full border-green-300 hover:bg-green-100"
+                        className={`w-full border-${statusColor}-300 hover:bg-${statusColor}-100`}
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         Lihat Dokumen
                       </Button>
+                    </div>;
+              }
+
+              // View mode - show placeholder for documents not yet uploaded
+              if (!canEdit && !documentLink) {
+                return <div key={index} className="space-y-2 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium text-gray-600">
+                          {index + 1}. {requirement}
+                        </Label>
+                        <Badge className="bg-gray-100 text-gray-600">Belum diupload</Badge>
+                      </div>
                     </div>;
               }
 
@@ -1472,6 +1485,7 @@ export default function DetailMutasiTerpadu() {
                       <p className="text-xs text-green-700">Dokumen sudah disetujui, tidak perlu diubah</p>
                     </div>;
               }
+              
               return <div key={index} className={`space-y-2 ${needsAttention ? 'bg-red-50 border border-red-200 rounded-lg p-3' : ''} ${isFixed ? 'bg-blue-50 border border-blue-200' : ''}`}>
                     <div className="flex items-center justify-between">
                       <Label htmlFor={`doc-${index}`} className={`text-sm font-medium ${needsAttention ? 'text-red-800' : isFixed ? 'text-blue-800' : ''}`}>
@@ -1505,7 +1519,7 @@ export default function DetailMutasiTerpadu() {
                            Edit
                          </Button>}
                        {documents[docKey] && <Button variant="outline" size="sm" onClick={() => window.open(documents[docKey], '_blank')}>
-                           <Download className="w-4 h-4" />
+                           <Eye className="w-4 h-4" />
                          </Button>}
                      </div>
                      
@@ -1518,7 +1532,7 @@ export default function DetailMutasiTerpadu() {
                          <p className="text-xs font-medium text-green-800">✓ Dokumen telah disimpan</p>
                          <p className="text-xs text-green-700">Link dokumen telah disimpan dan dikunci dari perubahan.</p>
                        </div>}
-                  </div>;
+                   </div>;
             })}
             </div>
           </CardContent>
