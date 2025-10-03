@@ -1299,6 +1299,66 @@ export default function DetailMutasiTerpadu() {
                 })}
                   </p>
                 </div>
+
+                {/* Supporting Documents for Advanced Timeline Stages */}
+                {(application.status === 'biro_osdma_submitted' || 
+                  application.status === 'biro_osdma_review' || 
+                  application.status === 'completed') && (
+                  <>
+                    <Separator />
+                    
+                    {application.status === 'biro_osdma_submitted' && workflowLinks['biro_osdma_submitted'] && (
+                      <div>
+                        <Label className="text-sm font-medium">Bukti Berkas Diajukan ke Biro OSDMA</Label>
+                        <div className="mt-2 flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(workflowLinks['biro_osdma_submitted'], '_blank')}
+                            className="gap-2"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            Lihat Bukti Pengajuan
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {application.status === 'biro_osdma_review' && workflowLinks['biro_osdma_review'] && (
+                      <div>
+                        <Label className="text-sm font-medium">Bukti Proses Review Biro OSDMA</Label>
+                        <div className="mt-2 flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(workflowLinks['biro_osdma_review'], '_blank')}
+                            className="gap-2"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            Lihat Bukti Review
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {application.status === 'completed' && workflowLinks['completed'] && (
+                      <div>
+                        <Label className="text-sm font-medium">Bukti SK Telah Terbit</Label>
+                        <div className="mt-2 flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(workflowLinks['completed'], '_blank')}
+                            className="gap-2"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            Lihat Bukti SK
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </>}
           </CardContent>
         </Card>
