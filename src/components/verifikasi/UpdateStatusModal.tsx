@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -79,6 +80,7 @@ export default function UpdateStatusModal({
   const { user } = useAuth();
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [notes, setNotes] = useState('');
+  const [fileLink, setFileLink] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
@@ -128,6 +130,7 @@ export default function UpdateStatusModal({
       toast.success('Status usulan berhasil diperbarui');
       setSelectedStatus('');
       setNotes('');
+      setFileLink('');
       onSuccess();
       onOpenChange(false);
     } catch (error) {
@@ -198,6 +201,21 @@ export default function UpdateStatusModal({
             )}
           </div>
 
+          {/* File Link */}
+          <div className="space-y-3">
+            <Label htmlFor="fileLink">Link Dokumen Pendukung (Opsional)</Label>
+            <Input
+              id="fileLink"
+              type="url"
+              value={fileLink}
+              onChange={(e) => setFileLink(e.target.value)}
+              placeholder="https://drive.google.com/..."
+            />
+            <p className="text-xs text-muted-foreground">
+              Lampirkan link Google Drive atau dokumen pendukung lainnya
+            </p>
+          </div>
+
           {/* Notes */}
           <div className="space-y-3">
             <Label htmlFor="notes">Catatan (Opsional)</Label>
@@ -219,6 +237,7 @@ export default function UpdateStatusModal({
               onClick={() => {
                 setSelectedStatus('');
                 setNotes('');
+                setFileLink('');
                 onOpenChange(false);
               }}
               disabled={loading}
