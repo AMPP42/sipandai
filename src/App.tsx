@@ -38,6 +38,8 @@ import UsulanMutasi from "./pages/UsulanMutasi";
 import BuatUsulanMutasi from "./pages/BuatUsulanMutasi";
 import DetailUsulanMutasi from "./pages/DetailUsulanMutasi";
 import DetailMutasiTerpadu from "./pages/DetailMutasiTerpadu";
+import DetailKenaikanPangkat from "./pages/DetailKenaikanPangkat";
+import DetailPensiun from "./pages/DetailPensiun";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -190,6 +192,26 @@ const App = () => (
                   <DashboardLayout>
                     <ErrorBoundary>
                       <PanelAdmin />
+                    </ErrorBoundary>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/detail-kenaikan-pangkat/:id" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ErrorBoundary>
+                      <DetailKenaikanPangkat />
+                    </ErrorBoundary>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/detail-pensiun/:id" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ErrorBoundary>
+                      <DetailPensiun />
                     </ErrorBoundary>
                   </DashboardLayout>
                 </ProtectedRoute>

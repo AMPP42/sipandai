@@ -230,7 +230,7 @@ export default function ReminderPensiun() {
         variant: "default"
       });
 
-      navigate(`/detail-mutasi-terpadu/${insertedApp.id}`);
+      navigate(`/detail-pensiun/${insertedApp.id}`);
 
     } catch (error: any) {
       console.error('Error submitting application:', error);
@@ -662,7 +662,7 @@ export default function ReminderPensiun() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => navigate(`/detail-mutasi-terpadu/${app.id}`)}
+                              onClick={() => navigate(`/detail-pensiun/${app.id}`)}
                             >
                               <Eye className="w-4 h-4 mr-2" />
                               Detail

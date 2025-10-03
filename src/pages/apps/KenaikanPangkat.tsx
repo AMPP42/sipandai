@@ -225,7 +225,7 @@ export default function KenaikanPangkat() {
         variant: "default"
       });
 
-      navigate(`/detail-mutasi-terpadu/${insertedApp.id}`);
+      navigate(`/detail-kenaikan-pangkat/${insertedApp.id}`);
 
     } catch (error: any) {
       console.error('Error submitting application:', error);
@@ -571,7 +571,7 @@ export default function KenaikanPangkat() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => navigate(`/detail-mutasi-terpadu/${app.id}`)}
+                              onClick={() => navigate(`/detail-kenaikan-pangkat/${app.id}`)}
                             >
                               <Eye className="w-4 h-4 mr-2" />
                               Detail
