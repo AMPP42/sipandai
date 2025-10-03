@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { CheckCircle, Clock, FileText, FileCheck, FileClock, FileX } from 'lucide-react';
+import { CheckCircle, Clock, FileText, FileCheck, FileClock, FileX, Send, ClipboardCheck } from 'lucide-react';
 
 interface UpdateStatusModalProps {
   open: boolean;
@@ -29,17 +29,45 @@ interface UpdateStatusModalProps {
 const timelineStatuses = [
   { 
     value: 'submitted', 
-    label: 'Usulan Diajukan', 
+    label: 'Pengajuan Dibuat', 
     icon: FileText,
-    description: 'Usulan baru diterima dan menunggu verifikasi',
+    description: 'Usulan baru dibuat dan menunggu pengajuan',
     color: 'text-blue-600'
   },
   { 
     value: 'in_review', 
-    label: 'Sedang Diverifikasi', 
-    icon: FileClock,
-    description: 'Usulan sedang dalam proses verifikasi',
+    label: 'Data Diajukan', 
+    icon: Send,
+    description: 'Data telah diajukan untuk verifikasi',
+    color: 'text-green-600'
+  },
+  { 
+    value: 'approved', 
+    label: 'Disetujui & Diproses', 
+    icon: FileCheck,
+    description: 'Usulan telah disetujui dan sedang diproses',
+    color: 'text-green-600'
+  },
+  { 
+    value: 'biro_osdma_submitted', 
+    label: 'Berkas Diajukan ke Biro OSDMA', 
+    icon: Send,
+    description: 'Berkas telah diajukan ke Biro OSDMA',
+    color: 'text-blue-600'
+  },
+  { 
+    value: 'biro_osdma_review', 
+    label: 'Menunggu Keputusan', 
+    icon: Clock,
+    description: 'Dalam proses review di Biro OSDMA',
     color: 'text-yellow-600'
+  },
+  { 
+    value: 'completed', 
+    label: 'SK Telah Terbit', 
+    icon: CheckCircle,
+    description: 'SK telah diterbitkan dan usulan selesai',
+    color: 'text-purple-600'
   },
   { 
     value: 'revision_needed', 
@@ -47,20 +75,6 @@ const timelineStatuses = [
     icon: FileX,
     description: 'Usulan memerlukan perbaikan dari pengusul',
     color: 'text-red-600'
-  },
-  { 
-    value: 'approved', 
-    label: 'Verifikasi Selesai - Diproses', 
-    icon: FileCheck,
-    description: 'Usulan telah diverifikasi dan sedang diproses lebih lanjut',
-    color: 'text-green-600'
-  },
-  { 
-    value: 'completed', 
-    label: 'Selesai Diproses', 
-    icon: CheckCircle,
-    description: 'Usulan telah selesai diproses',
-    color: 'text-purple-600'
   },
   { 
     value: 'rejected', 
