@@ -44,6 +44,12 @@ interface ApplicationDetail extends Application {
     jabatan_tujuan: string;
     alasan_mutasi: string;
     nomor_usulan: string;
+    kategori?: string;
+    kategori_name?: string;
+    periode?: string;
+    unit?: string;
+    jabatan?: string;
+    pangkat?: string;
   };
 }
 
@@ -55,7 +61,7 @@ interface DocumentVerificationStatus {
   };
 }
 
-const DOCUMENT_REQUIREMENTS = [
+const MUTASI_DOCUMENT_REQUIREMENTS = [
   'Surat Pernyataan Lolos Butuh dari PPK Instansi Asal (Asli)',
   'Surat Keterangan Tidak Sedang Menjalani Hukuman Disiplin (Asli)',
   'Surat Keterangan Tidak Sedang Menjalani Tugas Belajar/Ikatan Dinas (Asli)',
@@ -91,12 +97,19 @@ export default function DetailMutasiTerpadu() {
   const [showSubmitConfirmation, setShowSubmitConfirmation] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
+  const [documentRequirements, setDocumentRequirements] = useState<string[]>([]);
 
   useEffect(() => {
     if (id) {
       loadApplication();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (application) {
+      loadDocumentRequirements();
+    }
+  }, [application]);
 
   useEffect(() => {
     if (application) {
@@ -109,6 +122,84 @@ export default function DetailMutasiTerpadu() {
       }
     }
   }, [application, location.search]);
+
+  const loadDocumentRequirements = async () => {
+    if (!application) return;
+
+    try {
+      if (application.jenis === 'mutasi_terpadu') {
+        setDocumentRequirements(MUTASI_DOCUMENT_REQUIREMENTS);
+      } else if (application.jenis === 'kenaikan_pangkat') {
+        const employeeData = application.employee_data;
+        const kategori = employeeData?.kategori || '';
+        
+        const { data, error } = await supabase
+          .from('document_types')
+          .select('name')
+          .eq('category', `kenaikan_pangkat_${kategori}`)
+          .eq('is_active', true)
+          .order('code');
+
+        if (error) throw error;
+        setDocumentRequirements(data?.map(d => d.name) || []);
+      } else if (application.jenis === 'pensiun') {
+        const employeeData = application.employee_data;
+        const kategori = employeeData?.kategori || '';
+        
+        const retirementDocs: { [key: string]: string[] } = {
+          "pensiun_reguler": [
+            "Surat Permohonan Pensiun dari Ybs (tanpa kop unit kerja)",
+            "Daftar Susunan Keluarga - pastikan jumlah anak sama dengan di DPCPP",
+            "Kartu Pegawai (KARPEG)",
+            "Surat Nikah (Optional)",
+            "Akte Kelahiran Anak (apabila masih ada anak yang menjadi tanggungan)",
+            "SK Pengangkatan sebagai CPNS",
+            "SK Pengangkatan CPNS menjadi PNS",
+            "SK Kenaikan Pangkat terakhir",
+            "Kenaikan Gaji Berkala Terakhir",
+            "Penilaian Prestasi Kerja (SKP) 2 Tahun Terakhir",
+            "Surat Pernyataan Tidak Pernah Dijatuhi Hukuman Disiplin Sedang/Berat dalam 1 Tahun Terakhir",
+            "Surat Pernyataan Tidak Sedang Menjalani Proses Pidana",
+            "Foto Pegawai ybs",
+            "Data Perorangan Calon Penerima Pensiun (DPCPP)",
+            "Surat Keterangan Kematian (Bila ada suami/istri yang sudah meninggal dunia)",
+            "KTP",
+            "NPWP",
+            "Buku Tabungan (lembar yang terdapat nomor rekening)",
+            "Surat Keterangan Sekolah / Kuliah (bila terdapat anak yang masih menjadi tanggungan)"
+          ],
+          "pensiun_janda_duda": [
+            "Surat Permohonan Pensiun dari Janda / Duda Ybs (tanpa kop)",
+            "Daftar Susunan Keluarga (Dokumen Asli)",
+            "Kartu Pegawai (KARPEG) almarhum/ah",
+            "Surat Nikah",
+            "Akte Kelahiran Anak",
+            "SK Pengangkatan sebagai CPNS almarhum/ah",
+            "SK Pengangkatan CPNS menjadi PNS almarhum/ah",
+            "SK Kenaikan Pangkat almarhum/ah",
+            "Gaji Berkala Terakhir almarhum/ah",
+            "Penilaian Prestasi Kerja 2 Tahun Terakhir almarhum/ah",
+            "Surat Pernyataan Tidak Pernah Dijatuhi Hukuman Disiplin Sedang/Berat dalam 1 Tahun Terakhir almarhum/ah",
+            "Surat Pernyataan Tidak Sedang Menjalani Proses Pidana almarhum/ah",
+            "Data Perorangan Calon Penerima Pensiun (DPCPP)",
+            "Foto Janda / Duda ybs",
+            "Surat Keterangan Kematian yang Sah (harus dari Dukcapil)",
+            "Surat Keterangan Janda / Duda dari Kelurahan",
+            "Kartu Istri (KARIS) utk pensiun janda atau Kartu Suami (KARSU) untuk pensiun duda",
+            "KTP janda/duda/KK",
+            "NPWP janda/duda",
+            "Buku Tabungan janda/duda",
+            "Surat Keterangan Sekolah / Kuliah (bila terdapat anak yang masih menjadi tanggungan)"
+          ]
+        };
+        
+        setDocumentRequirements(retirementDocs[kategori] || []);
+      }
+    } catch (error) {
+      console.error('Error loading document requirements:', error);
+      setDocumentRequirements(MUTASI_DOCUMENT_REQUIREMENTS);
+    }
+  };
 
   const loadApplication = async () => {
     try {
@@ -283,8 +374,13 @@ export default function DetailMutasiTerpadu() {
 
       if (deleteDocsError) throw deleteDocsError;
 
+      // Determine document category based on application type
+      const docCategory = application.jenis === 'mutasi_terpadu' ? 'mutasi_terpadu' : 
+                          application.jenis === 'kenaikan_pangkat' ? 'kenaikan_pangkat' :
+                          application.jenis === 'pensiun' ? 'pensiun' : 'mutasi_terpadu';
+
       // Insert ALL documents from the form state, including empty ones as placeholders
-      const documentInserts = DOCUMENT_REQUIREMENTS.map((documentName, index) => {
+      const documentInserts = documentRequirements.map((documentName, index) => {
         const docKey = `doc_${index}`;
         const linkValue = documents[docKey] || '';
         
@@ -293,7 +389,7 @@ export default function DetailMutasiTerpadu() {
           title: documentName,
           drive_link: linkValue.trim(),
           created_by: user.id,
-          document_category: 'mutasi_terpadu',
+          document_category: docCategory,
           document_index: index
         };
       }).filter(doc => doc.drive_link !== ''); // Only save documents with actual links
@@ -337,7 +433,7 @@ export default function DetailMutasiTerpadu() {
     if (!application || !application.employee_data) return;
 
     // Check if all documents are provided for final submission
-    const allDocumentsProvided = DOCUMENT_REQUIREMENTS.every((_, index) => {
+    const allDocumentsProvided = documentRequirements.every((_, index) => {
       const docKey = `doc_${index}`;
       return documents[docKey] && documents[docKey].trim() !== '';
     });
@@ -400,19 +496,24 @@ export default function DetailMutasiTerpadu() {
           throw deleteDocsError;
         }
 
+        // Determine document category based on application type
+        const docCategory = application.jenis === 'mutasi_terpadu' ? 'mutasi_terpadu' : 
+                            application.jenis === 'kenaikan_pangkat' ? 'kenaikan_pangkat' :
+                            application.jenis === 'pensiun' ? 'pensiun' : 'mutasi_terpadu';
+
         // Insert new documents
         const documentInserts = Object.entries(documents)
           .filter(([key, link]) => link.trim() !== '')
           .map(([key, link]) => {
             const index = parseInt(key.replace('doc_', ''));
-            const documentName = DOCUMENT_REQUIREMENTS[index];
+            const documentName = documentRequirements[index];
             
             return {
               application_id: id,
               title: documentName,
               drive_link: link.trim(),
               created_by: user.id,
-              document_category: 'mutasi_terpadu',
+              document_category: docCategory,
               document_index: index
             };
           });
@@ -459,19 +560,24 @@ export default function DetailMutasiTerpadu() {
 
         if (error) throw error;
 
+        // Determine document category based on application type
+        const docCategory = application.jenis === 'mutasi_terpadu' ? 'mutasi_terpadu' : 
+                            application.jenis === 'kenaikan_pangkat' ? 'kenaikan_pangkat' :
+                            application.jenis === 'pensiun' ? 'pensiun' : 'mutasi_terpadu';
+
         // Insert documents
         const documentInserts = Object.entries(documents)
           .filter(([key, link]) => link.trim() !== '')
           .map(([key, link]) => {
             const index = parseInt(key.replace('doc_', ''));
-            const documentName = DOCUMENT_REQUIREMENTS[index];
+            const documentName = documentRequirements[index];
             
             return {
               application_id: id,
               title: documentName,
               drive_link: link.trim(),
               created_by: user.id,
-              document_category: 'mutasi_terpadu',
+              document_category: docCategory,
               document_index: index
             };
           });
@@ -541,7 +647,7 @@ export default function DetailMutasiTerpadu() {
 
   const canEdit = application?.status === 'draft' || application?.status === 'revision_needed' || isEditing;
   const submittedDocumentsCount = Object.values(documents).filter(link => link.trim() !== '').length;
-  const allDocumentsCompleted = DOCUMENT_REQUIREMENTS.every((_, index) => {
+  const allDocumentsCompleted = documentRequirements.every((_, index) => {
     const docKey = `doc_${index}`;
     return documents[docKey] && documents[docKey].trim() !== '';
   });
@@ -559,7 +665,7 @@ export default function DetailMutasiTerpadu() {
   
   // For revision mode: Submit button enabled when all documents that need fixing are marked as fixed
   // For new applications: Submit button enabled when all documents are saved
-  const allDocumentsSaved = DOCUMENT_REQUIREMENTS.every((_, index) => {
+  const allDocumentsSaved = documentRequirements.every((_, index) => {
     const docKey = `doc_${index}`;
     return savedDocuments.has(docKey) && documents[docKey] && documents[docKey].trim() !== '';
   });
@@ -571,7 +677,7 @@ export default function DetailMutasiTerpadu() {
     : false;
   
   const canSubmit = canEdit && (allRevisionDocumentsFixed || (!isEditing && allDocumentsSaved) || (isEditing && application?.status !== 'revision_needed' && allDocumentsSaved));
-  const progressPercentage = Math.round((submittedDocumentsCount / DOCUMENT_REQUIREMENTS.length) * 100);
+  const progressPercentage = documentRequirements.length > 0 ? Math.round((submittedDocumentsCount / documentRequirements.length) * 100) : 0;
 
   if (loading) {
     return (
@@ -641,7 +747,7 @@ export default function DetailMutasiTerpadu() {
               ) : (
                 <>
                   <FileText className="w-4 h-4 mr-2" />
-                  Simpan Draft ({savedDocuments.size}/{DOCUMENT_REQUIREMENTS.length})
+                  Simpan Draft ({savedDocuments.size}/{documentRequirements.length})
                 </>
               )}
             </Button>
@@ -697,7 +803,7 @@ export default function DetailMutasiTerpadu() {
                     : submittedDocumentsCount
                   } dari {application.status === 'revision_needed' 
                     ? Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length 
-                    : DOCUMENT_REQUIREMENTS.length
+                    : documentRequirements.length
                   }
                 </span>
               </div>
@@ -1050,7 +1156,7 @@ export default function DetailMutasiTerpadu() {
             )}
 
             <div className="space-y-4">
-              {DOCUMENT_REQUIREMENTS.map((requirement, index) => {
+              {documentRequirements.map((requirement, index) => {
                 const docKey = `doc_${index}`;
                 const verificationStatus = documentVerificationStatus[docKey];
                 const needsAttention = isEditing && verificationStatus?.status === 'needs_fix';
