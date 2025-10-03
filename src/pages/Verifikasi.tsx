@@ -20,10 +20,15 @@ import {
   X,
   TrendingUp,
   UserX,
-  Users
+  Users,
+  MoreVertical,
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import DetailedVerificationModal from '@/components/verifikasi/DetailedVerificationModal';
+import UpdateStatusModal from '@/components/verifikasi/UpdateStatusModal';
 import { createApplicationStatusNotification } from '@/lib/notifications';
 
 interface ApplicationItem {
@@ -63,6 +68,7 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
   const [selectedApplication, setSelectedApplication] = useState<ApplicationItem | null>(null);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [showDetailedVerification, setShowDetailedVerification] = useState(false);
+  const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'revision'>('approve');
   const [processing, setProcessing] = useState(false);
@@ -506,16 +512,37 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
         </Button>
         
         {user?.role === 'admin_pusat' && (
-          <Button 
-            size="sm" 
-            variant="outline"
-            onClick={() => handleDeleteApplication(application)}
-            className="text-red-600 hover:text-red-700"
-            title="Hapus Usulan"
-            disabled={processing}
-          >
-            <X className="w-4 h-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                size="sm" 
+                variant="outline"
+                title="Aksi Lainnya"
+                disabled={processing}
+              >
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem 
+                onClick={() => {
+                  setSelectedApplication(application);
+                  setShowUpdateStatusModal(true);
+                }}
+                className="cursor-pointer"
+              >
+                <RefreshCw className="w-4 h-4 mr-2 text-blue-600" />
+                <span>Update Status Usulan</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => handleDeleteApplication(application)}
+                className="cursor-pointer text-red-600 focus:text-red-700"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                <span>Hapus Usulan</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
     );
@@ -880,6 +907,14 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
         onOpenChange={setShowDetailedVerification}
         application={selectedApplication}
         onVerificationComplete={loadApplications}
+      />
+
+      {/* Update Status Modal */}
+      <UpdateStatusModal
+        open={showUpdateStatusModal}
+        onOpenChange={setShowUpdateStatusModal}
+        application={selectedApplication}
+        onSuccess={loadApplications}
       />
     </div>
   );
