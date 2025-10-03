@@ -44,7 +44,7 @@ export default function ReminderPensiun() {
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  const [activeTab, setActiveTab] = useState("create");
+  const [activeTab, setActiveTab] = useState("reminder");
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -291,10 +291,104 @@ export default function ReminderPensiun() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="reminder">Reminder Pensiun</TabsTrigger>
           <TabsTrigger value="create">Buat Pengajuan</TabsTrigger>
           <TabsTrigger value="list">Daftar Pengajuan</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="reminder" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-orange-500" />
+                Pegawai Yang Akan Memasuki Masa Pensiun
+              </CardTitle>
+              <CardDescription>
+                Daftar pegawai yang akan memasuki masa pensiun dalam 12 bulan ke depan
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {employees.filter(emp => {
+                if (!emp.tmt_pensiun) return false;
+                const pensiunDate = new Date(emp.tmt_pensiun);
+                const today = new Date();
+                const monthsUntilRetirement = (pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30);
+                return monthsUntilRetirement > 0 && monthsUntilRetirement <= 12;
+              }).length === 0 ? (
+                <div className="text-center py-8">
+                  <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Tidak ada pegawai yang akan pensiun dalam 12 bulan ke depan</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nama Pegawai</TableHead>
+                      <TableHead>NIP</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Jabatan</TableHead>
+                      <TableHead>TMT Pensiun</TableHead>
+                      <TableHead>Sisa Waktu</TableHead>
+                      <TableHead>Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {employees
+                      .filter(emp => {
+                        if (!emp.tmt_pensiun) return false;
+                        const pensiunDate = new Date(emp.tmt_pensiun);
+                        const today = new Date();
+                        const monthsUntilRetirement = (pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30);
+                        return monthsUntilRetirement > 0 && monthsUntilRetirement <= 12;
+                      })
+                      .sort((a, b) => {
+                        const dateA = a.tmt_pensiun ? new Date(a.tmt_pensiun).getTime() : 0;
+                        const dateB = b.tmt_pensiun ? new Date(b.tmt_pensiun).getTime() : 0;
+                        return dateA - dateB;
+                      })
+                      .map((employee) => {
+                        const pensiunDate = new Date(employee.tmt_pensiun!);
+                        const today = new Date();
+                        const daysUntilRetirement = Math.ceil((pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                        const monthsUntilRetirement = Math.floor(daysUntilRetirement / 30);
+                        
+                        return (
+                          <TableRow key={employee.id}>
+                            <TableCell className="font-medium">{employee.nama}</TableCell>
+                            <TableCell>{employee.nip || '-'}</TableCell>
+                            <TableCell>{employee.unit || '-'}</TableCell>
+                            <TableCell>{employee.jabatan || '-'}</TableCell>
+                            <TableCell>
+                              {new Date(employee.tmt_pensiun!).toLocaleDateString('id-ID')}
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={monthsUntilRetirement <= 3 ? 'destructive' : monthsUntilRetirement <= 6 ? 'warning' : 'default'}
+                              >
+                                {monthsUntilRetirement} bulan ({daysUntilRetirement} hari)
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedEmployee(employee);
+                                  setActiveTab('create');
+                                }}
+                              >
+                                Buat Pengajuan
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="create" className="space-y-6">
           <Card>
