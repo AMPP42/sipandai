@@ -62,17 +62,11 @@ export default function ReminderPensiun() {
 
   const loadEmployees = async () => {
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('employees')
         .select('*')
         .not('tmt_pensiun', 'is', null)
         .order('nama');
-      
-      if (user?.role === 'admin_unit' && user?.unit) {
-        query = query.eq('unit', user.unit);
-      }
-      
-      const { data, error } = await query;
       
       if (error) throw error;
       setEmployees(data || []);
@@ -497,7 +491,7 @@ export default function ReminderPensiun() {
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih kategori pensiun" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50">
                     {Object.entries(retirementCategories).map(([key, value]) => (
                       <SelectItem key={key} value={key}>
                         {value.label}
