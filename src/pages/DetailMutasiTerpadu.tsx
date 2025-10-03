@@ -13,26 +13,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import DocumentVerificationStatus from '@/components/applications/DocumentVerificationStatus';
-import { 
-  ArrowLeft, 
-  User, 
-  Building, 
-  Calendar,
-  FileText,
-  Upload,
-  Download,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  Send,
-  Loader2,
-  AlertTriangle
-} from 'lucide-react';
+import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CheckCircle, AlertCircle, Clock, Send, Loader2, AlertTriangle } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
-
 type Application = Database['public']['Tables']['applications']['Row'];
-
 interface ApplicationDetail extends Application {
   employee_data?: {
     employee_id: string;
@@ -52,7 +36,6 @@ interface ApplicationDetail extends Application {
     pangkat?: string;
   };
 }
-
 interface DocumentVerificationStatus {
   [key: string]: {
     status: 'approved' | 'needs_fix' | 'pending';
@@ -60,34 +43,23 @@ interface DocumentVerificationStatus {
     document_name: string;
   };
 }
-
-const MUTASI_DOCUMENT_REQUIREMENTS = [
-  'Surat Pernyataan Lolos Butuh dari PPK Instansi Asal (Asli)',
-  'Surat Keterangan Tidak Sedang Menjalani Hukuman Disiplin (Asli)',
-  'Surat Keterangan Tidak Sedang Menjalani Tugas Belajar/Ikatan Dinas (Asli)',
-  'Surat Keterangan Tidak Mempunyai Hutang Piutang dengan Pihak Bank (Asli)',
-  'Surat Pernyataan Bebas Temuan yang Diterbitkan oleh ITJEN (Asli)',
-  'ANJAB dan ABK yang ditandatangani oleh PPK Instansi Asal (Bila Pindah Antar Kementerian)',
-  'SK CPNS (Fotokopi legalisir)',
-  'SK PNS (Fotokopi legalisir)',
-  'SK Pangkat Terakhir (Fotokopi legalisir)',
-  'SK Jabatan Terakhir (Fotokopi legalisir)',
-  'KARPEG (Fotokopi legalisir)',
-  'Ijazah dan Transkrip Nilai Universitas (Fotokopi legalisir)',
-  'SKP 2 tahun terakhir (Fotokopi legalisir)',
-  'Surat permohonan mutasi dari ybs',
-  'Daftar Riwayat Hidup (DRH) sesuai Keputusan Kepala BKN Nomor 11 Tahun 2002',
-  'Nota Dinas Usulan Mutasi yang telah ditandatangani'
-];
-
+const MUTASI_DOCUMENT_REQUIREMENTS = ['Surat Pernyataan Lolos Butuh dari PPK Instansi Asal (Asli)', 'Surat Keterangan Tidak Sedang Menjalani Hukuman Disiplin (Asli)', 'Surat Keterangan Tidak Sedang Menjalani Tugas Belajar/Ikatan Dinas (Asli)', 'Surat Keterangan Tidak Mempunyai Hutang Piutang dengan Pihak Bank (Asli)', 'Surat Pernyataan Bebas Temuan yang Diterbitkan oleh ITJEN (Asli)', 'ANJAB dan ABK yang ditandatangani oleh PPK Instansi Asal (Bila Pindah Antar Kementerian)', 'SK CPNS (Fotokopi legalisir)', 'SK PNS (Fotokopi legalisir)', 'SK Pangkat Terakhir (Fotokopi legalisir)', 'SK Jabatan Terakhir (Fotokopi legalisir)', 'KARPEG (Fotokopi legalisir)', 'Ijazah dan Transkrip Nilai Universitas (Fotokopi legalisir)', 'SKP 2 tahun terakhir (Fotokopi legalisir)', 'Surat permohonan mutasi dari ybs', 'Daftar Riwayat Hidup (DRH) sesuai Keputusan Kepala BKN Nomor 11 Tahun 2002', 'Nota Dinas Usulan Mutasi yang telah ditandatangani'];
 export default function DetailMutasiTerpadu() {
-  const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
+  const {
+    user
+  } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [application, setApplication] = useState<ApplicationDetail | null>(null);
-  const [documents, setDocuments] = useState<{ [key: string]: string }>({});
+  const [documents, setDocuments] = useState<{
+    [key: string]: string;
+  }>({});
   const [isEditing, setIsEditing] = useState(false);
   const [documentVerificationStatus, setDocumentVerificationStatus] = useState<DocumentVerificationStatus>({});
   const [fixedDocuments, setFixedDocuments] = useState<Set<string>>(new Set());
@@ -98,19 +70,16 @@ export default function DetailMutasiTerpadu() {
   const [draftSaved, setDraftSaved] = useState(false);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   const [documentRequirements, setDocumentRequirements] = useState<string[]>([]);
-
   useEffect(() => {
     if (id) {
       loadApplication();
     }
   }, [id]);
-
   useEffect(() => {
     if (application) {
       loadDocumentRequirements();
     }
   }, [application]);
-
   useEffect(() => {
     if (application) {
       // Check if we're in edit mode or if status is revision_needed
@@ -122,77 +91,29 @@ export default function DetailMutasiTerpadu() {
       }
     }
   }, [application, location.search]);
-
   const loadDocumentRequirements = async () => {
     if (!application) return;
-
     try {
       if (application.jenis === 'mutasi_terpadu') {
         setDocumentRequirements(MUTASI_DOCUMENT_REQUIREMENTS);
       } else if (application.jenis === 'kenaikan_pangkat') {
         const employeeData = application.employee_data;
         const kategori = employeeData?.kategori || '';
-        
-        const { data, error } = await supabase
-          .from('document_types')
-          .select('name')
-          .eq('category', `kenaikan_pangkat_${kategori}`)
-          .eq('is_active', true)
-          .order('code');
-
+        const {
+          data,
+          error
+        } = await supabase.from('document_types').select('name').eq('category', `kenaikan_pangkat_${kategori}`).eq('is_active', true).order('code');
         if (error) throw error;
         setDocumentRequirements(data?.map(d => d.name) || []);
       } else if (application.jenis === 'pensiun') {
         const employeeData = application.employee_data;
         const kategori = employeeData?.kategori || '';
-        
-        const retirementDocs: { [key: string]: string[] } = {
-          "pensiun_reguler": [
-            "Surat Permohonan Pensiun dari Ybs (tanpa kop unit kerja)",
-            "Daftar Susunan Keluarga - pastikan jumlah anak sama dengan di DPCPP",
-            "Kartu Pegawai (KARPEG)",
-            "Surat Nikah (Optional)",
-            "Akte Kelahiran Anak (apabila masih ada anak yang menjadi tanggungan)",
-            "SK Pengangkatan sebagai CPNS",
-            "SK Pengangkatan CPNS menjadi PNS",
-            "SK Kenaikan Pangkat terakhir",
-            "Kenaikan Gaji Berkala Terakhir",
-            "Penilaian Prestasi Kerja (SKP) 2 Tahun Terakhir",
-            "Surat Pernyataan Tidak Pernah Dijatuhi Hukuman Disiplin Sedang/Berat dalam 1 Tahun Terakhir",
-            "Surat Pernyataan Tidak Sedang Menjalani Proses Pidana",
-            "Foto Pegawai ybs",
-            "Data Perorangan Calon Penerima Pensiun (DPCPP)",
-            "Surat Keterangan Kematian (Bila ada suami/istri yang sudah meninggal dunia)",
-            "KTP",
-            "NPWP",
-            "Buku Tabungan (lembar yang terdapat nomor rekening)",
-            "Surat Keterangan Sekolah / Kuliah (bila terdapat anak yang masih menjadi tanggungan)"
-          ],
-          "pensiun_janda_duda": [
-            "Surat Permohonan Pensiun dari Janda / Duda Ybs (tanpa kop)",
-            "Daftar Susunan Keluarga (Dokumen Asli)",
-            "Kartu Pegawai (KARPEG) almarhum/ah",
-            "Surat Nikah",
-            "Akte Kelahiran Anak",
-            "SK Pengangkatan sebagai CPNS almarhum/ah",
-            "SK Pengangkatan CPNS menjadi PNS almarhum/ah",
-            "SK Kenaikan Pangkat almarhum/ah",
-            "Gaji Berkala Terakhir almarhum/ah",
-            "Penilaian Prestasi Kerja 2 Tahun Terakhir almarhum/ah",
-            "Surat Pernyataan Tidak Pernah Dijatuhi Hukuman Disiplin Sedang/Berat dalam 1 Tahun Terakhir almarhum/ah",
-            "Surat Pernyataan Tidak Sedang Menjalani Proses Pidana almarhum/ah",
-            "Data Perorangan Calon Penerima Pensiun (DPCPP)",
-            "Foto Janda / Duda ybs",
-            "Surat Keterangan Kematian yang Sah (harus dari Dukcapil)",
-            "Surat Keterangan Janda / Duda dari Kelurahan",
-            "Kartu Istri (KARIS) utk pensiun janda atau Kartu Suami (KARSU) untuk pensiun duda",
-            "KTP janda/duda/KK",
-            "NPWP janda/duda",
-            "Buku Tabungan janda/duda",
-            "Surat Keterangan Sekolah / Kuliah (bila terdapat anak yang masih menjadi tanggungan)"
-          ]
+        const retirementDocs: {
+          [key: string]: string[];
+        } = {
+          "pensiun_reguler": ["Surat Permohonan Pensiun dari Ybs (tanpa kop unit kerja)", "Daftar Susunan Keluarga - pastikan jumlah anak sama dengan di DPCPP", "Kartu Pegawai (KARPEG)", "Surat Nikah (Optional)", "Akte Kelahiran Anak (apabila masih ada anak yang menjadi tanggungan)", "SK Pengangkatan sebagai CPNS", "SK Pengangkatan CPNS menjadi PNS", "SK Kenaikan Pangkat terakhir", "Kenaikan Gaji Berkala Terakhir", "Penilaian Prestasi Kerja (SKP) 2 Tahun Terakhir", "Surat Pernyataan Tidak Pernah Dijatuhi Hukuman Disiplin Sedang/Berat dalam 1 Tahun Terakhir", "Surat Pernyataan Tidak Sedang Menjalani Proses Pidana", "Foto Pegawai ybs", "Data Perorangan Calon Penerima Pensiun (DPCPP)", "Surat Keterangan Kematian (Bila ada suami/istri yang sudah meninggal dunia)", "KTP", "NPWP", "Buku Tabungan (lembar yang terdapat nomor rekening)", "Surat Keterangan Sekolah / Kuliah (bila terdapat anak yang masih menjadi tanggungan)"],
+          "pensiun_janda_duda": ["Surat Permohonan Pensiun dari Janda / Duda Ybs (tanpa kop)", "Daftar Susunan Keluarga (Dokumen Asli)", "Kartu Pegawai (KARPEG) almarhum/ah", "Surat Nikah", "Akte Kelahiran Anak", "SK Pengangkatan sebagai CPNS almarhum/ah", "SK Pengangkatan CPNS menjadi PNS almarhum/ah", "SK Kenaikan Pangkat almarhum/ah", "Gaji Berkala Terakhir almarhum/ah", "Penilaian Prestasi Kerja 2 Tahun Terakhir almarhum/ah", "Surat Pernyataan Tidak Pernah Dijatuhi Hukuman Disiplin Sedang/Berat dalam 1 Tahun Terakhir almarhum/ah", "Surat Pernyataan Tidak Sedang Menjalani Proses Pidana almarhum/ah", "Data Perorangan Calon Penerima Pensiun (DPCPP)", "Foto Janda / Duda ybs", "Surat Keterangan Kematian yang Sah (harus dari Dukcapil)", "Surat Keterangan Janda / Duda dari Kelurahan", "Kartu Istri (KARIS) utk pensiun janda atau Kartu Suami (KARSU) untuk pensiun duda", "KTP janda/duda/KK", "NPWP janda/duda", "Buku Tabungan janda/duda", "Surat Keterangan Sekolah / Kuliah (bila terdapat anak yang masih menjadi tanggungan)"]
         };
-        
         setDocumentRequirements(retirementDocs[kategori] || []);
       }
     } catch (error) {
@@ -200,17 +121,13 @@ export default function DetailMutasiTerpadu() {
       setDocumentRequirements(MUTASI_DOCUMENT_REQUIREMENTS);
     }
   };
-
   const loadApplication = async () => {
     try {
-      const { data, error } = await supabase
-        .from('applications')
-        .select('*')
-        .eq('id', id)
-        .single();
-
+      const {
+        data,
+        error
+      } = await supabase.from('applications').select('*').eq('id', id).single();
       if (error) throw error;
-
       if (data) {
         const appData = {
           ...data,
@@ -229,28 +146,26 @@ export default function DetailMutasiTerpadu() {
       setLoading(false);
     }
   };
-
   const loadApplicationForEdit = async () => {
     try {
       // Load documents
-      const { data: documentsData, error: docsError } = await supabase
-        .from('documents')
-        .select('*')
-        .eq('application_id', id)
-        .order('document_index');
-
+      const {
+        data: documentsData,
+        error: docsError
+      } = await supabase.from('documents').select('*').eq('application_id', id).order('document_index');
       if (docsError) throw docsError;
 
       // Load document verification status
-      const { data: verificationData, error: verificationError } = await supabase
-        .from('document_verifications')
-        .select('*')
-        .eq('application_id', id);
-
+      const {
+        data: verificationData,
+        error: verificationError
+      } = await supabase.from('document_verifications').select('*').eq('application_id', id);
       if (verificationError) throw verificationError;
 
       // Populate documents - preserve existing document links
-      const loadedDocuments: { [key: string]: string } = {};
+      const loadedDocuments: {
+        [key: string]: string;
+      } = {};
       documentsData?.forEach(doc => {
         if (doc.document_index !== null && doc.drive_link) {
           loadedDocuments[`doc_${doc.document_index}`] = doc.drive_link;
@@ -272,15 +187,12 @@ export default function DetailMutasiTerpadu() {
         }
       });
       setDocumentVerificationStatus(verificationStatus);
-
       console.log('Loaded documents for edit:', loadedDocuments);
       console.log('Loaded verification status:', verificationStatus);
-
       toast({
         title: "Data Dimuat",
         description: "Data usulan berhasil dimuat untuk diedit"
       });
-
     } catch (error) {
       console.error('Error loading application data for edit:', error);
       toast({
@@ -290,7 +202,6 @@ export default function DetailMutasiTerpadu() {
       });
     }
   };
-
   const handleDocumentChange = (index: number, value: string) => {
     const docKey = `doc_${index}`;
     setDocuments(prev => ({
@@ -298,7 +209,6 @@ export default function DetailMutasiTerpadu() {
       [docKey]: value
     }));
   };
-
   const handleMarkDocumentFixed = (docKey: string) => {
     setFixedDocuments(prev => new Set(prev).add(docKey));
     toast({
@@ -306,7 +216,6 @@ export default function DetailMutasiTerpadu() {
       description: "Dokumen telah ditandai sebagai diperbaiki dan dikunci"
     });
   };
-
   const handleUnmarkDocumentFixed = (docKey: string) => {
     setFixedDocuments(prev => {
       const newSet = new Set(prev);
@@ -318,7 +227,6 @@ export default function DetailMutasiTerpadu() {
       description: "Dokumen dapat diedit kembali"
     });
   };
-
   const handleSaveDocument = (docKey: string) => {
     setSavedDocuments(prev => new Set(prev).add(docKey));
     toast({
@@ -326,7 +234,6 @@ export default function DetailMutasiTerpadu() {
       description: "Link dokumen telah disimpan dan dikunci"
     });
   };
-
   const handleEditDocument = (docKey: string) => {
     setSavedDocuments(prev => {
       const newSet = new Set(prev);
@@ -338,10 +245,8 @@ export default function DetailMutasiTerpadu() {
       description: "Dokumen dapat diedit kembali"
     });
   };
-
   const handleSaveDraft = async () => {
     if (!application || !application.employee_data) return;
-
     if (!user?.id) {
       toast({
         title: "Error",
@@ -350,40 +255,33 @@ export default function DetailMutasiTerpadu() {
       });
       return;
     }
-
     try {
       setIsSubmitting(true);
-      
-      // Update application keterangan and ensure status stays as draft
-      const { error: updateError } = await supabase
-        .from('applications')
-        .update({
-          status: 'draft', // Explicitly ensure status remains draft
-          keterangan: `Kategori: Mutasi Terpadu${additionalNotes ? ` - ${additionalNotes}` : ''}`,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
 
+      // Update application keterangan and ensure status stays as draft
+      const {
+        error: updateError
+      } = await supabase.from('applications').update({
+        status: 'draft',
+        // Explicitly ensure status remains draft
+        keterangan: `Kategori: Mutasi Terpadu${additionalNotes ? ` - ${additionalNotes}` : ''}`,
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
       if (updateError) throw updateError;
 
       // Delete existing documents first
-      const { error: deleteDocsError } = await supabase
-        .from('documents')
-        .delete()
-        .eq('application_id', id);
-
+      const {
+        error: deleteDocsError
+      } = await supabase.from('documents').delete().eq('application_id', id);
       if (deleteDocsError) throw deleteDocsError;
 
       // Determine document category based on application type
-      const docCategory = application.jenis === 'mutasi_terpadu' ? 'mutasi_terpadu' : 
-                          application.jenis === 'kenaikan_pangkat' ? 'kenaikan_pangkat' :
-                          application.jenis === 'pensiun' ? 'pensiun' : 'mutasi_terpadu';
+      const docCategory = application.jenis === 'mutasi_terpadu' ? 'mutasi_terpadu' : application.jenis === 'kenaikan_pangkat' ? 'kenaikan_pangkat' : application.jenis === 'pensiun' ? 'pensiun' : 'mutasi_terpadu';
 
       // Insert ALL documents from the form state, including empty ones as placeholders
       const documentInserts = documentRequirements.map((documentName, index) => {
         const docKey = `doc_${index}`;
         const linkValue = documents[docKey] || '';
-        
         return {
           application_id: id,
           title: documentName,
@@ -395,26 +293,21 @@ export default function DetailMutasiTerpadu() {
       }).filter(doc => doc.drive_link !== ''); // Only save documents with actual links
 
       if (documentInserts.length > 0) {
-        const { error: documentsError } = await supabase
-          .from('documents')
-          .insert(documentInserts);
-
+        const {
+          error: documentsError
+        } = await supabase.from('documents').insert(documentInserts);
         if (documentsError) throw documentsError;
       }
-
       setDraftSaved(true);
-      
       toast({
         title: "Berhasil",
-        description: `Draft disimpan dengan ${documentInserts.length} dokumen. Status tetap Draft.`,
+        description: `Draft disimpan dengan ${documentInserts.length} dokumen. Status tetap Draft.`
       });
-
       console.log('Draft saved successfully:', {
         applicationId: id,
         documentsCount: documentInserts.length,
         status: 'draft'
       });
-
     } catch (error: any) {
       console.error('Error saving draft:', error);
       toast({
@@ -426,10 +319,8 @@ export default function DetailMutasiTerpadu() {
       setIsSubmitting(false);
     }
   };
-
   const handleSubmitApplication = async () => {
     setShowSubmitConfirmation(false);
-    
     if (!application || !application.employee_data) return;
 
     // Check if all documents are provided for final submission
@@ -437,16 +328,14 @@ export default function DetailMutasiTerpadu() {
       const docKey = `doc_${index}`;
       return documents[docKey] && documents[docKey].trim() !== '';
     });
-
     if (!allDocumentsProvided) {
       toast({
-        title: "Error", 
+        title: "Error",
         description: "Semua dokumen persyaratan harus diisi sebelum submit pengajuan",
         variant: "destructive"
       });
       return;
     }
-
     if (!user?.id) {
       toast({
         title: "Error",
@@ -455,88 +344,71 @@ export default function DetailMutasiTerpadu() {
       });
       return;
     }
-
     try {
       setIsSubmitting(true);
-      
       if (isEditing) {
         // Update existing application
-        const { error: updateError } = await supabase
-          .from('applications')
-          .update({
-            status: 'submitted',
-            keterangan: `Perbaikan - Diajukan Ulang - Kategori: Mutasi Terpadu${additionalNotes ? ` - ${additionalNotes}` : ''}`,
-            updated_at: new Date().toISOString(),
-            progress: 20,  // Reset progress for resubmission
-            detailed_verification_status: 'not_started' // Reset verification status
-          })
-          .eq('id', id);
-
+        const {
+          error: updateError
+        } = await supabase.from('applications').update({
+          status: 'submitted',
+          keterangan: `Perbaikan - Diajukan Ulang - Kategori: Mutasi Terpadu${additionalNotes ? ` - ${additionalNotes}` : ''}`,
+          updated_at: new Date().toISOString(),
+          progress: 20,
+          // Reset progress for resubmission
+          detailed_verification_status: 'not_started' // Reset verification status
+        }).eq('id', id);
         if (updateError) throw updateError;
 
         // Reset document verifications for admin to re-verify (must delete first due to FK constraint)
-        const { error: deleteVerificationError } = await supabase
-          .from('document_verifications')
-          .delete()
-          .eq('application_id', id);
-
+        const {
+          error: deleteVerificationError
+        } = await supabase.from('document_verifications').delete().eq('application_id', id);
         if (deleteVerificationError) {
           console.error('Error deleting old verifications:', deleteVerificationError);
           throw deleteVerificationError; // Throw error to prevent FK constraint violation
         }
 
         // Delete existing documents (after verifications are deleted)
-        const { error: deleteDocsError } = await supabase
-          .from('documents')
-          .delete()
-          .eq('application_id', id);
-
+        const {
+          error: deleteDocsError
+        } = await supabase.from('documents').delete().eq('application_id', id);
         if (deleteDocsError) {
           console.error('Error deleting old documents:', deleteDocsError);
           throw deleteDocsError;
         }
 
         // Determine document category based on application type
-        const docCategory = application.jenis === 'mutasi_terpadu' ? 'mutasi_terpadu' : 
-                            application.jenis === 'kenaikan_pangkat' ? 'kenaikan_pangkat' :
-                            application.jenis === 'pensiun' ? 'pensiun' : 'mutasi_terpadu';
+        const docCategory = application.jenis === 'mutasi_terpadu' ? 'mutasi_terpadu' : application.jenis === 'kenaikan_pangkat' ? 'kenaikan_pangkat' : application.jenis === 'pensiun' ? 'pensiun' : 'mutasi_terpadu';
 
         // Insert new documents
-        const documentInserts = Object.entries(documents)
-          .filter(([key, link]) => link.trim() !== '')
-          .map(([key, link]) => {
-            const index = parseInt(key.replace('doc_', ''));
-            const documentName = documentRequirements[index];
-            
-            return {
-              application_id: id,
-              title: documentName,
-              drive_link: link.trim(),
-              created_by: user.id,
-              document_category: docCategory,
-              document_index: index
-            };
-          });
-
+        const documentInserts = Object.entries(documents).filter(([key, link]) => link.trim() !== '').map(([key, link]) => {
+          const index = parseInt(key.replace('doc_', ''));
+          const documentName = documentRequirements[index];
+          return {
+            application_id: id,
+            title: documentName,
+            drive_link: link.trim(),
+            created_by: user.id,
+            document_category: docCategory,
+            document_index: index
+          };
+        });
         if (documentInserts.length > 0) {
-          const { error: documentsError } = await supabase
-            .from('documents')
-            .insert(documentInserts);
-
+          const {
+            error: documentsError
+          } = await supabase.from('documents').insert(documentInserts);
           if (documentsError) throw documentsError;
         }
-
         console.log('Successfully resubmitted application for re-verification:', {
           applicationId: id,
           status: 'submitted',
           documentsCount: documentInserts.length
         });
-
         toast({
           title: "Berhasil",
-          description: `Perbaikan usulan untuk ${application.employee_data.employee_name} berhasil dikirim ulang!`,
+          description: `Perbaikan usulan untuk ${application.employee_data.employee_name} berhasil dikirim ulang!`
         });
-
         setApplicationSubmitted(true);
 
         // Clear edit state
@@ -545,7 +417,7 @@ export default function DetailMutasiTerpadu() {
         setFixedDocuments(new Set());
         setDocuments({});
         setAdditionalNotes('');
-        
+
         // Navigate to appropriate list page based on application type
         setTimeout(() => {
           if (application.jenis === 'kenaikan_pangkat') {
@@ -556,57 +428,45 @@ export default function DetailMutasiTerpadu() {
             navigate('/apps/pengajuan-mutasi-terpadu?tab=list');
           }
         }, 1000);
-
       } else {
         // Submit new application
-        const { error } = await supabase
-          .from('applications')
-          .update({ 
-            status: 'submitted',
-            tanggal_pengajuan: new Date().toISOString(),
-            keterangan: `Kategori: Mutasi Terpadu${additionalNotes ? ` - ${additionalNotes}` : ''}`
-          })
-          .eq('id', application.id);
-
+        const {
+          error
+        } = await supabase.from('applications').update({
+          status: 'submitted',
+          tanggal_pengajuan: new Date().toISOString(),
+          keterangan: `Kategori: Mutasi Terpadu${additionalNotes ? ` - ${additionalNotes}` : ''}`
+        }).eq('id', application.id);
         if (error) throw error;
 
         // Determine document category based on application type
-        const docCategory = application.jenis === 'mutasi_terpadu' ? 'mutasi_terpadu' : 
-                            application.jenis === 'kenaikan_pangkat' ? 'kenaikan_pangkat' :
-                            application.jenis === 'pensiun' ? 'pensiun' : 'mutasi_terpadu';
+        const docCategory = application.jenis === 'mutasi_terpadu' ? 'mutasi_terpadu' : application.jenis === 'kenaikan_pangkat' ? 'kenaikan_pangkat' : application.jenis === 'pensiun' ? 'pensiun' : 'mutasi_terpadu';
 
         // Insert documents
-        const documentInserts = Object.entries(documents)
-          .filter(([key, link]) => link.trim() !== '')
-          .map(([key, link]) => {
-            const index = parseInt(key.replace('doc_', ''));
-            const documentName = documentRequirements[index];
-            
-            return {
-              application_id: id,
-              title: documentName,
-              drive_link: link.trim(),
-              created_by: user.id,
-              document_category: docCategory,
-              document_index: index
-            };
-          });
-
+        const documentInserts = Object.entries(documents).filter(([key, link]) => link.trim() !== '').map(([key, link]) => {
+          const index = parseInt(key.replace('doc_', ''));
+          const documentName = documentRequirements[index];
+          return {
+            application_id: id,
+            title: documentName,
+            drive_link: link.trim(),
+            created_by: user.id,
+            document_category: docCategory,
+            document_index: index
+          };
+        });
         if (documentInserts.length > 0) {
-          const { error: documentsError } = await supabase
-            .from('documents')
-            .insert(documentInserts);
-
+          const {
+            error: documentsError
+          } = await supabase.from('documents').insert(documentInserts);
           if (documentsError) throw documentsError;
         }
-
         toast({
           title: "Berhasil",
-          description: `Pengajuan untuk ${application.employee_data.employee_name} berhasil disubmit dan sedang menunggu verifikasi!`,
+          description: `Pengajuan untuk ${application.employee_data.employee_name} berhasil disubmit dan sedang menunggu verifikasi!`
         });
-
         setApplicationSubmitted(true);
-        
+
         // Navigate to appropriate list page based on application type
         setTimeout(() => {
           if (application.jenis === 'kenaikan_pangkat') {
@@ -618,7 +478,6 @@ export default function DetailMutasiTerpadu() {
           }
         }, 1000);
       }
-
     } catch (error: any) {
       console.error('Error submitting application:', error);
       toast({
@@ -630,28 +489,41 @@ export default function DetailMutasiTerpadu() {
       setIsSubmitting(false);
     }
   };
-
   const getStatusBadge = (status: string, keterangan?: string) => {
     // Check if this is a resubmitted application
     const isResubmitted = keterangan?.includes('Perbaikan - Diajukan Ulang');
-    
     if (status === 'submitted' && isResubmitted) {
       return <Badge className="bg-blue-100 text-blue-700">Menunggu Verifikasi Ulang</Badge>;
     }
-    
     const statusMap = {
-      draft: { label: "Draft", className: "bg-gray-100 text-gray-700" },
-      submitted: { label: "Menunggu Verifikasi", className: "bg-gray-100 text-gray-700" },
-      in_review: { label: "Sudah Diperbaiki", className: "bg-orange-100 text-orange-700" },
-      approved: { label: "Diproses", className: "bg-blue-100 text-blue-700" },
-      rejected: { label: "Ditolak", className: "bg-red-100 text-red-700" },
-      revision_needed: { label: "Perlu Perbaikan", className: "bg-yellow-100 text-yellow-700" }
+      draft: {
+        label: "Draft",
+        className: "bg-gray-100 text-gray-700"
+      },
+      submitted: {
+        label: "Menunggu Verifikasi",
+        className: "bg-gray-100 text-gray-700"
+      },
+      in_review: {
+        label: "Sudah Diperbaiki",
+        className: "bg-orange-100 text-orange-700"
+      },
+      approved: {
+        label: "Diproses",
+        className: "bg-blue-100 text-blue-700"
+      },
+      rejected: {
+        label: "Ditolak",
+        className: "bg-red-100 text-red-700"
+      },
+      revision_needed: {
+        label: "Perlu Perbaikan",
+        className: "bg-yellow-100 text-yellow-700"
+      }
     };
-    
     const statusInfo = statusMap[status as keyof typeof statusMap] || statusMap.draft;
     return <Badge className={statusInfo.className}>{statusInfo.label}</Badge>;
   };
-
   const getVerificationStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
@@ -664,93 +536,68 @@ export default function DetailMutasiTerpadu() {
         return <Badge className="bg-gray-100 text-gray-700">Belum Diperiksa</Badge>;
     }
   };
-
   const canEdit = application?.status === 'draft' || application?.status === 'revision_needed' || isEditing;
   const submittedDocumentsCount = Object.values(documents).filter(link => link.trim() !== '').length;
   const allDocumentsCompleted = documentRequirements.every((_, index) => {
     const docKey = `doc_${index}`;
     return documents[docKey] && documents[docKey].trim() !== '';
   });
-  
+
   // Check if all revision documents are completed (based on fixed status)
-  const revisionDocumentsCompleted = application?.status === 'revision_needed' 
-    ? Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').every(verification => {
-        const docKey = Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === verification);
-        return docKey && fixedDocuments.has(docKey);
-      })
-    : false;
-  
+  const revisionDocumentsCompleted = application?.status === 'revision_needed' ? Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').every(verification => {
+    const docKey = Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === verification);
+    return docKey && fixedDocuments.has(docKey);
+  }) : false;
+
   // Draft button enabled when at least one document is saved
   const canSaveDraft = canEdit && savedDocuments.size > 0;
-  
+
   // For revision mode: Submit button enabled when all documents that need fixing are marked as fixed
   // For new applications: Submit button enabled when all documents are saved
   const allDocumentsSaved = documentRequirements.every((_, index) => {
     const docKey = `doc_${index}`;
     return savedDocuments.has(docKey) && documents[docKey] && documents[docKey].trim() !== '';
   });
-  
-  const allRevisionDocumentsFixed = isEditing && application?.status === 'revision_needed' 
-    ? Object.entries(documentVerificationStatus)
-        .filter(([_, verification]) => verification.status === 'needs_fix')
-        .every(([docKey, _]) => fixedDocuments.has(docKey) && documents[docKey] && documents[docKey].trim() !== '')
-    : false;
-  
-  const canSubmit = canEdit && (allRevisionDocumentsFixed || (!isEditing && allDocumentsSaved) || (isEditing && application?.status !== 'revision_needed' && allDocumentsSaved));
-  const progressPercentage = documentRequirements.length > 0 ? Math.round((submittedDocumentsCount / documentRequirements.length) * 100) : 0;
-
+  const allRevisionDocumentsFixed = isEditing && application?.status === 'revision_needed' ? Object.entries(documentVerificationStatus).filter(([_, verification]) => verification.status === 'needs_fix').every(([docKey, _]) => fixedDocuments.has(docKey) && documents[docKey] && documents[docKey].trim() !== '') : false;
+  const canSubmit = canEdit && (allRevisionDocumentsFixed || !isEditing && allDocumentsSaved || isEditing && application?.status !== 'revision_needed' && allDocumentsSaved);
+  const progressPercentage = documentRequirements.length > 0 ? Math.round(submittedDocumentsCount / documentRequirements.length * 100) : 0;
   if (loading) {
-    return (
-      <div className="container mx-auto py-6">
+    return <div className="container mx-auto py-6">
         <div className="text-center py-8">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
           <p>Memuat data pengajuan...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!application) {
-    return (
-      <div className="container mx-auto py-6">
+    return <div className="container mx-auto py-6">
         <div className="text-center py-8">
           <p>Pengajuan tidak ditemukan</p>
           <Button onClick={() => navigate('/apps')} className="mt-4">
             Kembali ke Aplikasi
           </Button>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   const getApplicationTitle = () => {
     if (!application) return 'Detail Pengajuan';
-    
     const titles: Record<string, string> = {
       'mutasi_terpadu': 'Detail Pengajuan Mutasi Terpadu',
       'kenaikan_pangkat': 'Detail Pengajuan Kenaikan Pangkat',
       'pensiun': 'Detail Pengajuan Pensiun'
     };
-    
-    return isEditing 
-      ? titles[application.jenis]?.replace('Detail', 'Edit') || 'Edit Pengajuan'
-      : titles[application.jenis] || 'Detail Pengajuan';
+    return isEditing ? titles[application.jenis]?.replace('Detail', 'Edit') || 'Edit Pengajuan' : titles[application.jenis] || 'Detail Pengajuan';
   };
-
   const getBackUrl = () => {
     if (!application) return '/apps';
-    
     const urls: Record<string, string> = {
       'mutasi_terpadu': '/apps/pengajuan-mutasi-terpadu?tab=list',
       'kenaikan_pangkat': '/apps/kenaikan-pangkat?tab=list',
       'pensiun': '/apps/reminder-pensiun?tab=list'
     };
-    
     return urls[application.jenis] || '/apps';
   };
-
-  return (
-    <div className="container mx-auto py-6 space-y-6">
+  return <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="outline" size="sm" onClick={() => navigate(getBackUrl())}>
@@ -767,67 +614,39 @@ export default function DetailMutasiTerpadu() {
         </div>
         <div className="flex items-center gap-2">
           {getStatusBadge(application.status, application.keterangan)}
-          {application.status === 'revision_needed' && !isEditing && (
-            <Button onClick={() => setIsEditing(true)} variant="outline">
+          {application.status === 'revision_needed' && !isEditing && <Button onClick={() => setIsEditing(true)} variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Edit Usulan
-            </Button>
-          )}
-          {canSaveDraft && (
-            <Button 
-              onClick={handleSaveDraft} 
-              disabled={isSubmitting || draftSaved}
-              variant={draftSaved ? "default" : "outline"}
-              className={draftSaved ? "bg-green-600 hover:bg-green-700 text-white" : ""}
-            >
-              {isSubmitting ? (
-                <>
+            </Button>}
+          {canSaveDraft && <Button onClick={handleSaveDraft} disabled={isSubmitting || draftSaved} variant={draftSaved ? "default" : "outline"} className={draftSaved ? "bg-green-600 hover:bg-green-700 text-white" : ""}>
+              {isSubmitting ? <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Menyimpan...
-                </>
-              ) : draftSaved ? (
-                <>
+                </> : draftSaved ? <>
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Draft Tersimpan
-                </>
-              ) : (
-                <>
+                </> : <>
                   <FileText className="w-4 h-4 mr-2" />
                   Simpan Draft ({savedDocuments.size}/{documentRequirements.length})
-                </>
-              )}
-            </Button>
-          )}
-          {canSubmit && (
-            <Button 
-              onClick={() => setShowSubmitConfirmation(true)} 
-              disabled={isSubmitting || applicationSubmitted}
-              className={applicationSubmitted ? "bg-green-600 hover:bg-green-700 text-white" : ""}
-            >
-              {isSubmitting ? (
-                <>
+                </>}
+            </Button>}
+          {canSubmit && <Button onClick={() => setShowSubmitConfirmation(true)} disabled={isSubmitting || applicationSubmitted} className={applicationSubmitted ? "bg-green-600 hover:bg-green-700 text-white" : ""}>
+              {isSubmitting ? <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   {isEditing ? 'Mengirim Perbaikan...' : 'Mengirim...'}
-                </>
-              ) : applicationSubmitted ? (
-                <>
+                </> : applicationSubmitted ? <>
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Pengajuan Terkirim
-                </>
-              ) : (
-                <>
+                </> : <>
                   <Send className="w-4 h-4 mr-2" />
                   {isEditing ? 'Submit Perbaikan' : 'Submit Pengajuan'}
-                </>
-              )}
-            </Button>
-          )}
+                </>}
+            </Button>}
         </div>
       </div>
 
       {/* Progress - Only show for draft and revision_needed status */}
-      {(application.status === 'draft' || application.status === 'revision_needed') && (
-        <Card>
+      {(application.status === 'draft' || application.status === 'revision_needed') && <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="w-5 h-5" />
@@ -838,72 +657,35 @@ export default function DetailMutasiTerpadu() {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>
-                  {application.status === 'revision_needed' 
-                    ? 'Dokumen perbaikan yang sudah diupload' 
-                    : 'Dokumen yang sudah diupload'
-                  }
+                  {application.status === 'revision_needed' ? 'Dokumen perbaikan yang sudah diupload' : 'Dokumen yang sudah diupload'}
                 </span>
                 <span>
-                  {application.status === 'revision_needed' 
-                    ? Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix' && documents[Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === v) || '']?.trim() !== '').length
-                    : submittedDocumentsCount
-                  } dari {application.status === 'revision_needed' 
-                    ? Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length 
-                    : documentRequirements.length
-                  }
+                  {application.status === 'revision_needed' ? Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix' && documents[Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === v) || '']?.trim() !== '').length : submittedDocumentsCount} dari {application.status === 'revision_needed' ? Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length : documentRequirements.length}
                 </span>
               </div>
-              <Progress 
-                value={
-                  application.status === 'revision_needed' 
-                    ? Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').filter(verification => {
-                        const docKey = Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === verification);
-                        return docKey && fixedDocuments.has(docKey);
-                      }).length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)
-                    : progressPercentage
-                }
-                className={cn(
-                  "w-full",
-                  // For revision status: green if all revision documents completed, gray if not
-                  application.status === 'revision_needed' 
-                    ? revisionDocumentsCompleted 
-                      ? "[&>div]:bg-green-500" 
-                      : "[&>div]:bg-gray-400"
-                    : allDocumentsCompleted 
-                      ? "[&>div]:bg-green-500" 
-                      : ""
-                )}
-              />
-              {application.status === 'revision_needed' ? (
-                revisionDocumentsCompleted ? (
-                  <p className="text-xs text-green-600 font-medium flex items-center gap-1">
+              <Progress value={application.status === 'revision_needed' ? Math.round(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').filter(verification => {
+            const docKey = Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === verification);
+            return docKey && fixedDocuments.has(docKey);
+          }).length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1) * 100) : progressPercentage} className={cn("w-full",
+          // For revision status: green if all revision documents completed, gray if not
+          application.status === 'revision_needed' ? revisionDocumentsCompleted ? "[&>div]:bg-green-500" : "[&>div]:bg-gray-400" : allDocumentsCompleted ? "[&>div]:bg-green-500" : "")} />
+              {application.status === 'revision_needed' ? revisionDocumentsCompleted ? <p className="text-xs text-green-600 font-medium flex items-center gap-1">
                     <CheckCircle className="w-3 h-3" />
                     Dokumen perbaikan sudah lengkap
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    {Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').filter(verification => {
-                      const docKey = Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === verification);
-                      return docKey && fixedDocuments.has(docKey);
-                    }).length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)}% perbaikan selesai
-                  </p>
-                )
-              ) : (
-                allDocumentsCompleted ? (
-                  <p className="text-xs text-green-600 font-medium flex items-center gap-1">
+                  </p> : <p className="text-xs text-muted-foreground">
+                    {Math.round(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').filter(verification => {
+              const docKey = Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === verification);
+              return docKey && fixedDocuments.has(docKey);
+            }).length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1) * 100)}% perbaikan selesai
+                  </p> : allDocumentsCompleted ? <p className="text-xs text-green-600 font-medium flex items-center gap-1">
                     <CheckCircle className="w-3 h-3" />
                     Dokumen persyaratan sudah lengkap
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
+                  </p> : <p className="text-xs text-muted-foreground">
                     {progressPercentage}% selesai
-                  </p>
-                )
-              )}
+                  </p>}
             </div>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* Timeline */}
       <Card>
@@ -921,17 +703,17 @@ export default function DetailMutasiTerpadu() {
               <div className="absolute top-6 left-6 right-6 h-0.5 bg-gray-200 z-0"></div>
               
               {/* Active connecting lines */}
-              {(application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') && (
-                <div className="absolute top-6 left-6 h-0.5 bg-green-500 z-10" style={{ width: 'calc(50% - 12px)' }}></div>
-              )}
+              {(application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') && <div className="absolute top-6 left-6 h-0.5 bg-green-500 z-10" style={{
+              width: 'calc(50% - 12px)'
+            }}></div>}
               
-              {application?.status === 'approved' && (
-                <div className="absolute top-6 right-6 h-0.5 bg-green-500 z-10" style={{ width: 'calc(50% - 12px)' }}></div>
-              )}
+              {application?.status === 'approved' && <div className="absolute top-6 right-6 h-0.5 bg-green-500 z-10" style={{
+              width: 'calc(50% - 12px)'
+            }}></div>}
               
-              {application?.status === 'revision_needed' && (
-                <div className="absolute top-6 right-6 h-0.5 bg-yellow-500 z-10" style={{ width: 'calc(50% - 12px)' }}></div>
-              )}
+              {application?.status === 'revision_needed' && <div className="absolute top-6 right-6 h-0.5 bg-yellow-500 z-10" style={{
+              width: 'calc(50% - 12px)'
+            }}></div>}
 
               {/* Timeline Step 1: Pengajuan dibuat */}
               <div className="flex flex-col items-center z-20 bg-white px-4">
@@ -942,128 +724,92 @@ export default function DetailMutasiTerpadu() {
                   <h4 className="text-sm font-semibold text-gray-900 mb-1">Pengajuan Dibuat</h4>
                   <p className="text-xs text-gray-600 break-words">
                     {new Date(application?.created_at || '').toLocaleDateString('id-ID', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric'
-                    })}
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                  })}
                   </p>
                   <p className="text-xs text-gray-500">
                     {new Date(application?.created_at || '').toLocaleTimeString('id-ID', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
                   </p>
                 </div>
               </div>
 
               {/* Timeline Step 2: Data telah diajukan */}
               <div className="flex flex-col items-center z-20 bg-white px-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 relative ${
-                  (application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') 
-                    ? 'bg-green-500' 
-                    : 'bg-gray-300'
-                }`}>
-                  {(application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') ? (
-                    <Send className="w-6 h-6 text-white" />
-                  ) : (
-                    <Clock className="w-6 h-6 text-gray-500" />
-                  )}
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 relative ${application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed' ? 'bg-green-500' : 'bg-gray-300'}`}>
+                  {application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed' ? <Send className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
                 </div>
                 <div className="text-center min-w-0 max-w-32">
                   <h4 className="text-sm font-semibold text-gray-900 mb-1">Data Diajukan</h4>
-                  {(application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') ? (
-                    <>
+                  {application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed' ? <>
                       <p className="text-xs text-gray-600 break-words">
-                        {application?.tanggal_pengajuan ? 
-                          new Date(application.tanggal_pengajuan).toLocaleDateString('id-ID', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric'
-                          }) : 
-                          new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric'
-                          })
-                        }
+                        {application?.tanggal_pengajuan ? new Date(application.tanggal_pengajuan).toLocaleDateString('id-ID', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric'
+                    }) : new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric'
+                    })}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {application?.tanggal_pengajuan ? 
-                          new Date(application.tanggal_pengajuan).toLocaleTimeString('id-ID', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          }) : 
-                          new Date(application?.updated_at || '').toLocaleTimeString('id-ID', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })
-                        }
+                        {application?.tanggal_pengajuan ? new Date(application.tanggal_pengajuan).toLocaleTimeString('id-ID', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) : new Date(application?.updated_at || '').toLocaleTimeString('id-ID', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
                       </p>
-                    </>
-                  ) : (
-                    <p className="text-xs text-gray-500">Menunggu</p>
-                  )}
+                    </> : <p className="text-xs text-gray-500">Menunggu</p>}
                 </div>
               </div>
 
               {/* Timeline Step 3: Status akhir */}
               <div className="flex flex-col items-center z-20 bg-white px-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 relative ${
-                  application?.status === 'approved' 
-                    ? 'bg-green-500' 
-                    : application?.status === 'revision_needed'
-                    ? 'bg-yellow-500'
-                    : 'bg-gray-300'
-                }`}>
-                  {application?.status === 'approved' ? (
-                    <CheckCircle className="w-6 h-6 text-white" />
-                  ) : application?.status === 'revision_needed' ? (
-                    <AlertTriangle className="w-6 h-6 text-white" />
-                  ) : (
-                    <Clock className="w-6 h-6 text-gray-500" />
-                  )}
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 relative ${application?.status === 'approved' ? 'bg-green-500' : application?.status === 'revision_needed' ? 'bg-yellow-500' : 'bg-gray-300'}`}>
+                  {application?.status === 'approved' ? <CheckCircle className="w-6 h-6 text-white" /> : application?.status === 'revision_needed' ? <AlertTriangle className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
                 </div>
                 <div className="text-center min-w-0 max-w-32">
-                  {application?.status === 'approved' ? (
-                    <>
+                  {application?.status === 'approved' ? <>
                       <h4 className="text-sm font-semibold text-gray-900 mb-1">Disetujui & Diproses</h4>
                       <p className="text-xs text-gray-600 break-words">
                         {new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric'
-                        })}
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric'
+                    })}
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(application?.updated_at || '').toLocaleTimeString('id-ID', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
                       </p>
-                    </>
-                  ) : application?.status === 'revision_needed' ? (
-                    <>
+                    </> : application?.status === 'revision_needed' ? <>
                       <h4 className="text-sm font-semibold text-gray-900 mb-1">Perlu Perbaikan</h4>
                       <p className="text-xs text-gray-600 break-words">
                         {new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric'
-                        })}
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric'
+                    })}
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(application?.updated_at || '').toLocaleTimeString('id-ID', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
                       </p>
-                    </>
-                  ) : (
-                    <>
+                    </> : <>
                       <h4 className="text-sm font-semibold text-gray-900 mb-1">Menunggu Verifikasi</h4>
                       <p className="text-xs text-gray-500">Belum diproses</p>
-                    </>
-                  )}
+                    </>}
                 </div>
               </div>
             </div>
@@ -1072,16 +818,10 @@ export default function DetailMutasiTerpadu() {
       </Card>
 
       {/* Document Verification Status - Moved from bottom */}
-      {application.status !== 'draft' && (
-        <DocumentVerificationStatus 
-          applicationId={application.id} 
-          applicationStatus={application.status} 
-        />
-      )}
+      {application.status !== 'draft' && <DocumentVerificationStatus applicationId={application.id} applicationStatus={application.status} />}
 
       {/* Edit Mode Summary */}
-      {isEditing && Object.keys(documentVerificationStatus).length > 0 && (
-        <Card className="bg-orange-50 border-orange-200">
+      {isEditing && Object.keys(documentVerificationStatus).length > 0 && <Card className="bg-orange-50 border-orange-200">
           <CardContent className="p-4">
             <h4 className="font-semibold text-orange-900 mb-2">Ringkasan Status Verifikasi</h4>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
@@ -1110,16 +850,13 @@ export default function DetailMutasiTerpadu() {
                 </span>
               </div>
             </div>
-            {Object.values(documentVerificationStatus).some(v => v.status === 'needs_fix') && (
-              <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg">
+            {Object.values(documentVerificationStatus).some(v => v.status === 'needs_fix') && <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg">
                 <p className="text-sm font-medium text-red-900">
                   Fokus pada dokumen yang perlu diperbaiki. Pastikan untuk menekan tombol "Perbaiki" setelah mengupdate link dokumen.
                 </p>
-              </div>
-            )}
+              </div>}
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Application Details */}
@@ -1131,10 +868,10 @@ export default function DetailMutasiTerpadu() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {application.employee_data && (
-              <>
+            {application.employee_data && <>
                 <div>
-                  <Label className="text-sm font-medium">Pegawai yang Dimutasi</Label>
+                  <Label className="text-sm font-medium">Pegawai yang Diusulkan
+              </Label>
                   <p className="mt-1 font-medium">{application.employee_data.employee_name}</p>
                   <p className="text-sm text-muted-foreground">
                     NIP: {application.employee_data.employee_nip}
@@ -1143,25 +880,22 @@ export default function DetailMutasiTerpadu() {
 
                 <Separator />
 
-                <div>
-                  <Label className="text-sm font-medium">Unit Asal</Label>
-                  <p className="mt-1">{application.employee_data.unit_asal}</p>
-                </div>
+                
 
                 <div>
-                  <Label className="text-sm font-medium">Unit Tujuan</Label>
+                  
                   <p className="mt-1 font-medium text-primary">{application.employee_data.unit_tujuan}</p>
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Jabatan Tujuan</Label>
+                  
                   <p className="mt-1 font-medium">{application.employee_data.jabatan_tujuan}</p>
                 </div>
 
                 <Separator />
 
                 <div>
-                  <Label className="text-sm font-medium">Alasan Mutasi</Label>
+                  
                   <p className="mt-1 text-sm">{application.employee_data.alasan_mutasi}</p>
                 </div>
 
@@ -1169,15 +903,14 @@ export default function DetailMutasiTerpadu() {
                   <Label className="text-sm font-medium">Tanggal Pengajuan</Label>
                   <p className="mt-1 text-sm">
                     {new Date(application.created_at).toLocaleDateString('id-ID', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
                   </p>
                 </div>
-              </>
-            )}
+              </>}
           </CardContent>
         </Card>
 
@@ -1190,29 +923,26 @@ export default function DetailMutasiTerpadu() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isEditing && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            {isEditing && <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                 <h4 className="font-semibold text-blue-900 mb-2">Panduan Edit Dokumen</h4>
                 <div className="text-sm text-blue-800 space-y-1">
                   <p>• <span className="font-medium text-green-700">✓ Disetujui</span>: Dokumen sudah benar, tidak perlu diubah</p>
                   <p>• <span className="font-medium text-red-700">✗ Perlu Diperbaiki</span>: Dokumen harus diperbaiki dan diupload ulang</p>
                   <p>• <span className="font-medium text-yellow-700">⏳ Menunggu</span>: Dokumen belum diperiksa</p>
                 </div>
-              </div>
-            )}
+              </div>}
 
             <div className="space-y-4">
               {documentRequirements.map((requirement, index) => {
-                const docKey = `doc_${index}`;
-                const verificationStatus = documentVerificationStatus[docKey];
-                const needsAttention = isEditing && verificationStatus?.status === 'needs_fix';
-                const isApproved = verificationStatus?.status === 'approved';
-                const isFixed = fixedDocuments.has(docKey);
-                
-                // In edit mode, only show documents that need fixing or are new
-                if (isEditing && isApproved) {
-                  return (
-                    <div key={index} className="space-y-2 bg-green-50 border border-green-200 rounded-lg p-3 opacity-75">
+              const docKey = `doc_${index}`;
+              const verificationStatus = documentVerificationStatus[docKey];
+              const needsAttention = isEditing && verificationStatus?.status === 'needs_fix';
+              const isApproved = verificationStatus?.status === 'approved';
+              const isFixed = fixedDocuments.has(docKey);
+
+              // In edit mode, only show documents that need fixing or are new
+              if (isEditing && isApproved) {
+                return <div key={index} className="space-y-2 bg-green-50 border border-green-200 rounded-lg p-3 opacity-75">
                       <div className="flex items-center justify-between">
                         <Label className="text-sm font-medium text-green-800">
                           {index + 1}. {requirement}
@@ -1220,12 +950,9 @@ export default function DetailMutasiTerpadu() {
                         {getVerificationStatusBadge(verificationStatus.status)}
                       </div>
                       <p className="text-xs text-green-700">Dokumen sudah disetujui, tidak perlu diubah</p>
-                    </div>
-                  );
-                }
-                
-                return (
-                  <div key={index} className={`space-y-2 ${needsAttention ? 'bg-red-50 border border-red-200 rounded-lg p-3' : ''} ${isFixed ? 'bg-blue-50 border border-blue-200' : ''}`}>
+                    </div>;
+              }
+              return <div key={index} className={`space-y-2 ${needsAttention ? 'bg-red-50 border border-red-200 rounded-lg p-3' : ''} ${isFixed ? 'bg-blue-50 border border-blue-200' : ''}`}>
                     <div className="flex items-center justify-between">
                       <Label htmlFor={`doc-${index}`} className={`text-sm font-medium ${needsAttention ? 'text-red-800' : isFixed ? 'text-blue-800' : ''}`}>
                         {index + 1}. {requirement}
@@ -1236,114 +963,60 @@ export default function DetailMutasiTerpadu() {
                       </div>
                     </div>
                     
-                    {verificationStatus?.admin_notes && (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
+                    {verificationStatus?.admin_notes && <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
                         <p className="text-xs font-medium text-yellow-800">Catatan Admin:</p>
                         <p className="text-xs text-yellow-700">{verificationStatus.admin_notes}</p>
-                      </div>
-                    )}
+                      </div>}
                     
                      <div className="flex gap-2">
-                       <Input
-                         id={`doc-${index}`}
-                         placeholder="Masukkan link Google Drive dokumen..."
-                         value={documents[docKey] || ""}
-                         onChange={(e) => handleDocumentChange(index, e.target.value)}
-                         className={needsAttention ? 'border-red-300 focus:border-red-500' : isFixed ? 'border-green-300 focus:border-green-500 bg-green-50' : savedDocuments.has(docKey) ? 'border-green-300 focus:border-green-500 bg-green-50' : ''}
-                         disabled={!canEdit || isFixed || savedDocuments.has(docKey)}
-                       />
+                       <Input id={`doc-${index}`} placeholder="Masukkan link Google Drive dokumen..." value={documents[docKey] || ""} onChange={e => handleDocumentChange(index, e.target.value)} className={needsAttention ? 'border-red-300 focus:border-red-500' : isFixed ? 'border-green-300 focus:border-green-500 bg-green-50' : savedDocuments.has(docKey) ? 'border-green-300 focus:border-green-500 bg-green-50' : ''} disabled={!canEdit || isFixed || savedDocuments.has(docKey)} />
                        {/* Revision flow buttons */}
-                       {needsAttention && !isFixed && documents[docKey] && (
-                         <Button 
-                           onClick={() => handleMarkDocumentFixed(docKey)}
-                           size="sm"
-                           className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
-                         >
+                       {needsAttention && !isFixed && documents[docKey] && <Button onClick={() => handleMarkDocumentFixed(docKey)} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap">
                            Perbaiki
-                         </Button>
-                       )}
-                       {needsAttention && isFixed && (
-                         <Button 
-                           onClick={() => handleUnmarkDocumentFixed(docKey)}
-                           size="sm"
-                           variant="outline"
-                           className="whitespace-nowrap"
-                         >
+                         </Button>}
+                       {needsAttention && isFixed && <Button onClick={() => handleUnmarkDocumentFixed(docKey)} size="sm" variant="outline" className="whitespace-nowrap">
                            Edit
-                         </Button>
-                       )}
+                         </Button>}
                        {/* Regular save/edit buttons */}
-                       {!needsAttention && !savedDocuments.has(docKey) && documents[docKey] && documents[docKey].trim() !== '' && (
-                         <Button 
-                           onClick={() => handleSaveDocument(docKey)}
-                           size="sm"
-                           className="bg-green-600 hover:bg-green-700 text-white whitespace-nowrap"
-                         >
+                       {!needsAttention && !savedDocuments.has(docKey) && documents[docKey] && documents[docKey].trim() !== '' && <Button onClick={() => handleSaveDocument(docKey)} size="sm" className="bg-green-600 hover:bg-green-700 text-white whitespace-nowrap">
                            Simpan
-                         </Button>
-                       )}
-                       {!needsAttention && savedDocuments.has(docKey) && (
-                         <Button 
-                           onClick={() => handleEditDocument(docKey)}
-                           size="sm"
-                           variant="outline"
-                           className="whitespace-nowrap"
-                         >
+                         </Button>}
+                       {!needsAttention && savedDocuments.has(docKey) && <Button onClick={() => handleEditDocument(docKey)} size="sm" variant="outline" className="whitespace-nowrap">
                            Edit
-                         </Button>
-                       )}
-                       {documents[docKey] && (
-                         <Button
-                           variant="outline"
-                           size="sm"
-                           onClick={() => window.open(documents[docKey], '_blank')}
-                         >
+                         </Button>}
+                       {documents[docKey] && <Button variant="outline" size="sm" onClick={() => window.open(documents[docKey], '_blank')}>
                            <Download className="w-4 h-4" />
-                         </Button>
-                       )}
+                         </Button>}
                      </div>
                      
-                     {isFixed && (
-                       <div className="bg-blue-50 border border-blue-200 rounded p-2">
+                     {isFixed && <div className="bg-blue-50 border border-blue-200 rounded p-2">
                          <p className="text-xs font-medium text-blue-800">✓ Dokumen telah diperbaiki</p>
                          <p className="text-xs text-blue-700">Dokumen ini telah ditandai sebagai diperbaiki dan siap untuk direview ulang.</p>
-                       </div>
-                     )}
+                       </div>}
                      
-                     {!needsAttention && savedDocuments.has(docKey) && (
-                       <div className="bg-green-50 border border-green-200 rounded p-2">
+                     {!needsAttention && savedDocuments.has(docKey) && <div className="bg-green-50 border border-green-200 rounded p-2">
                          <p className="text-xs font-medium text-green-800">✓ Dokumen telah disimpan</p>
                          <p className="text-xs text-green-700">Link dokumen telah disimpan dan dikunci dari perubahan.</p>
-                       </div>
-                     )}
-                  </div>
-                );
-              })}
+                       </div>}
+                  </div>;
+            })}
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Additional Notes */}
-      {canEdit && (
-        <Card>
+      {canEdit && <Card>
           <CardHeader>
             <CardTitle>Catatan Tambahan</CardTitle>
           </CardHeader>
           <CardContent>
-            <Textarea
-              placeholder="Masukkan catatan atau keterangan tambahan jika diperlukan..."
-              value={additionalNotes}
-              onChange={(e) => setAdditionalNotes(e.target.value)}
-              rows={4}
-            />
+            <Textarea placeholder="Masukkan catatan atau keterangan tambahan jika diperlukan..." value={additionalNotes} onChange={e => setAdditionalNotes(e.target.value)} rows={4} />
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* Information Card */}
-      {canEdit && (
-        <Card className="bg-amber-50 border-amber-200">
+      {canEdit && <Card className="bg-amber-50 border-amber-200">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
@@ -1356,8 +1029,7 @@ export default function DetailMutasiTerpadu() {
               </div>
             </div>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* Submit Confirmation Dialog */}
       <Dialog open={showSubmitConfirmation} onOpenChange={setShowSubmitConfirmation}>
@@ -1369,28 +1041,17 @@ export default function DetailMutasiTerpadu() {
             Apakah anda sudah yakin untuk submit pengajuan?
           </p>
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowSubmitConfirmation(false)}
-            >
+            <Button variant="outline" onClick={() => setShowSubmitConfirmation(false)}>
               Tidak
             </Button>
-            <Button 
-              onClick={handleSubmitApplication}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
+            <Button onClick={handleSubmitApplication} disabled={isSubmitting}>
+              {isSubmitting ? <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Mengirim...
-                </>
-              ) : (
-                'Ya'
-              )}
+                </> : 'Ya'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 }
