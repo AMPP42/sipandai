@@ -372,7 +372,7 @@ export type Database = {
           kategori: string
           konselor_id?: string | null
           konselor_name?: string | null
-          nomor_ticket?: string
+          nomor_ticket: string
           prioritas: string
           rating?: number | null
           status?: string
@@ -613,6 +613,7 @@ export type Database = {
           agama: string | null
           alamat: string | null
           created_at: string
+          created_by: string | null
           email: string | null
           grade_kelas_jabatan: string | null
           handphone: string | null
@@ -642,6 +643,7 @@ export type Database = {
           agama?: string | null
           alamat?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           grade_kelas_jabatan?: string | null
           handphone?: string | null
@@ -671,6 +673,7 @@ export type Database = {
           agama?: string | null
           alamat?: string | null
           created_at?: string
+          created_by?: string | null
           email?: string | null
           grade_kelas_jabatan?: string | null
           handphone?: string | null
@@ -1041,6 +1044,66 @@ export type Database = {
         }
         Relationships: []
       }
+      retirement_applications: {
+        Row: {
+          application_status: string | null
+          created_at: string | null
+          created_by: string | null
+          date_of_birth: string | null
+          documents: Json | null
+          employee_id: string
+          full_name: string
+          id: string
+          nip: string | null
+          notes: string | null
+          position: string | null
+          rank: string | null
+          retirement_date: string
+          updated_at: string | null
+          updated_by: string | null
+          work_unit: string | null
+          years_of_service: string | null
+        }
+        Insert: {
+          application_status?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date_of_birth?: string | null
+          documents?: Json | null
+          employee_id: string
+          full_name: string
+          id?: string
+          nip?: string | null
+          notes?: string | null
+          position?: string | null
+          rank?: string | null
+          retirement_date: string
+          updated_at?: string | null
+          updated_by?: string | null
+          work_unit?: string | null
+          years_of_service?: string | null
+        }
+        Update: {
+          application_status?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date_of_birth?: string | null
+          documents?: Json | null
+          employee_id?: string
+          full_name?: string
+          id?: string
+          nip?: string | null
+          notes?: string | null
+          position?: string | null
+          rank?: string | null
+          retirement_date?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          work_unit?: string | null
+          years_of_service?: string | null
+        }
+        Relationships: []
+      }
       usulan_mutasi: {
         Row: {
           alasan_mutasi: string
@@ -1211,9 +1274,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
-      generate_ticket_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
+      get_retirement_status: {
+        Args: { employee_id_param: string }
+        Returns: {
+          approved_count: number
+          pending_count: number
+          rejected_count: number
+          total_applications: number
+        }[]
       }
       is_admin_pusat: {
         Args: Record<PropertyKey, never>
@@ -1231,9 +1299,39 @@ export type Database = {
         Args: { app_id: string }
         Returns: undefined
       }
+      submit_application_revision: {
+        Args: { application_id: string }
+        Returns: undefined
+      }
       update_chat_queue: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      upload_employee_from_excel: {
+        Args: {
+          p_agama?: string
+          p_alamat?: string
+          p_email?: string
+          p_grade_kelas_jabatan?: string
+          p_handphone?: string
+          p_jabatan?: string
+          p_jenis_kelamin?: string
+          p_kriteria_asn?: string
+          p_nama: string
+          p_nik?: string
+          p_nip?: string
+          p_pangkat?: string
+          p_pendidikan_terakhir?: string
+          p_status_pernikahan?: string
+          p_tanggal_lahir?: string
+          p_tempat_lahir?: string
+          p_tmt_cpns?: string
+          p_tmt_jabatan_terakhir?: string
+          p_tmt_pangkat_terakhir?: string
+          p_tmt_pns?: string
+          p_unit?: string
+        }
+        Returns: string
       }
     }
     Enums: {
