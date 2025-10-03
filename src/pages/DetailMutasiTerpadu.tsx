@@ -8,12 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import DocumentVerificationStatus from '@/components/applications/DocumentVerificationStatus';
-import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CheckCircle, AlertCircle, Clock, Send, Loader2, AlertTriangle, Eye } from 'lucide-react';
+import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CheckCircle, AlertCircle, Clock, Send, Loader2, AlertTriangle, Eye, FileCheck, XCircle } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
 type Application = Database['public']['Tables']['applications']['Row'];
@@ -70,6 +71,13 @@ export default function DetailMutasiTerpadu() {
   const [draftSaved, setDraftSaved] = useState(false);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   const [documentRequirements, setDocumentRequirements] = useState<string[]>([]);
+  const [showUploadNotaDinasDialog, setShowUploadNotaDinasDialog] = useState(false);
+  const [showUploadSKDialog, setShowUploadSKDialog] = useState(false);
+  const [showUpdateBiroStatusDialog, setShowUpdateBiroStatusDialog] = useState(false);
+  const [notaDinasUrl, setNotaDinasUrl] = useState('');
+  const [skUrl, setSkUrl] = useState('');
+  const [biroStatus, setBiroStatus] = useState<'in_progress' | 'approved' | 'rejected'>('in_progress');
+  const [biroRejectionNotes, setBiroRejectionNotes] = useState('');
   useEffect(() => {
     if (id) {
       loadApplication();
@@ -346,6 +354,114 @@ export default function DetailMutasiTerpadu() {
       setIsSubmitting(false);
     }
   };
+  const handleUploadNotaDinas = async () => {
+    if (!notaDinasUrl.trim() || !application) return;
+
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({
+          nota_dinas_url: notaDinasUrl.trim(),
+          nota_dinas_uploaded_at: new Date().toISOString(),
+          biro_osdma_status: 'submitted'
+        })
+        .eq('id', application.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Berhasil",
+        description: "Nota Dinas berhasil diupload"
+      });
+
+      setShowUploadNotaDinasDialog(false);
+      setNotaDinasUrl('');
+      await loadApplication();
+    } catch (error) {
+      console.error('Error uploading nota dinas:', error);
+      toast({
+        title: "Error",
+        description: "Gagal mengupload Nota Dinas",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUpdateBiroStatus = async () => {
+    if (!application) return;
+
+    try {
+      const updateData: any = {
+        biro_osdma_status: biroStatus,
+        biro_osdma_decision_at: new Date().toISOString()
+      };
+
+      if (biroStatus === 'rejected') {
+        updateData.biro_osdma_rejection_notes = biroRejectionNotes.trim();
+      }
+
+      const { error } = await supabase
+        .from('applications')
+        .update(updateData)
+        .eq('id', application.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Berhasil",
+        description: `Status Biro OSDMA berhasil diupdate menjadi ${
+          biroStatus === 'approved' ? 'Disetujui' : 
+          biroStatus === 'rejected' ? 'Ditolak' : 
+          'Dalam Proses'
+        }`
+      });
+
+      setShowUpdateBiroStatusDialog(false);
+      setBiroStatus('in_progress');
+      setBiroRejectionNotes('');
+      await loadApplication();
+    } catch (error) {
+      console.error('Error updating biro status:', error);
+      toast({
+        title: "Error",
+        description: "Gagal mengupdate status Biro OSDMA",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUploadSK = async () => {
+    if (!skUrl.trim() || !application) return;
+
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({
+          sk_url: skUrl.trim(),
+          sk_uploaded_at: new Date().toISOString()
+        })
+        .eq('id', application.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Berhasil",
+        description: "SK berhasil diupload"
+      });
+
+      setShowUploadSKDialog(false);
+      setSkUrl('');
+      await loadApplication();
+    } catch (error) {
+      console.error('Error uploading SK:', error);
+      toast({
+        title: "Error",
+        description: "Gagal mengupload SK",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleSubmitApplication = async () => {
     setShowSubmitConfirmation(false);
     if (!application || !application.employee_data) return;
@@ -724,120 +840,282 @@ export default function DetailMutasiTerpadu() {
         </CardHeader>
         <CardContent>
           <div className="relative">
-            {/* Horizontal timeline container */}
-            <div className="flex items-center justify-between relative">
-              {/* Background connecting line */}
-              <div className="absolute top-6 left-6 right-6 h-0.5 bg-gray-200 z-0"></div>
-              
-              {/* Active connecting lines */}
-              {(application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed') && <div className="absolute top-6 left-6 h-0.5 bg-green-500 z-10" style={{
-              width: 'calc(50% - 12px)'
-            }}></div>}
-              
-              {application?.status === 'approved' && <div className="absolute top-6 right-6 h-0.5 bg-green-500 z-10" style={{
-              width: 'calc(50% - 12px)'
-            }}></div>}
-              
-              {application?.status === 'revision_needed' && <div className="absolute top-6 right-6 h-0.5 bg-yellow-500 z-10" style={{
-              width: 'calc(50% - 12px)'
-            }}></div>}
+            {/* Horizontal scrollable timeline container */}
+            <div className="overflow-x-auto pb-4">
+              <div className="flex items-start min-w-max relative">
+                {/* Background connecting line */}
+                <div className="absolute top-6 left-6 right-6 h-0.5 bg-gray-200 z-0"></div>
+                
+                {/* Calculate timeline steps and durations */}
+                {(() => {
+                  const steps = [];
+                  const createdAt = application?.created_at ? new Date(application.created_at) : null;
+                  const submittedAt = application?.tanggal_pengajuan ? new Date(application.tanggal_pengajuan) : application?.updated_at ? new Date(application.updated_at) : null;
+                  const approvedAt = application?.status === 'approved' && application?.updated_at ? new Date(application.updated_at) : null;
+                  const notaDinasUploadedAt = application?.nota_dinas_uploaded_at ? new Date(application.nota_dinas_uploaded_at) : null;
+                  const biroDecisionAt = application?.biro_osdma_decision_at ? new Date(application.biro_osdma_decision_at) : null;
+                  const skUploadedAt = application?.sk_uploaded_at ? new Date(application.sk_uploaded_at) : null;
 
-              {/* Timeline Step 1: Pengajuan dibuat */}
-              <div className="flex flex-col items-center z-20 bg-white px-4">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mb-2 relative">
-                  <CheckCircle className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-center min-w-0 max-w-32">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-1">Pengajuan Dibuat</h4>
-                  <p className="text-xs text-gray-600 break-words">
-                    {new Date(application?.created_at || '').toLocaleDateString('id-ID', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric'
-                  })}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(application?.created_at || '').toLocaleTimeString('id-ID', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                  </p>
-                </div>
-              </div>
+                  // Helper function to calculate duration
+                  const calculateDuration = (start: Date | null, end: Date | null) => {
+                    if (!start || !end) return null;
+                    const diffMs = end.getTime() - start.getTime();
+                    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    if (days > 0) return `${days} hari ${hours} jam`;
+                    return `${hours} jam`;
+                  };
 
-              {/* Timeline Step 2: Data telah diajukan */}
-              <div className="flex flex-col items-center z-20 bg-white px-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 relative ${application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed' ? 'bg-green-500' : 'bg-gray-300'}`}>
-                  {application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed' ? <Send className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
-                </div>
-                <div className="text-center min-w-0 max-w-32">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-1">Data Diajukan</h4>
-                  {application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed' ? <>
-                      <p className="text-xs text-gray-600 break-words">
-                        {application?.tanggal_pengajuan ? new Date(application.tanggal_pengajuan).toLocaleDateString('id-ID', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric'
-                    }) : new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric'
-                    })}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {application?.tanggal_pengajuan ? new Date(application.tanggal_pengajuan).toLocaleTimeString('id-ID', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) : new Date(application?.updated_at || '').toLocaleTimeString('id-ID', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                      </p>
-                    </> : <p className="text-xs text-gray-500">Menunggu</p>}
-                </div>
-              </div>
+                  // Step 1: Pengajuan dibuat
+                  steps.push(
+                    <div key="created" className="flex flex-col items-center z-20 bg-white px-6">
+                      <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mb-2">
+                        <CheckCircle className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="text-center min-w-0 max-w-40">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-1">Pengajuan Dibuat</h4>
+                        {createdAt && <>
+                          <p className="text-xs text-gray-600 break-words">
+                            {createdAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {createdAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </>}
+                      </div>
+                    </div>
+                  );
 
-              {/* Timeline Step 3: Status akhir */}
-              <div className="flex flex-col items-center z-20 bg-white px-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 relative ${application?.status === 'approved' ? 'bg-green-500' : application?.status === 'revision_needed' ? 'bg-yellow-500' : 'bg-gray-300'}`}>
-                  {application?.status === 'approved' ? <CheckCircle className="w-6 h-6 text-white" /> : application?.status === 'revision_needed' ? <AlertTriangle className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
-                </div>
-                <div className="text-center min-w-0 max-w-32">
-                  {application?.status === 'approved' ? <>
-                      <h4 className="text-sm font-semibold text-gray-900 mb-1">Disetujui & Diproses</h4>
-                      <p className="text-xs text-gray-600 break-words">
-                        {new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric'
-                    })}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(application?.updated_at || '').toLocaleTimeString('id-ID', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                      </p>
-                    </> : application?.status === 'revision_needed' ? <>
-                      <h4 className="text-sm font-semibold text-gray-900 mb-1">Perlu Perbaikan</h4>
-                      <p className="text-xs text-gray-600 break-words">
-                        {new Date(application?.updated_at || '').toLocaleDateString('id-ID', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric'
-                    })}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(application?.updated_at || '').toLocaleTimeString('id-ID', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                      </p>
-                    </> : <>
-                      <h4 className="text-sm font-semibold text-gray-900 mb-1">Menunggu Verifikasi</h4>
-                      <p className="text-xs text-gray-500">Belum diproses</p>
-                    </>}
-                </div>
+                  // Duration line 1
+                  const duration1 = calculateDuration(createdAt, submittedAt);
+                  if (submittedAt && duration1) {
+                    steps.push(
+                      <div key="dur1" className="flex items-center justify-center px-2 z-20 bg-white">
+                        <div className="w-px h-12 bg-green-500"></div>
+                        <p className="text-xs text-green-600 font-medium px-2">{duration1}</p>
+                        <div className="w-px h-12 bg-green-500"></div>
+                      </div>
+                    );
+                  }
+
+                  // Step 2: Data diajukan
+                  const isSubmitted = application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed' || application?.nota_dinas_uploaded_at;
+                  steps.push(
+                    <div key="submitted" className="flex flex-col items-center z-20 bg-white px-6">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${isSubmitted ? 'bg-green-500' : 'bg-gray-300'}`}>
+                        {isSubmitted ? <Send className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
+                      </div>
+                      <div className="text-center min-w-0 max-w-40">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-1">Data Diajukan</h4>
+                        {submittedAt ? <>
+                          <p className="text-xs text-gray-600 break-words">
+                            {submittedAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {submittedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </> : <p className="text-xs text-gray-500">Menunggu</p>}
+                      </div>
+                    </div>
+                  );
+
+                  // Duration line 2
+                  const duration2 = calculateDuration(submittedAt, approvedAt);
+                  if (approvedAt && duration2) {
+                    steps.push(
+                      <div key="dur2" className="flex items-center justify-center px-2 z-20 bg-white">
+                        <div className="w-px h-12 bg-green-500"></div>
+                        <p className="text-xs text-green-600 font-medium px-2">{duration2}</p>
+                        <div className="w-px h-12 bg-green-500"></div>
+                      </div>
+                    );
+                  }
+
+                  // Step 3: Disetujui & Diproses
+                  steps.push(
+                    <div key="approved" className="flex flex-col items-center z-20 bg-white px-6">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${application?.status === 'approved' || application?.nota_dinas_uploaded_at ? 'bg-green-500' : application?.status === 'revision_needed' ? 'bg-yellow-500' : 'bg-gray-300'}`}>
+                        {application?.status === 'approved' || application?.nota_dinas_uploaded_at ? <CheckCircle className="w-6 h-6 text-white" /> : application?.status === 'revision_needed' ? <AlertTriangle className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
+                      </div>
+                      <div className="text-center min-w-0 max-w-40">
+                        {application?.status === 'approved' || application?.nota_dinas_uploaded_at ? <>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-1">Disetujui & Diproses</h4>
+                          {approvedAt && <>
+                            <p className="text-xs text-gray-600 break-words">
+                              {approvedAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {approvedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </>}
+                        </> : application?.status === 'revision_needed' ? <>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-1">Perlu Perbaikan</h4>
+                          <p className="text-xs text-gray-600 break-words">
+                            {new Date(application?.updated_at || '').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </p>
+                        </> : <>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-1">Menunggu Verifikasi</h4>
+                          <p className="text-xs text-gray-500">Belum diproses</p>
+                        </>}
+                      </div>
+                    </div>
+                  );
+
+                  // Show remaining steps only if approved
+                  if (application?.status === 'approved' || application?.nota_dinas_uploaded_at) {
+                    // Duration line 3
+                    const duration3 = calculateDuration(approvedAt, notaDinasUploadedAt);
+                    if (notaDinasUploadedAt && duration3) {
+                      steps.push(
+                        <div key="dur3" className="flex items-center justify-center px-2 z-20 bg-white">
+                          <div className="w-px h-12 bg-green-500"></div>
+                          <p className="text-xs text-green-600 font-medium px-2">{duration3}</p>
+                          <div className="w-px h-12 bg-green-500"></div>
+                        </div>
+                      );
+                    }
+
+                    // Step 4: Berkas diajukan ke Biro OSDMA
+                    steps.push(
+                      <div key="biro-submitted" className="flex flex-col items-center z-20 bg-white px-6">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${notaDinasUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}>
+                          {notaDinasUploadedAt ? <FileCheck className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
+                        </div>
+                        <div className="text-center min-w-0 max-w-40">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-1">Berkas Diajukan ke Biro OSDMA</h4>
+                          {notaDinasUploadedAt ? <>
+                            <p className="text-xs text-gray-600 break-words">
+                              {notaDinasUploadedAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {notaDinasUploadedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </> : <p className="text-xs text-gray-500">Belum diajukan</p>}
+                        </div>
+                        {!notaDinasUploadedAt && user?.role === 'admin_pusat' && (
+                          <Button size="sm" className="mt-2" onClick={() => setShowUploadNotaDinasDialog(true)}>
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload Nota Dinas
+                          </Button>
+                        )}
+                      </div>
+                    );
+
+                    if (notaDinasUploadedAt) {
+                      // Duration line 4
+                      const duration4 = calculateDuration(notaDinasUploadedAt, biroDecisionAt);
+                      if (biroDecisionAt && duration4) {
+                        steps.push(
+                          <div key="dur4" className="flex items-center justify-center px-2 z-20 bg-white">
+                            <div className={`w-px h-12 ${application.biro_osdma_status === 'approved' ? 'bg-green-500' : application.biro_osdma_status === 'rejected' ? 'bg-red-500' : 'bg-gray-300'}`}></div>
+                            {duration4 && <p className={`text-xs font-medium px-2 ${application.biro_osdma_status === 'approved' ? 'text-green-600' : application.biro_osdma_status === 'rejected' ? 'text-red-600' : 'text-gray-500'}`}>{duration4}</p>}
+                            <div className={`w-px h-12 ${application.biro_osdma_status === 'approved' ? 'bg-green-500' : application.biro_osdma_status === 'rejected' ? 'bg-red-500' : 'bg-gray-300'}`}></div>
+                          </div>
+                        );
+                      }
+
+                      // Step 5: Status Biro OSDMA
+                      steps.push(
+                        <div key="biro-decision" className="flex flex-col items-center z-20 bg-white px-6">
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                            application.biro_osdma_status === 'approved' ? 'bg-green-500' : 
+                            application.biro_osdma_status === 'rejected' ? 'bg-red-500' : 
+                            'bg-gray-300'
+                          }`}>
+                            {application.biro_osdma_status === 'approved' ? <CheckCircle className="w-6 h-6 text-white" /> : 
+                             application.biro_osdma_status === 'rejected' ? <XCircle className="w-6 h-6 text-white" /> : 
+                             <Clock className="w-6 h-6 text-gray-500" />}
+                          </div>
+                          <div className="text-center min-w-0 max-w-40">
+                            {application.biro_osdma_status === 'approved' ? <>
+                              <h4 className="text-sm font-semibold text-gray-900 mb-1">Pengajuan Disetujui</h4>
+                              <p className="text-xs text-green-700 mb-1">Menunggu penerbitan SK</p>
+                              {biroDecisionAt && <>
+                                <p className="text-xs text-gray-600 break-words">
+                                  {biroDecisionAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {biroDecisionAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </>}
+                            </> : application.biro_osdma_status === 'rejected' ? <>
+                              <h4 className="text-sm font-semibold text-gray-900 mb-1">Pengajuan Ditolak</h4>
+                              {biroDecisionAt && <>
+                                <p className="text-xs text-gray-600 break-words">
+                                  {biroDecisionAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {biroDecisionAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </>}
+                              {application.biro_osdma_rejection_notes && (
+                                <p className="text-xs text-red-700 mt-2 bg-red-50 p-2 rounded">
+                                  {application.biro_osdma_rejection_notes}
+                                </p>
+                              )}
+                            </> : <>
+                              <h4 className="text-sm font-semibold text-gray-900 mb-1">Menunggu Keputusan</h4>
+                              <p className="text-xs text-gray-500">Dalam proses review</p>
+                            </>}
+                          </div>
+                          {!application.biro_osdma_status && user?.role === 'admin_pusat' && (
+                            <Button size="sm" className="mt-2" onClick={() => setShowUpdateBiroStatusDialog(true)}>
+                              Update Status
+                            </Button>
+                          )}
+                        </div>
+                      );
+
+                      if (application.biro_osdma_status === 'approved') {
+                        // Duration line 5
+                        const duration5 = calculateDuration(biroDecisionAt, skUploadedAt);
+                        if (skUploadedAt && duration5) {
+                          steps.push(
+                            <div key="dur5" className="flex items-center justify-center px-2 z-20 bg-white">
+                              <div className="w-px h-12 bg-green-500"></div>
+                              <p className="text-xs text-green-600 font-medium px-2">{duration5}</p>
+                              <div className="w-px h-12 bg-green-500"></div>
+                            </div>
+                          );
+                        }
+
+                        // Step 6: SK Terbit
+                        steps.push(
+                          <div key="sk-published" className="flex flex-col items-center z-20 bg-white px-6">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${skUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}>
+                              {skUploadedAt ? <CheckCircle className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
+                            </div>
+                            <div className="text-center min-w-0 max-w-40">
+                              <h4 className="text-sm font-semibold text-gray-900 mb-1">SK Telah Terbit</h4>
+                              {skUploadedAt ? <>
+                                <p className="text-xs text-gray-600 break-words">
+                                  {skUploadedAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {skUploadedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                                {application.sk_url && (
+                                  <Button size="sm" variant="outline" className="mt-2" onClick={() => window.open(application.sk_url!, '_blank')}>
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    Lihat SK
+                                  </Button>
+                                )}
+                              </> : <p className="text-xs text-gray-500">Belum terbit</p>}
+                            </div>
+                            {!skUploadedAt && user?.role === 'admin_pusat' && (
+                              <Button size="sm" className="mt-2" onClick={() => setShowUploadSKDialog(true)}>
+                                <Upload className="w-4 h-4 mr-2" />
+                                Upload SK
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      }
+                    }
+                  }
+
+                  return steps;
+                })()}
               </div>
             </div>
           </div>
@@ -1099,6 +1377,105 @@ export default function DetailMutasiTerpadu() {
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Mengirim...
                 </> : 'Ya'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Nota Dinas Dialog */}
+      <Dialog open={showUploadNotaDinasDialog} onOpenChange={setShowUploadNotaDinasDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload Nota Dinas Pengajuan ke Biro OSDMA</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Link Nota Dinas</Label>
+              <Input
+                placeholder="Masukkan link Google Drive untuk Nota Dinas..."
+                value={notaDinasUrl}
+                onChange={(e) => setNotaDinasUrl(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowUploadNotaDinasDialog(false)}>
+              Batal
+            </Button>
+            <Button onClick={handleUploadNotaDinas} disabled={!notaDinasUrl.trim()}>
+              <Upload className="w-4 h-4 mr-2" />
+              Upload
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Update Biro OSDMA Status Dialog */}
+      <Dialog open={showUpdateBiroStatusDialog} onOpenChange={setShowUpdateBiroStatusDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Status Biro OSDMA</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Status</Label>
+              <Select value={biroStatus} onValueChange={(value: 'in_progress' | 'approved' | 'rejected') => setBiroStatus(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="in_progress">Dalam Proses</SelectItem>
+                  <SelectItem value="approved">Disetujui</SelectItem>
+                  <SelectItem value="rejected">Ditolak</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {biroStatus === 'rejected' && (
+              <div>
+                <Label>Keterangan Penolakan</Label>
+                <Textarea
+                  placeholder="Masukkan alasan penolakan..."
+                  value={biroRejectionNotes}
+                  onChange={(e) => setBiroRejectionNotes(e.target.value)}
+                  rows={4}
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowUpdateBiroStatusDialog(false)}>
+              Batal
+            </Button>
+            <Button onClick={handleUpdateBiroStatus}>
+              Update Status
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload SK Dialog */}
+      <Dialog open={showUploadSKDialog} onOpenChange={setShowUploadSKDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload SK (Surat Keputusan)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Link SK</Label>
+              <Input
+                placeholder="Masukkan link Google Drive untuk SK..."
+                value={skUrl}
+                onChange={(e) => setSkUrl(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowUploadSKDialog(false)}>
+              Batal
+            </Button>
+            <Button onClick={handleUploadSK} disabled={!skUrl.trim()}>
+              <Upload className="w-4 h-4 mr-2" />
+              Upload
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -16,6 +16,10 @@ export type Database = {
     Tables: {
       applications: {
         Row: {
+          biro_osdma_decision_at: string | null
+          biro_osdma_rejection_notes: string | null
+          biro_osdma_status: string | null
+          biro_osdma_submitted_at: string | null
           created_at: string
           detailed_verification_status: string | null
           documents_count: number
@@ -24,7 +28,11 @@ export type Database = {
           jenis: Database["public"]["Enums"]["application_type"]
           judul: string | null
           keterangan: string | null
+          nota_dinas_uploaded_at: string | null
+          nota_dinas_url: string | null
           progress: number
+          sk_uploaded_at: string | null
+          sk_url: string | null
           status: Database["public"]["Enums"]["application_status"]
           submitter_id: string
           submitter_name: string | null
@@ -33,6 +41,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          biro_osdma_decision_at?: string | null
+          biro_osdma_rejection_notes?: string | null
+          biro_osdma_status?: string | null
+          biro_osdma_submitted_at?: string | null
           created_at?: string
           detailed_verification_status?: string | null
           documents_count?: number
@@ -41,7 +53,11 @@ export type Database = {
           jenis: Database["public"]["Enums"]["application_type"]
           judul?: string | null
           keterangan?: string | null
+          nota_dinas_uploaded_at?: string | null
+          nota_dinas_url?: string | null
           progress?: number
+          sk_uploaded_at?: string | null
+          sk_url?: string | null
           status?: Database["public"]["Enums"]["application_status"]
           submitter_id: string
           submitter_name?: string | null
@@ -50,6 +66,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          biro_osdma_decision_at?: string | null
+          biro_osdma_rejection_notes?: string | null
+          biro_osdma_status?: string | null
+          biro_osdma_submitted_at?: string | null
           created_at?: string
           detailed_verification_status?: string | null
           documents_count?: number
@@ -58,7 +78,11 @@ export type Database = {
           jenis?: Database["public"]["Enums"]["application_type"]
           judul?: string | null
           keterangan?: string | null
+          nota_dinas_uploaded_at?: string | null
+          nota_dinas_url?: string | null
           progress?: number
+          sk_uploaded_at?: string | null
+          sk_url?: string | null
           status?: Database["public"]["Enums"]["application_status"]
           submitter_id?: string
           submitter_name?: string | null
