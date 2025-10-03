@@ -79,6 +79,7 @@ export default function DetailMutasiTerpadu() {
   const [biroStatus, setBiroStatus] = useState<'in_progress' | 'approved' | 'rejected'>('in_progress');
   const [biroRejectionNotes, setBiroRejectionNotes] = useState('');
   const [workflowLinks, setWorkflowLinks] = useState<{ [key: string]: string }>({});
+  const [workflowData, setWorkflowData] = useState<{ [key: string]: { note?: string; created_at?: string; file_link?: string } }>({});
   
   useEffect(() => {
     if (id) {
@@ -160,9 +161,8 @@ export default function DetailMutasiTerpadu() {
       console.log('Loading workflow links for application:', id);
       const { data, error } = await supabase
         .from('workflows')
-        .select('to_status, file_link, created_at')
+        .select('to_status, file_link, note, created_at')
         .eq('application_id', id)
-        .not('file_link', 'is', null)
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -174,16 +174,31 @@ export default function DetailMutasiTerpadu() {
       
       if (data) {
         const links: { [key: string]: string } = {};
+        const workflows: { [key: string]: { note?: string; created_at?: string; file_link?: string } } = {};
+        
         data.forEach(workflow => {
-          // Map status to timeline step key
           const statusKey = workflow.to_status;
-          console.log('Processing workflow:', { statusKey, file_link: workflow.file_link });
+          console.log('Processing workflow:', { statusKey, file_link: workflow.file_link, note: workflow.note });
+          
+          // Store complete workflow data
+          if (!workflows[statusKey]) {
+            workflows[statusKey] = {
+              note: workflow.note || undefined,
+              created_at: workflow.created_at || undefined,
+              file_link: workflow.file_link || undefined
+            };
+          }
+          
+          // Store file links separately for backward compatibility
           if (workflow.file_link && !links[statusKey]) {
             links[statusKey] = workflow.file_link;
           }
         });
+        
         console.log('Final workflow links:', links);
+        console.log('Final workflow data:', workflows);
         setWorkflowLinks(links);
+        setWorkflowData(workflows);
       }
     } catch (error) {
       console.error('Error loading workflow links:', error);
@@ -1214,7 +1229,24 @@ export default function DetailMutasiTerpadu() {
                         ) : (
                           <>
                             <h4 className="text-sm font-semibold text-gray-900 mb-1">Menunggu Keputusan</h4>
-                            <p className="text-xs text-gray-500">Dalam proses review</p>
+                            {workflowData['biro_osdma_review']?.created_at && (
+                              <>
+                                <p className="text-xs text-gray-600">
+                                  {new Date(workflowData['biro_osdma_review'].created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {new Date(workflowData['biro_osdma_review'].created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </>
+                            )}
+                            {workflowData['biro_osdma_review']?.note && (
+                              <p className="text-xs text-blue-700 mt-2 bg-blue-50 p-2 rounded">
+                                {workflowData['biro_osdma_review'].note}
+                              </p>
+                            )}
+                            {!workflowData['biro_osdma_review']?.created_at && (
+                              <p className="text-xs text-gray-500">Dalam proses review</p>
+                            )}
                           </>
                         )}
                         {duration5 && (
