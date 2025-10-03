@@ -133,18 +133,20 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
 
       setApplicationList(combinedData);
       
-      // Calculate stats
-      const total = combinedData.length;
-      const pending = combinedData.filter(app => ['submitted', 'in_review'].includes(app.status)).length;
-      const approved = combinedData.filter(app => app.status === 'approved').length;
-      const rejected = combinedData.filter(app => app.status === 'rejected').length;
+      // Calculate stats - exclude draft applications
+      const submittedOnly = combinedData.filter(app => app.status !== 'draft');
       
-      // Stats by application type
-      const mutasi = combinedData.filter(app => 
+      const total = submittedOnly.length;
+      const pending = submittedOnly.filter(app => ['submitted', 'in_review'].includes(app.status)).length;
+      const approved = submittedOnly.filter(app => app.status === 'approved').length;
+      const rejected = submittedOnly.filter(app => app.status === 'rejected').length;
+      
+      // Stats by application type - exclude draft
+      const mutasi = submittedOnly.filter(app => 
         app.type === 'usulan_mutasi' || (app.type === 'application' && (app.jenis === 'mutasi' || app.jenis === 'mutasi_terpadu'))
       ).length;
-      const pensiun = combinedData.filter(app => app.type === 'application' && app.jenis === 'pensiun').length;
-      const kenaikanPangkat = combinedData.filter(app => app.type === 'application' && app.jenis === 'kenaikan_pangkat').length;
+      const pensiun = submittedOnly.filter(app => app.type === 'application' && app.jenis === 'pensiun').length;
+      const kenaikanPangkat = submittedOnly.filter(app => app.type === 'application' && app.jenis === 'kenaikan_pangkat').length;
       
       setStats({ total, pending, approved, rejected, mutasi, pensiun, kenaikanPangkat });
 
