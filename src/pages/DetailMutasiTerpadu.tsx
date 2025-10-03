@@ -842,11 +842,65 @@ export default function DetailMutasiTerpadu() {
           <div className="relative">
             {/* Horizontal scrollable timeline container */}
             <div className="overflow-x-auto pb-4">
-              <div className="flex items-start min-w-max relative">
-                {/* Background connecting line */}
-                <div className="absolute top-6 left-6 right-6 h-0.5 bg-gray-200 z-0"></div>
+              <div className="flex items-start min-w-max relative pt-8">
+                {/* Duration labels positioned absolutely */}
+                {(() => {
+                  const createdAt = application?.created_at ? new Date(application.created_at) : null;
+                  const submittedAt = application?.tanggal_pengajuan ? new Date(application.tanggal_pengajuan) : application?.updated_at ? new Date(application.updated_at) : null;
+                  const approvedAt = application?.status === 'approved' && application?.updated_at ? new Date(application.updated_at) : null;
+                  const notaDinasUploadedAt = application?.nota_dinas_uploaded_at ? new Date(application.nota_dinas_uploaded_at) : null;
+                  const biroDecisionAt = application?.biro_osdma_decision_at ? new Date(application.biro_osdma_decision_at) : null;
+                  const skUploadedAt = application?.sk_uploaded_at ? new Date(application.sk_uploaded_at) : null;
+
+                  const calculateDuration = (start: Date | null, end: Date | null) => {
+                    if (!start || !end) return null;
+                    const diffMs = end.getTime() - start.getTime();
+                    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                    return days > 0 ? `${days} hari` : '< 1 hari';
+                  };
+
+                  const duration1 = calculateDuration(createdAt, submittedAt);
+                  const duration2 = calculateDuration(submittedAt, approvedAt);
+                  const duration3 = calculateDuration(approvedAt, notaDinasUploadedAt);
+                  const duration4 = calculateDuration(notaDinasUploadedAt, biroDecisionAt);
+                  const duration5 = calculateDuration(biroDecisionAt, skUploadedAt);
+
+                  return (
+                    <>
+                      {duration1 && (
+                        <div className="absolute top-14 left-32 text-xs text-green-600 font-medium whitespace-nowrap">
+                          {duration1}
+                        </div>
+                      )}
+                      {duration2 && (
+                        <div className="absolute top-14 left-80 text-xs text-green-600 font-medium whitespace-nowrap">
+                          {duration2}
+                        </div>
+                      )}
+                      {duration3 && (
+                        <div className="absolute top-14 left-[32rem] text-xs text-green-600 font-medium whitespace-nowrap">
+                          {duration3}
+                        </div>
+                      )}
+                      {duration4 && (
+                        <div className={`absolute top-14 left-[42rem] text-xs font-medium whitespace-nowrap ${
+                          application.biro_osdma_status === 'approved' ? 'text-green-600' : 
+                          application.biro_osdma_status === 'rejected' ? 'text-red-600' : 
+                          'text-gray-500'
+                        }`}>
+                          {duration4}
+                        </div>
+                      )}
+                      {duration5 && (
+                        <div className="absolute top-14 left-[52rem] text-xs text-green-600 font-medium whitespace-nowrap">
+                          {duration5}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
                 
-                {/* Calculate timeline steps and durations */}
+                {/* Calculate timeline steps and render */}
                 {(() => {
                   const steps = [];
                   const createdAt = application?.created_at ? new Date(application.created_at) : null;
@@ -856,17 +910,12 @@ export default function DetailMutasiTerpadu() {
                   const biroDecisionAt = application?.biro_osdma_decision_at ? new Date(application.biro_osdma_decision_at) : null;
                   const skUploadedAt = application?.sk_uploaded_at ? new Date(application.sk_uploaded_at) : null;
 
-                  // Helper function to calculate duration
-                  const calculateDuration = (start: Date | null, end: Date | null) => {
-                    if (!start || !end) return null;
-                    const diffMs = end.getTime() - start.getTime();
-                    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                    return days > 0 ? `${days} hari` : '< 1 hari';
-                  };
-
                   // Step 1: Pengajuan dibuat
                   steps.push(
-                    <div key="created" className="flex flex-col items-center z-20 bg-white px-6">
+                    <div key="created" className="flex flex-col items-center z-20 bg-white px-6 relative">
+                      {/* Connector line - green if next step completed */}
+                      <div className={`absolute left-full top-6 w-32 h-0.5 ${submittedAt ? 'bg-green-500' : 'bg-gray-200'}`}></div>
+                      
                       <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mb-2">
                         <CheckCircle className="w-6 h-6 text-white" />
                       </div>
@@ -884,21 +933,13 @@ export default function DetailMutasiTerpadu() {
                     </div>
                   );
 
-                  // Duration line 1
-                  const duration1 = calculateDuration(createdAt, submittedAt);
-                  if (submittedAt && duration1) {
-                    steps.push(
-                      <div key="dur1" className="flex flex-col items-center justify-center z-20 bg-white px-4">
-                        <div className="w-20 h-0.5 bg-green-500"></div>
-                        <p className="text-xs text-green-600 font-medium whitespace-nowrap mt-1">{duration1}</p>
-                      </div>
-                    );
-                  }
-
                   // Step 2: Data diajukan
                   const isSubmitted = application?.status === 'submitted' || application?.status === 'approved' || application?.status === 'revision_needed' || application?.nota_dinas_uploaded_at;
                   steps.push(
-                    <div key="submitted" className="flex flex-col items-center z-20 bg-white px-6">
+                    <div key="submitted" className="flex flex-col items-center z-20 bg-white px-6 relative">
+                      {/* Connector line */}
+                      <div className={`absolute left-full top-6 w-32 h-0.5 ${approvedAt ? 'bg-green-500' : 'bg-gray-200'}`}></div>
+                      
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${isSubmitted ? 'bg-green-500' : 'bg-gray-300'}`}>
                         {isSubmitted ? <Send className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
                       </div>
@@ -916,20 +957,14 @@ export default function DetailMutasiTerpadu() {
                     </div>
                   );
 
-                  // Duration line 2
-                  const duration2 = calculateDuration(submittedAt, approvedAt);
-                  if (approvedAt && duration2) {
-                    steps.push(
-                      <div key="dur2" className="flex flex-col items-center justify-center z-20 bg-white px-4">
-                        <div className="w-20 h-0.5 bg-green-500"></div>
-                        <p className="text-xs text-green-600 font-medium whitespace-nowrap mt-1">{duration2}</p>
-                      </div>
-                    );
-                  }
-
                   // Step 3: Disetujui & Diproses
                   steps.push(
-                    <div key="approved" className="flex flex-col items-center z-20 bg-white px-6">
+                    <div key="approved" className="flex flex-col items-center z-20 bg-white px-6 relative">
+                      {/* Connector line */}
+                      {(application?.status === 'approved' || application?.nota_dinas_uploaded_at) && (
+                        <div className={`absolute left-full top-6 w-32 h-0.5 ${notaDinasUploadedAt ? 'bg-green-500' : 'bg-gray-200'}`}></div>
+                      )}
+                      
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${application?.status === 'approved' || application?.nota_dinas_uploaded_at ? 'bg-green-500' : application?.status === 'revision_needed' ? 'bg-yellow-500' : 'bg-gray-300'}`}>
                         {application?.status === 'approved' || application?.nota_dinas_uploaded_at ? <CheckCircle className="w-6 h-6 text-white" /> : application?.status === 'revision_needed' ? <AlertTriangle className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
                       </div>
@@ -959,20 +994,18 @@ export default function DetailMutasiTerpadu() {
 
                   // Show remaining steps only if approved
                   if (application?.status === 'approved' || application?.nota_dinas_uploaded_at) {
-                    // Duration line 3
-                    const duration3 = calculateDuration(approvedAt, notaDinasUploadedAt);
-                    if (notaDinasUploadedAt && duration3) {
-                      steps.push(
-                        <div key="dur3" className="flex flex-col items-center justify-center z-20 bg-white px-4">
-                          <div className="w-20 h-0.5 bg-green-500"></div>
-                          <p className="text-xs text-green-600 font-medium whitespace-nowrap mt-1">{duration3}</p>
-                        </div>
-                      );
-                    }
-
                     // Step 4: Berkas diajukan ke Biro OSDMA
                     steps.push(
-                      <div key="biro-submitted" className="flex flex-col items-center z-20 bg-white px-6">
+                      <div key="biro-submitted" className="flex flex-col items-center z-20 bg-white px-6 relative">
+                        {/* Connector line */}
+                        {notaDinasUploadedAt && (
+                          <div className={`absolute left-full top-6 w-32 h-0.5 ${
+                            application.biro_osdma_status === 'approved' ? 'bg-green-500' : 
+                            application.biro_osdma_status === 'rejected' ? 'bg-red-500' : 
+                            'bg-gray-200'
+                          }`}></div>
+                        )}
+                        
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${notaDinasUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}>
                           {notaDinasUploadedAt ? <FileCheck className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
                         </div>
@@ -991,20 +1024,14 @@ export default function DetailMutasiTerpadu() {
                     );
 
                     if (notaDinasUploadedAt) {
-                      // Duration line 4
-                      const duration4 = calculateDuration(notaDinasUploadedAt, biroDecisionAt);
-                      if (biroDecisionAt && duration4) {
-                        steps.push(
-                          <div key="dur4" className="flex flex-col items-center justify-center z-20 bg-white px-4">
-                            <div className={`w-20 h-0.5 ${application.biro_osdma_status === 'approved' ? 'bg-green-500' : application.biro_osdma_status === 'rejected' ? 'bg-red-500' : 'bg-gray-300'}`}></div>
-                            <p className={`text-xs font-medium whitespace-nowrap mt-1 ${application.biro_osdma_status === 'approved' ? 'text-green-600' : application.biro_osdma_status === 'rejected' ? 'text-red-600' : 'text-gray-500'}`}>{duration4}</p>
-                          </div>
-                        );
-                      }
-
                       // Step 5: Status Biro OSDMA
                       steps.push(
-                        <div key="biro-decision" className="flex flex-col items-center z-20 bg-white px-6">
+                        <div key="biro-decision" className="flex flex-col items-center z-20 bg-white px-6 relative">
+                          {/* Connector line */}
+                          {application.biro_osdma_status === 'approved' && (
+                            <div className={`absolute left-full top-6 w-32 h-0.5 ${skUploadedAt ? 'bg-green-500' : 'bg-gray-200'}`}></div>
+                          )}
+                          
                           <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
                             application.biro_osdma_status === 'approved' ? 'bg-green-500' : 
                             application.biro_osdma_status === 'rejected' ? 'bg-red-500' : 
@@ -1050,17 +1077,6 @@ export default function DetailMutasiTerpadu() {
                       );
 
                       if (application.biro_osdma_status === 'approved') {
-                        // Duration line 5
-                        const duration5 = calculateDuration(biroDecisionAt, skUploadedAt);
-                        if (skUploadedAt && duration5) {
-                          steps.push(
-                            <div key="dur5" className="flex flex-col items-center justify-center z-20 bg-white px-4">
-                              <div className="w-20 h-0.5 bg-green-500"></div>
-                              <p className="text-xs text-green-600 font-medium whitespace-nowrap mt-1">{duration5}</p>
-                            </div>
-                          );
-                        }
-
                         // Step 6: SK Terbit
                         steps.push(
                           <div key="sk-published" className="flex flex-col items-center z-20 bg-white px-6">
