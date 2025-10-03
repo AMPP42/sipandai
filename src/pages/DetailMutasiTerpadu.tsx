@@ -13,7 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import DocumentVerificationStatus from '@/components/applications/DocumentVerificationStatus';
-import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CheckCircle, AlertCircle, Clock, Send, Loader2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CheckCircle, AlertCircle, Clock, Send, Loader2, AlertTriangle, Eye } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
 type Application = Database['public']['Tables']['applications']['Row'];
@@ -88,6 +88,9 @@ export default function DetailMutasiTerpadu() {
       if (editMode || application.status === 'revision_needed') {
         setIsEditing(true);
         loadApplicationForEdit();
+      } else if (application.status === 'approved' || application.status === 'submitted') {
+        // Load documents for viewing in approved/submitted status
+        loadDocumentsForViewing();
       }
     }
   }, [application, location.search]);
@@ -200,6 +203,30 @@ export default function DetailMutasiTerpadu() {
         description: "Gagal memuat data usulan untuk edit",
         variant: "destructive"
       });
+    }
+  };
+
+  const loadDocumentsForViewing = async () => {
+    try {
+      // Load documents
+      const {
+        data: documentsData,
+        error: docsError
+      } = await supabase.from('documents').select('*').eq('application_id', id).order('document_index');
+      if (docsError) throw docsError;
+
+      // Populate documents
+      const loadedDocuments: {
+        [key: string]: string;
+      } = {};
+      documentsData?.forEach(doc => {
+        if (doc.document_index !== null && doc.drive_link) {
+          loadedDocuments[`doc_${doc.document_index}`] = doc.drive_link;
+        }
+      });
+      setDocuments(loadedDocuments);
+    } catch (error) {
+      console.error('Error loading documents for viewing:', error);
     }
   };
   const handleDocumentChange = (index: number, value: string) => {
@@ -939,6 +966,29 @@ export default function DetailMutasiTerpadu() {
               const needsAttention = isEditing && verificationStatus?.status === 'needs_fix';
               const isApproved = verificationStatus?.status === 'approved';
               const isFixed = fixedDocuments.has(docKey);
+              const documentLink = documents[docKey];
+
+              // View mode for approved applications - show green with preview
+              if (!canEdit && application?.status === 'approved' && documentLink) {
+                return <div key={index} className="space-y-2 bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium text-green-800">
+                          {index + 1}. {requirement}
+                        </Label>
+                        <Badge className="bg-green-100 text-green-700">✓ Disetujui</Badge>
+                      </div>
+                      <p className="text-xs text-green-700 mb-2">Dokumen telah disetujui</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => window.open(documentLink, '_blank')}
+                        className="w-full border-green-300 hover:bg-green-100"
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Lihat Dokumen
+                      </Button>
+                    </div>;
+              }
 
               // In edit mode, only show documents that need fixing or are new
               if (isEditing && isApproved) {
