@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   FileText, 
   Clock, 
@@ -16,7 +17,10 @@ import {
   Filter,
   MessageSquare,
   Check,
-  X
+  X,
+  TrendingUp,
+  UserX,
+  Users
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import DetailedVerificationModal from '@/components/verifikasi/DetailedVerificationModal';
@@ -62,14 +66,17 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
   const [reviewNote, setReviewNote] = useState('');
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'revision'>('approve');
   const [processing, setProcessing] = useState(false);
-  const [filterType, setFilterType] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<string>('mutasi');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
     approved: 0,
-    rejected: 0
+    rejected: 0,
+    mutasi: 0,
+    pensiun: 0,
+    kenaikanPangkat: 0
   });
 
   useEffect(() => {
@@ -80,7 +87,7 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
 
   useEffect(() => {
     filterApplications();
-  }, [applicationList, filterType, statusFilter]);
+  }, [applicationList, activeTab, statusFilter]);
 
   const loadApplications = async () => {
     try {
@@ -125,7 +132,14 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
       const approved = combinedData.filter(app => app.status === 'approved').length;
       const rejected = combinedData.filter(app => app.status === 'rejected').length;
       
-      setStats({ total, pending, approved, rejected });
+      // Stats by application type
+      const mutasi = combinedData.filter(app => 
+        app.type === 'usulan_mutasi' || (app.type === 'application' && (app.jenis === 'mutasi' || app.jenis === 'mutasi_terpadu'))
+      ).length;
+      const pensiun = combinedData.filter(app => app.type === 'application' && app.jenis === 'pensiun').length;
+      const kenaikanPangkat = combinedData.filter(app => app.type === 'application' && app.jenis === 'kenaikan_pangkat').length;
+      
+      setStats({ total, pending, approved, rejected, mutasi, pensiun, kenaikanPangkat });
 
     } catch (error) {
       console.error('Error loading applications:', error);
@@ -148,18 +162,19 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
       );
     }
 
-    // Filter by application type
-    if (filterType !== 'all') {
-      if (filterType === 'mutasi') {
-        // Include both legacy usulan_mutasi and applications with jenis 'mutasi' or 'mutasi_terpadu'
-        filtered = filtered.filter(app => 
-          app.type === 'usulan_mutasi' || (app.type === 'application' && (app.jenis === 'mutasi' || app.jenis === 'mutasi_terpadu'))
-        );
-      } else {
-        filtered = filtered.filter(app => 
-          app.type === 'application' && app.jenis === filterType
-        );
-      }
+    // Filter by active tab (application type)
+    if (activeTab === 'mutasi') {
+      filtered = filtered.filter(app => 
+        app.type === 'usulan_mutasi' || (app.type === 'application' && (app.jenis === 'mutasi' || app.jenis === 'mutasi_terpadu'))
+      );
+    } else if (activeTab === 'pensiun') {
+      filtered = filtered.filter(app => 
+        app.type === 'application' && app.jenis === 'pensiun'
+      );
+    } else if (activeTab === 'kenaikan_pangkat') {
+      filtered = filtered.filter(app => 
+        app.type === 'application' && app.jenis === 'kenaikan_pangkat'
+      );
     }
 
     // Filter by status
@@ -588,94 +603,217 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
         </Card>
       </div>
 
-      {/* Filter and Applications Table */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Daftar Usulan</CardTitle>
-              <CardDescription>
-                Kelola dan verifikasi usulan yang masuk dari berbagai aplikasi
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-500" />
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter berdasarkan jenis" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Aplikasi</SelectItem>
-                  <SelectItem value="pensiun">Pengajuan Pensiun</SelectItem>
-                  <SelectItem value="mutasi">Pengajuan Mutasi</SelectItem>
-                  <SelectItem value="kenaikan_pangkat">Kenaikan Pangkat</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-56">
-                  <SelectValue placeholder="Filter berdasarkan status" />
-                </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Status</SelectItem>
-                    <SelectItem value="menunggu_verifikasi">⏳ Menunggu Verifikasi (Baru)</SelectItem>
-                    <SelectItem value="sudah_diperbaiki">✓ Sudah Diperbaiki</SelectItem>
-                    <SelectItem value="perlu_perbaikan">✗ Perlu Perbaikan</SelectItem>
-                    <SelectItem value="diproses">✓ Diproses</SelectItem>
-                    <SelectItem value="disetujui">✓ Disetujui</SelectItem>
-                  </SelectContent>
-              </Select>
-            </div>
+      {/* Tabs for Different Application Types */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <div className="flex items-center justify-between">
+          <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsTrigger value="mutasi" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Mutasi ({stats.mutasi})
+            </TabsTrigger>
+            <TabsTrigger value="pensiun" className="flex items-center gap-2">
+              <UserX className="w-4 h-4" />
+              Pensiun ({stats.pensiun})
+            </TabsTrigger>
+            <TabsTrigger value="kenaikan_pangkat" className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Kenaikan Pangkat ({stats.kenaikanPangkat})
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Status Filter */}
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-500" />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="Filter berdasarkan status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="menunggu_verifikasi">⏳ Menunggu Verifikasi (Baru)</SelectItem>
+                <SelectItem value="sudah_diperbaiki">✓ Sudah Diperbaiki</SelectItem>
+                <SelectItem value="perlu_perbaikan">✗ Perlu Perbaikan</SelectItem>
+                <SelectItem value="diproses">✓ Diproses</SelectItem>
+                <SelectItem value="disetujui">✓ Disetujui</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-            </div>
-          ) : filteredApplications.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              Tidak ada usulan yang ditemukan
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nomor/Judul</TableHead>
-                  <TableHead>Nama Pengaju</TableHead>
-                  <TableHead>Unit</TableHead>
-                  <TableHead>Jenis Aplikasi</TableHead>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredApplications.map((application) => (
-                  <TableRow key={`${application.type}-${application.id}`}>
-                    <TableCell className="font-medium">
-                      {getApplicationTitle(application)}
-                    </TableCell>
-                    <TableCell>{getApplicationName(application)}</TableCell>
-                    <TableCell>
-                      {application.type === 'usulan_mutasi' 
-                        ? application.unit_asal 
-                        : application.submitter_unit}
-                    </TableCell>
-                    <TableCell>{getApplicationType(application)}</TableCell>
-                    <TableCell>
-                      <div className="text-sm text-gray-700">
-                        {getStatusTimestamp(application)}
-                      </div>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(application.status, application)}</TableCell>
-                    <TableCell>{getActionButtons(application)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Mutasi Tab */}
+        <TabsContent value="mutasi">
+          <Card>
+            <CardHeader>
+              <CardTitle>Verifikasi Usulan Mutasi</CardTitle>
+              <CardDescription>
+                Kelola dan verifikasi usulan mutasi pegawai
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+                </div>
+              ) : filteredApplications.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  Tidak ada usulan mutasi yang ditemukan
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nomor/Judul</TableHead>
+                      <TableHead>Nama Pengaju</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredApplications.map((application) => (
+                      <TableRow key={`${application.type}-${application.id}`}>
+                        <TableCell className="font-medium">
+                          {getApplicationTitle(application)}
+                        </TableCell>
+                        <TableCell>{getApplicationName(application)}</TableCell>
+                        <TableCell className="text-sm">
+                          {application.type === 'usulan_mutasi' 
+                            ? application.unit_asal 
+                            : application.submitter_unit}
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm text-gray-700">
+                            {getStatusTimestamp(application)}
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(application.status, application)}</TableCell>
+                        <TableCell>{getActionButtons(application)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Pensiun Tab */}
+        <TabsContent value="pensiun">
+          <Card>
+            <CardHeader>
+              <CardTitle>Verifikasi Pengajuan Pensiun</CardTitle>
+              <CardDescription>
+                Kelola dan verifikasi pengajuan administrasi pensiun
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+                </div>
+              ) : filteredApplications.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  Tidak ada pengajuan pensiun yang ditemukan
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nomor/Judul</TableHead>
+                      <TableHead>Nama Pengaju</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredApplications.map((application) => (
+                      <TableRow key={`${application.type}-${application.id}`}>
+                        <TableCell className="font-medium">
+                          {getApplicationTitle(application)}
+                        </TableCell>
+                        <TableCell>{getApplicationName(application)}</TableCell>
+                        <TableCell className="text-sm">
+                          {application.type === 'usulan_mutasi' 
+                            ? application.unit_asal 
+                            : application.submitter_unit}
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm text-gray-700">
+                            {getStatusTimestamp(application)}
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(application.status, application)}</TableCell>
+                        <TableCell>{getActionButtons(application)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Kenaikan Pangkat Tab */}
+        <TabsContent value="kenaikan_pangkat">
+          <Card>
+            <CardHeader>
+              <CardTitle>Verifikasi Kenaikan Pangkat</CardTitle>
+              <CardDescription>
+                Kelola dan verifikasi usulan kenaikan pangkat pegawai
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+                </div>
+              ) : filteredApplications.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  Tidak ada usulan kenaikan pangkat yang ditemukan
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nomor/Judul</TableHead>
+                      <TableHead>Nama Pengaju</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredApplications.map((application) => (
+                      <TableRow key={`${application.type}-${application.id}`}>
+                        <TableCell className="font-medium">
+                          {getApplicationTitle(application)}
+                        </TableCell>
+                        <TableCell>{getApplicationName(application)}</TableCell>
+                        <TableCell className="text-sm">
+                          {application.type === 'usulan_mutasi' 
+                            ? application.unit_asal 
+                            : application.submitter_unit}
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm text-gray-700">
+                            {getStatusTimestamp(application)}
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(application.status, application)}</TableCell>
+                        <TableCell>{getActionButtons(application)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Review Dialog */}
       <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
