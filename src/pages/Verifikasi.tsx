@@ -317,12 +317,16 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
         return <Badge className="bg-red-100 text-red-700">✗ Perlu Perbaikan</Badge>;
       case 'approved':
         return <Badge className="bg-blue-100 text-blue-700">✓ Diproses</Badge>;
+      case 'biro_osdma_submitted':
+        return <Badge className="bg-blue-100 text-blue-700">📤 Berkas Diajukan ke Biro OSDMA</Badge>;
+      case 'biro_osdma_review':
+        return <Badge className="bg-yellow-100 text-yellow-700">⏳ Menunggu Keputusan</Badge>;
       case 'rejected':
         return <Badge className="bg-red-100 text-red-700">✗ Ditolak</Badge>;
       case 'completed':
-        return <Badge className="bg-purple-100 text-purple-700">✓ Selesai</Badge>;
+        return <Badge className="bg-purple-100 text-purple-700">✓ SK Telah Terbit</Badge>;
       default:
-        return <Badge>Unknown</Badge>;
+        return <Badge className="bg-gray-100 text-gray-700">{status}</Badge>;
     }
   };
 
