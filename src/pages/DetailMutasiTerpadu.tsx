@@ -715,25 +715,51 @@ export default function DetailMutasiTerpadu() {
       <div className="container mx-auto py-6">
         <div className="text-center py-8">
           <p>Pengajuan tidak ditemukan</p>
-          <Button onClick={() => navigate('/apps/pengajuan-mutasi-terpadu')} className="mt-4">
-            Kembali
+          <Button onClick={() => navigate('/apps')} className="mt-4">
+            Kembali ke Aplikasi
           </Button>
         </div>
       </div>
     );
   }
 
+  const getApplicationTitle = () => {
+    if (!application) return 'Detail Pengajuan';
+    
+    const titles: Record<string, string> = {
+      'mutasi_terpadu': 'Detail Pengajuan Mutasi Terpadu',
+      'kenaikan_pangkat': 'Detail Pengajuan Kenaikan Pangkat',
+      'pensiun': 'Detail Pengajuan Pensiun'
+    };
+    
+    return isEditing 
+      ? titles[application.jenis]?.replace('Detail', 'Edit') || 'Edit Pengajuan'
+      : titles[application.jenis] || 'Detail Pengajuan';
+  };
+
+  const getBackUrl = () => {
+    if (!application) return '/apps';
+    
+    const urls: Record<string, string> = {
+      'mutasi_terpadu': '/apps/pengajuan-mutasi-terpadu?tab=list',
+      'kenaikan_pangkat': '/apps/kenaikan-pangkat?tab=list',
+      'pensiun': '/apps/reminder-pensiun?tab=list'
+    };
+    
+    return urls[application.jenis] || '/apps';
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="sm" onClick={() => navigate('/apps/pengajuan-mutasi-terpadu')}>
+        <Button variant="outline" size="sm" onClick={() => navigate(getBackUrl())}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Kembali
         </Button>
         <div className="flex-1">
           <h1 className="text-3xl font-bold">
-            {isEditing ? 'Edit Pengajuan Mutasi Terpadu' : 'Detail Pengajuan Mutasi Terpadu'}
+            {getApplicationTitle()}
           </h1>
           <p className="text-muted-foreground">
             {application.employee_data?.nomor_usulan || 'Nomor belum tersedia'}
