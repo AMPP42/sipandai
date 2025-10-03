@@ -316,6 +316,9 @@ export default function PengajuanMutasiTerpadu() {
       'submitted': 'default',
       'in_review': 'outline',
       'approved': 'default',
+      'biro_osdma_submitted': 'default',
+      'biro_osdma_review': 'warning',
+      'completed': 'default',
       'rejected': 'destructive',
       'revision_needed': 'warning'
     };
@@ -327,7 +330,10 @@ export default function PengajuanMutasiTerpadu() {
       const labels: Record<string, string> = {
         'draft': 'Draft',
         'in_review': 'Dalam Review',
-        'approved': 'Disetujui',
+        'approved': 'Disetujui & Diproses',
+        'biro_osdma_submitted': 'Berkas Diajukan ke Biro OSDMA',
+        'biro_osdma_review': 'Menunggu Keputusan',
+        'completed': 'SK Telah Terbit',
         'rejected': 'Ditolak',
         'revision_needed': 'Perlu Perbaikan'
       };
