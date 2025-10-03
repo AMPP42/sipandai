@@ -62,12 +62,17 @@ export default function ReminderPensiun() {
 
   const loadEmployees = async () => {
     try {
+      console.log('Loading employees...');
       const { data, error } = await supabase
         .from('employees')
         .select('id,nama,nip,tanggal_lahir,tmt_pensiun,unit,jabatan,pangkat,masa_kerja')
         .order('nama');
       
-      if (error) throw error;
+      console.log('Employees loaded:', data?.length, 'employees');
+      if (error) {
+        console.error('Error from supabase:', error);
+        throw error;
+      }
       setEmployees(data || []);
     } catch (error: any) {
       console.error('Error loading employees:', error);
@@ -340,19 +345,20 @@ export default function ReminderPensiun() {
                   <TableBody>
                     {employees
                       .filter(emp => {
-                        if (!emp.tmt_pensiun) return false;
-                        const pensiunDate = new Date(emp.tmt_pensiun);
+                        const pensiunDate = getRetirementDate(emp);
+                        if (!pensiunDate) return false;
                         const today = new Date();
                         const monthsUntilRetirement = (pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30);
                         return monthsUntilRetirement > 0 && monthsUntilRetirement <= 12;
                       })
                       .sort((a, b) => {
-                        const dateA = a.tmt_pensiun ? new Date(a.tmt_pensiun).getTime() : 0;
-                        const dateB = b.tmt_pensiun ? new Date(b.tmt_pensiun).getTime() : 0;
-                        return dateA - dateB;
+                        const dateA = getRetirementDate(a);
+                        const dateB = getRetirementDate(b);
+                        return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
                       })
                       .map((employee) => {
-                        const pensiunDate = new Date(employee.tmt_pensiun!);
+                        const pensiunDate = getRetirementDate(employee);
+                        if (!pensiunDate) return null;
                         const today = new Date();
                         const daysUntilRetirement = Math.ceil((pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                         const monthsUntilRetirement = Math.floor(daysUntilRetirement / 30);
@@ -364,7 +370,7 @@ export default function ReminderPensiun() {
                             <TableCell>{employee.unit || '-'}</TableCell>
                             <TableCell>{employee.jabatan || '-'}</TableCell>
                             <TableCell>
-                              {new Date(employee.tmt_pensiun!).toLocaleDateString('id-ID')}
+                              {pensiunDate.toLocaleDateString('id-ID')}
                             </TableCell>
                             <TableCell>
                               <Badge 
@@ -596,12 +602,17 @@ export default function ReminderPensiun() {
                   </TableHeader>
                   <TableBody>
                      {applications.map((app) => {
-                       const employeeData = app.estimasi ? JSON.parse(app.estimasi) : {};
+                       let employeeData = {};
+                       try {
+                         employeeData = app.estimasi ? JSON.parse(app.estimasi) : {};
+                       } catch (e) {
+                         console.error('Error parsing estimasi:', e);
+                       }
                        return (
                        <TableRow key={app.id}>
                           <TableCell>
                             <div>
-                              <p className="font-medium">{employeeData.nomor_usulan || '-'}</p>
+                              <p className="font-medium">{(employeeData as any).nomor_usulan || '-'}</p>
                               <p className="text-xs text-muted-foreground">
                                 {app.id.slice(0, 8)}
                               </p>
@@ -609,14 +620,14 @@ export default function ReminderPensiun() {
                           </TableCell>
                           <TableCell>
                             <div>
-                              <p className="font-medium">{employeeData.employee_name || '-'}</p>
+                              <p className="font-medium">{(employeeData as any).employee_name || '-'}</p>
                               <p className="text-sm text-muted-foreground">
-                                NIP: {employeeData.employee_nip || '-'}
+                                NIP: {(employeeData as any).employee_nip || '-'}
                               </p>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <p className="text-sm">{employeeData.kategori_name || '-'}</p>
+                            <p className="text-sm">{(employeeData as any).kategori_name || '-'}</p>
                           </TableCell>
                           <TableCell>
                             {getStatusBadge(app)}
