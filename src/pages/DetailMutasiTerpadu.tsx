@@ -916,13 +916,13 @@ export default function DetailMutasiTerpadu() {
 
                   // Step 1: Pengajuan dibuat
                   steps.push(
-                    <div key="created" className="flex flex-col items-center z-20 bg-white px-6 relative">
-                      {/* Connector line - green if next step completed */}
-                      <div className={`absolute left-full top-6 w-32 h-0.5 ${submittedAt ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                      
-                      <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mb-2">
+                    <div key="created" className="flex flex-col items-center relative">
+                      <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mb-2 z-10">
                         <CheckCircle className="w-6 h-6 text-white" />
                       </div>
+                      {/* Connector line to next step */}
+                      <div className={`absolute left-1/2 top-6 w-full h-0.5 ${submittedAt ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      
                       <div className="text-center min-w-0 max-w-40">
                         <h4 className="text-sm font-semibold text-gray-900 mb-1">Pengajuan Dibuat</h4>
                         {createdAt && <>
@@ -939,13 +939,12 @@ export default function DetailMutasiTerpadu() {
 
                   // Step 2: Data diajukan
                   steps.push(
-                    <div key="submitted" className="flex flex-col items-center z-20 bg-white px-6 relative">
-                      {/* Connector line */}
-                      <div className={`absolute left-full top-6 w-32 h-0.5 ${approvedAt ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                      
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${isSubmitted ? 'bg-green-500' : 'bg-gray-300'}`}>
+                    <div key="submitted" className="flex flex-col items-center relative">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 z-10 ${isSubmitted ? 'bg-green-500' : 'bg-gray-300'}`}>
                         {isSubmitted ? <Send className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
                       </div>
+                      {/* Connector line to next step */}
+                      <div className={`absolute left-1/2 top-6 w-full h-0.5 ${approvedAt ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                       <div className="text-center min-w-0 max-w-40">
                         <h4 className="text-sm font-semibold text-gray-900 mb-1">Data Diajukan</h4>
                         {submittedAt ? <>
@@ -969,6 +968,9 @@ export default function DetailMutasiTerpadu() {
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${isApproved ? 'bg-green-500' : application?.status === 'revision_needed' ? 'bg-yellow-500' : 'bg-gray-300'}`}>
                         {isApproved ? <CheckCircle className="w-6 h-6 text-white" /> : application?.status === 'revision_needed' ? <AlertTriangle className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
                       </div>
+                      {/* Connector line to next step */}
+                      <div className={`absolute left-1/2 top-6 w-full h-0.5 ${notaDinasUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      
                       <div className="text-center min-w-0 max-w-40">
                         {isApproved ? <>
                           <h4 className="text-sm font-semibold text-gray-900 mb-1">Disetujui & Diproses</h4>
@@ -995,17 +997,13 @@ export default function DetailMutasiTerpadu() {
 
                   // Step 4: Berkas diajukan ke Biro OSDMA - Always show
                   steps.push(
-                    <div key="biro-submitted" className="flex flex-col items-center z-20 bg-white px-6 relative">
-                      {/* Connector line - always show */}
-                      <div className={`absolute left-full top-6 w-32 h-0.5 ${
-                        application.biro_osdma_status === 'approved' ? 'bg-green-500' : 
-                        application.biro_osdma_status === 'rejected' ? 'bg-red-500' : 
-                        'bg-gray-300'
-                      }`}></div>
-                        
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${notaDinasUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}>
+                    <div key="biro-submitted" className="flex flex-col items-center relative">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 z-10 ${notaDinasUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}>
                         {notaDinasUploadedAt ? <FileCheck className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
                       </div>
+                      {/* Connector line to next step */}
+                      <div className={`absolute left-1/2 top-6 w-full h-0.5 ${biroDecisionAt ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      
                       <div className="text-center min-w-0 max-w-40">
                         <h4 className="text-sm font-semibold text-gray-900 mb-1">Berkas Diajukan ke Biro OSDMA</h4>
                         {notaDinasUploadedAt ? <>
@@ -1022,11 +1020,8 @@ export default function DetailMutasiTerpadu() {
 
                   // Step 5: Status Biro OSDMA - Always show
                   steps.push(
-                    <div key="biro-decision" className="flex flex-col items-center z-20 bg-white px-6 relative">
-                      {/* Connector line - always show */}
-                      <div className={`absolute left-full top-6 w-32 h-0.5 ${skUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                          
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                    <div key="biro-decision" className="flex flex-col items-center relative">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 z-10 ${
                             application.biro_osdma_status === 'approved' ? 'bg-green-500' : 
                             application.biro_osdma_status === 'rejected' ? 'bg-red-500' : 
                             'bg-gray-300'
@@ -1035,6 +1030,9 @@ export default function DetailMutasiTerpadu() {
                              application.biro_osdma_status === 'rejected' ? <XCircle className="w-6 h-6 text-white" /> : 
                              <Clock className="w-6 h-6 text-gray-500" />}
                           </div>
+                          {/* Connector line to next step */}
+                          <div className={`absolute left-1/2 top-6 w-full h-0.5 ${skUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                          
                           <div className="text-center min-w-0 max-w-40">
                             {application.biro_osdma_status === 'approved' ? <>
                               <h4 className="text-sm font-semibold text-gray-900 mb-1">Pengajuan Disetujui</h4>
@@ -1070,10 +1068,10 @@ export default function DetailMutasiTerpadu() {
                         </div>
                     );
 
-                  // Step 6: SK Terbit - Always show
+                  // Step 6: SK Terbit - Always show (no connecting line after this)
                   steps.push(
-                    <div key="sk-published" className="flex flex-col items-center z-20 bg-white px-6">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${skUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}>
+                    <div key="sk-published" className="flex flex-col items-center relative">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 z-10 ${skUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}>
                         {skUploadedAt ? <CheckCircle className="w-6 h-6 text-white" /> : <Clock className="w-6 h-6 text-gray-500" />}
                       </div>
                       <div className="text-center min-w-0 max-w-40">
