@@ -135,7 +135,8 @@ export default function UpdateStatusModal({
             from_status: application.status as any,
             to_status: selectedStatus as any,
             actor_id: user.id,
-            note: notes || null
+            note: notes || null,
+            file_link: fileLink || null
           });
 
         if (workflowError) console.error('Workflow error:', workflowError);

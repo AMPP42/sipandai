@@ -14,7 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import DocumentVerificationStatus from '@/components/applications/DocumentVerificationStatus';
-import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CheckCircle, AlertCircle, Clock, Send, Loader2, AlertTriangle, Eye, FileCheck, XCircle } from 'lucide-react';
+import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CheckCircle, AlertCircle, Clock, Send, Loader2, AlertTriangle, Eye, FileCheck, XCircle, ExternalLink } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
 type Application = Database['public']['Tables']['applications']['Row'];
@@ -78,9 +78,12 @@ export default function DetailMutasiTerpadu() {
   const [skUrl, setSkUrl] = useState('');
   const [biroStatus, setBiroStatus] = useState<'in_progress' | 'approved' | 'rejected'>('in_progress');
   const [biroRejectionNotes, setBiroRejectionNotes] = useState('');
+  const [workflowLinks, setWorkflowLinks] = useState<{ [key: string]: string }>({});
+  
   useEffect(() => {
     if (id) {
       loadApplication();
+      loadWorkflowLinks();
     }
   }, [id]);
   useEffect(() => {
@@ -132,6 +135,34 @@ export default function DetailMutasiTerpadu() {
       setDocumentRequirements(MUTASI_DOCUMENT_REQUIREMENTS);
     }
   };
+  
+  const loadWorkflowLinks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('workflows')
+        .select('to_status, file_link, created_at')
+        .eq('application_id', id)
+        .not('file_link', 'is', null)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      if (data) {
+        const links: { [key: string]: string } = {};
+        data.forEach(workflow => {
+          // Map status to timeline step key
+          const statusKey = workflow.to_status;
+          if (workflow.file_link && !links[statusKey]) {
+            links[statusKey] = workflow.file_link;
+          }
+        });
+        setWorkflowLinks(links);
+      }
+    } catch (error) {
+      console.error('Error loading workflow links:', error);
+    }
+  };
+  
   const loadApplication = async () => {
     try {
       const {
@@ -1020,6 +1051,17 @@ export default function DetailMutasiTerpadu() {
                             <p className="text-xs text-gray-500">
                               {notaDinasUploadedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                             </p>
+                            {workflowLinks['biro_osdma_submitted'] && (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="mt-2 h-7 text-xs"
+                                onClick={() => window.open(workflowLinks['biro_osdma_submitted'], '_blank')}
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Lihat Bukti
+                              </Button>
+                            )}
                           </>
                         ) : (
                           <p className="text-xs text-gray-500">Belum diajukan</p>
@@ -1070,6 +1112,17 @@ export default function DetailMutasiTerpadu() {
                                   {biroDecisionAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                               </>
+                            )}
+                            {workflowLinks['biro_osdma_review'] && (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="mt-2 h-7 text-xs"
+                                onClick={() => window.open(workflowLinks['biro_osdma_review'], '_blank')}
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Lihat Bukti
+                              </Button>
                             )}
                           </>
                         ) : application.biro_osdma_status === 'rejected' ? (
@@ -1122,9 +1175,20 @@ export default function DetailMutasiTerpadu() {
                               {skUploadedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                             </p>
                             {application.sk_url && (
-                              <Button size="sm" variant="outline" className="mt-2" onClick={() => window.open(application.sk_url!, '_blank')}>
-                                <Eye className="w-4 h-4 mr-2" />
+                              <Button size="sm" variant="outline" className="mt-2 h-7 text-xs" onClick={() => window.open(application.sk_url!, '_blank')}>
+                                <Eye className="w-3 h-3 mr-1" />
                                 Lihat SK
+                              </Button>
+                            )}
+                            {workflowLinks['completed'] && (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="mt-2 h-7 text-xs ml-1"
+                                onClick={() => window.open(workflowLinks['completed'], '_blank')}
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Lihat Bukti
                               </Button>
                             )}
                           </>

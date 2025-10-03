@@ -1220,6 +1220,7 @@ export type Database = {
           actor_id: string
           application_id: string
           created_at: string
+          file_link: string | null
           from_status: Database["public"]["Enums"]["application_status"] | null
           id: string
           note: string | null
@@ -1229,6 +1230,7 @@ export type Database = {
           actor_id: string
           application_id: string
           created_at?: string
+          file_link?: string | null
           from_status?: Database["public"]["Enums"]["application_status"] | null
           id?: string
           note?: string | null
@@ -1238,6 +1240,7 @@ export type Database = {
           actor_id?: string
           application_id?: string
           created_at?: string
+          file_link?: string | null
           from_status?: Database["public"]["Enums"]["application_status"] | null
           id?: string
           note?: string | null
