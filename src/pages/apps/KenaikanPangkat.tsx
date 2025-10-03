@@ -231,7 +231,11 @@ export default function KenaikanPangkat() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (app: Application) => {
+    const status = app.status;
+    const estimasi = app.estimasi ? JSON.parse(app.estimasi) : {};
+    const isResubmission = estimasi.is_resubmission || false;
+    
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline" | "warning"> = {
       'draft': 'secondary',
       'submitted': 'default',
@@ -241,18 +245,23 @@ export default function KenaikanPangkat() {
       'revision_needed': 'warning'
     };
 
-    const labels: Record<string, string> = {
-      'draft': 'Draft',
-      'submitted': 'Diajukan',
-      'in_review': 'Dalam Review',
-      'approved': 'Disetujui',
-      'rejected': 'Ditolak',
-      'revision_needed': 'Perlu perbaikan'
+    const getLabel = () => {
+      if (status === 'submitted') {
+        return isResubmission ? 'Menunggu Verifikasi Ulang' : 'Menunggu Verifikasi';
+      }
+      const labels: Record<string, string> = {
+        'draft': 'Draft',
+        'in_review': 'Dalam Review',
+        'approved': 'Disetujui',
+        'rejected': 'Ditolak',
+        'revision_needed': 'Perlu Perbaikan'
+      };
+      return labels[status] || status;
     };
 
     return (
       <Badge variant={variants[status] || 'outline'}>
-        {labels[status] || status}
+        {getLabel()}
       </Badge>
     );
   };
@@ -532,7 +541,7 @@ export default function KenaikanPangkat() {
                             <p className="text-sm">{employeeData.periode || '-'}</p>
                           </TableCell>
                           <TableCell>
-                            {getStatusBadge(app.status)}
+                            {getStatusBadge(app)}
                           </TableCell>
                           <TableCell>
                             <DocumentVerificationStatus 
