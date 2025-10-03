@@ -1045,6 +1045,17 @@ export default function DetailMutasiTerpadu() {
                                 </p>
                               </>
                             )}
+                            {workflowLinks['approved'] && (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="mt-2 h-7 text-xs"
+                                onClick={() => window.open(workflowLinks['approved'], '_blank')}
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Lihat Bukti
+                              </Button>
+                            )}
                           </>
                         ) : application?.status === 'revision_needed' ? (
                           <>
