@@ -1,0 +1,73 @@
+-- Allow users to read workflow links for their own applications
+CREATE POLICY "Users can view workflows for their applications"
+ON public.workflows
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM public.applications
+    WHERE applications.id = workflows.application_id
+    AND applications.submitter_id = auth.uid()
+  )
+);
+
+-- Allow admin_pusat to view all workflows
+CREATE POLICY "Admin pusat can view all workflows"
+ON public.workflows
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE profiles.id = auth.uid()
+    AND profiles.role = 'admin_pusat'
+  )
+);
+
+-- Allow admin_unit to view workflows for applications from their unit
+CREATE POLICY "Admin unit can view workflows for their unit applications"
+ON public.workflows
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM public.profiles p
+    JOIN public.applications a ON a.id = workflows.application_id
+    WHERE p.id = auth.uid()
+    AND p.role = 'admin_unit'
+    AND p.unit = a.submitter_unit
+  )
+);
+
+-- Allow users to insert workflow records for their applications
+CREATE POLICY "Users can insert workflows for their applications"
+ON public.workflows
+FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.applications
+    WHERE applications.id = workflows.application_id
+    AND applications.submitter_id = auth.uid()
+  )
+);
+
+-- Allow admin to insert workflows
+CREATE POLICY "Admin can insert workflows"
+ON public.workflows
+FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE profiles.id = auth.uid()
+    AND profiles.role IN ('admin_pusat', 'admin_unit')
+  )
+);
+
+-- Allow admin to update workflows
+CREATE POLICY "Admin can update workflows"
+ON public.workflows
+FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE profiles.id = auth.uid()
+    AND profiles.role IN ('admin_pusat', 'admin_unit')
+  )
+);
