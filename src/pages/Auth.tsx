@@ -54,15 +54,15 @@ export default function Auth() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     const name = formData.get('name') as string;
-    const role = formData.get('role') as string;
     const unit = formData.get('unit') as string;
 
-    const result = await signUp(email, password, name, role, unit || undefined);
+    // SECURITY: Role is no longer passed - defaults to 'viewer' on backend
+    const result = await signUp(email, password, name, 'viewer', unit || undefined);
     if (result.error) {
       setError(result.error);
     } else {
       setError('');
-      alert('Pendaftaran berhasil! Silakan cek email untuk verifikasi akun.');
+      alert('Pendaftaran berhasil! Akun Anda akan ditinjau oleh administrator. Silakan cek email untuk verifikasi akun.');
     }
     setIsLoading(false);
   };
@@ -166,28 +166,11 @@ export default function Auth() {
                       className="h-11"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
-                    <Select name="role" required>
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Pilih role Anda" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin_pusat">
-                          <div className="flex items-center gap-2">
-                            <Shield className="w-4 h-4" />
-                            Admin Pusat
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="admin_unit">
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4" />
-                            Admin Unit
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Alert className="border-blue-200 bg-blue-50">
+                    <AlertDescription className="text-blue-800 text-sm">
+                      ℹ️ Akun baru akan dibuat dengan akses terbatas. Administrator akan meninjau dan memberikan izin akses yang sesuai.
+                    </AlertDescription>
+                  </Alert>
                   <div className="space-y-2">
                     <Label htmlFor="unit">Unit Kerja (Opsional)</Label>
                     <Input
