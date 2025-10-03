@@ -62,17 +62,18 @@ export default function ReminderPensiun() {
 
   const loadEmployees = async () => {
     try {
-      console.log('Loading employees...');
-      const { data, error } = await supabase
+      let query = supabase
         .from('employees')
         .select('id,nama,nip,tanggal_lahir,tmt_pensiun,unit,jabatan,pangkat,masa_kerja')
         .order('nama');
       
-      console.log('Employees loaded:', data?.length, 'employees');
-      if (error) {
-        console.error('Error from supabase:', error);
-        throw error;
+      if (user?.role === 'admin_unit' && user?.unit) {
+        query = query.eq('unit', user.unit);
       }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
       setEmployees(data || []);
     } catch (error: any) {
       console.error('Error loading employees:', error);
