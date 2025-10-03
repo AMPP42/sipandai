@@ -74,27 +74,17 @@ export const AdminChatView: React.FC<AdminChatViewProps> = ({
   const loadChatSession = async () => {
     setIsLoading(true);
     try {
-      // First, get the user_id from the ticket
-      const { data: ticketData, error: ticketError } = await supabase
-        .from('consultation_tickets')
-        .select('user_id')
-        .eq('id', ticketId)
-        .single();
-
-      if (ticketError) throw ticketError;
-
-      // Find the most recent chat session from this user
-      // Can be linked to ticket or not
+      // Get or create session for this specific ticket
       const { data, error } = await supabase
         .from('chat_sessions')
         .select('*')
-        .eq('user_id', ticketData.user_id)
+        .eq('ticket_id', ticketId)
         .in('status', ['waiting', 'active'])
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') throw error;
 
       if (data) {
         const sessionData = {
@@ -102,17 +92,10 @@ export const AdminChatView: React.FC<AdminChatViewProps> = ({
           status: data.status as 'waiting' | 'active' | 'ended',
         };
         
-        // If session doesn't have ticket_id, link it to this ticket
-        if (!data.ticket_id) {
-          await supabase
-            .from('chat_sessions')
-            .update({ ticket_id: ticketId })
-            .eq('id', data.id);
-          
-          sessionData.ticket_id = ticketId;
-        }
-        
         setSession(sessionData);
+      } else {
+        // No session found for this ticket yet
+        console.log('No chat session found for ticket:', ticketId);
       }
     } catch (error) {
       console.error('Error loading chat session:', error);

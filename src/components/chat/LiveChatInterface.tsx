@@ -88,12 +88,14 @@ export const LiveChatInterface = ({ ticketId }: { ticketId?: string | null }) =>
     scrollToBottom();
   }, [messages]);
 
-  // Load initial data
+  // Load initial data when ticketId is available
   useEffect(() => {
-    loadOfficerStatus();
-    loadAutoReplies();
-    loadExistingSession();
-  }, [user]);
+    if (ticketId) {
+      loadOfficerStatus();
+      loadAutoReplies();
+      loadExistingSession();
+    }
+  }, [user, ticketId]);
 
   // Real-time subscriptions
   useEffect(() => {
@@ -180,12 +182,14 @@ export const LiveChatInterface = ({ ticketId }: { ticketId?: string | null }) =>
   };
 
   const loadExistingSession = async () => {
-    if (!user) return;
+    if (!user || !ticketId) return;
 
+    // Load session specific to this ticket
     const { data, error } = await supabase
       .from('chat_sessions')
       .select('*')
       .eq('user_id', user.id)
+      .eq('ticket_id', ticketId)
       .in('status', ['waiting', 'active'])
       .order('created_at', { ascending: false })
       .limit(1)
