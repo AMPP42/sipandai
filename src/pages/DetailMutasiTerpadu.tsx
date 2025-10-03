@@ -1371,19 +1371,19 @@ export default function DetailMutasiTerpadu() {
                 
 
                 <div>
-                  
+                  <Label className="text-sm font-medium">Unit Kerja Tujuan</Label>
                   <p className="mt-1 font-medium text-primary">{application.employee_data.unit_tujuan}</p>
                 </div>
 
                 <div>
-                  
+                  <Label className="text-sm font-medium">Jabatan Tujuan</Label>
                   <p className="mt-1 font-medium">{application.employee_data.jabatan_tujuan}</p>
                 </div>
 
                 <Separator />
 
                 <div>
-                  
+                  <Label className="text-sm font-medium">Alasan Pengajuan</Label>
                   <p className="mt-1 text-sm">{application.employee_data.alasan_mutasi}</p>
                 </div>
 
