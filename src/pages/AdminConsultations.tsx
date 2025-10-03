@@ -150,43 +150,35 @@ export default function AdminConsultations() {
     setFilteredTickets(filtered);
   };
 
-  const handleAssignOfficer = async () => {
-    if (!selectedTicket || !selectedOfficer) return;
-
-    setIsAssigning(true);
+  const handleOpenChatSession = async (ticket: ConsultationTicket) => {
     try {
-      const officer = officers.find((o) => o.id === selectedOfficer);
-      
       const { error } = await supabase
         .from('consultation_tickets')
         .update({
-          konselor_id: selectedOfficer,
-          konselor_name: officer?.name,
+          konselor_id: user?.id,
+          konselor_name: user?.name || 'Admin',
           status: 'in_progress',
           updated_at: new Date().toISOString(),
         })
-        .eq('id', selectedTicket.id);
+        .eq('id', ticket.id);
 
       if (error) throw error;
 
       toast({
         title: 'Berhasil',
-        description: 'Konselor berhasil ditugaskan',
+        description: 'Sesi live chat telah dibuka',
       });
 
-      setIsDialogOpen(false);
-      setSelectedTicket(null);
-      setSelectedOfficer('');
+      // Langsung buka chat view
+      setChatTicket(ticket);
       loadTickets();
     } catch (error) {
-      console.error('Error assigning officer:', error);
+      console.error('Error opening chat session:', error);
       toast({
         title: 'Error',
-        description: 'Gagal menugaskan konselor',
+        description: 'Gagal membuka sesi live chat',
         variant: 'destructive',
       });
-    } finally {
-      setIsAssigning(false);
     }
   };
 
@@ -220,8 +212,8 @@ export default function AdminConsultations() {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; label: string }> = {
-      open: { variant: 'default', label: 'Terbuka' },
-      in_progress: { variant: 'secondary', label: 'Diproses' },
+      open: { variant: 'default', label: 'Menunggu Konfirmasi' },
+      in_progress: { variant: 'secondary', label: 'Sesi Terbuka' },
       resolved: { variant: 'default', label: 'Selesai' },
       closed: { variant: 'outline', label: 'Ditutup' },
     };
@@ -444,13 +436,10 @@ export default function AdminConsultations() {
                         {ticket.status === 'open' && (
                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedTicket(ticket);
-                              setIsDialogOpen(true);
-                            }}
+                            onClick={() => handleOpenChatSession(ticket)}
                           >
-                            Tugaskan
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Buka Sesi Live Chat
                           </Button>
                         )}
                         {(ticket.status === 'in_progress' || ticket.status === 'resolved') && (
@@ -501,55 +490,6 @@ export default function AdminConsultations() {
         </DialogContent>
       </Dialog>
 
-      {/* Assign Officer Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Tugaskan Konselor</DialogTitle>
-            <DialogDescription>
-              Pilih konselor untuk menangani tiket ini
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedTicket && (
-            <div className="space-y-4">
-              <div className="rounded-lg border p-4 space-y-2">
-                <p className="font-medium">{selectedTicket.nomor_ticket}</p>
-                <p className="text-sm">{selectedTicket.judul}</p>
-                <div className="flex gap-2">
-                  {getPriorityBadge(selectedTicket.prioritas)}
-                  <Badge variant="outline">{selectedTicket.kategori}</Badge>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="officer">Konselor</Label>
-                <Select value={selectedOfficer} onValueChange={setSelectedOfficer}>
-                  <SelectTrigger id="officer">
-                    <SelectValue placeholder="Pilih konselor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {officers.map((officer) => (
-                      <SelectItem key={officer.id} value={officer.id}>
-                        {officer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Batal
-            </Button>
-            <Button onClick={handleAssignOfficer} disabled={!selectedOfficer || isAssigning}>
-              {isAssigning ? 'Menugaskan...' : 'Tugaskan'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

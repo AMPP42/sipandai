@@ -265,9 +265,9 @@ export default function KonsultasiSDM() {
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      open: { label: "Buka", className: "bg-blue-100 text-blue-700" },
-      in_progress: { label: "Sedang Diproses", className: "bg-yellow-100 text-yellow-700" },
-      resolved: { label: "Selesai", className: "bg-green-100 text-green-700" },
+      open: { label: "Menunggu Konfirmasi", className: "bg-blue-100 text-blue-700" },
+      in_progress: { label: "Sesi Terbuka", className: "bg-green-100 text-green-700" },
+      resolved: { label: "Selesai", className: "bg-gray-100 text-gray-700" },
       closed: { label: "Ditutup", className: "bg-gray-100 text-gray-700" }
     };
     
