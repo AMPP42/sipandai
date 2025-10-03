@@ -118,12 +118,36 @@ export default function UpdateStatusModal({
 
         if (error) throw error;
       } else {
+        // Prepare update data with appropriate timestamp fields based on status
+        const updateData: any = {
+          status: selectedStatus as any
+        };
+
+        // Set appropriate timestamp fields based on status
+        const now = new Date().toISOString();
+        
+        if (selectedStatus === 'submitted' || selectedStatus === 'in_review') {
+          // When submitting or in review, set tanggal_pengajuan
+          updateData.tanggal_pengajuan = now;
+        } else if (selectedStatus === 'biro_osdma_submitted') {
+          // When submitting to Biro OSDMA, set nota_dinas_uploaded_at
+          updateData.nota_dinas_uploaded_at = now;
+          updateData.biro_osdma_status = 'submitted';
+          updateData.biro_osdma_submitted_at = now;
+        } else if (selectedStatus === 'biro_osdma_review') {
+          // Keep existing timestamps, just update status
+          updateData.biro_osdma_status = 'in_progress';
+        } else if (selectedStatus === 'completed') {
+          // When completed, set SK uploaded timestamp
+          updateData.sk_uploaded_at = now;
+          updateData.biro_osdma_status = 'approved';
+          updateData.biro_osdma_decision_at = now;
+        }
+
         // Update application status
         const { error } = await supabase
           .from('applications')
-          .update({
-            status: selectedStatus as any
-          })
+          .update(updateData)
           .eq('id', application.id);
 
         if (error) throw error;
