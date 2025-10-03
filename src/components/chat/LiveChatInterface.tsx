@@ -265,16 +265,13 @@ export const LiveChatInterface = ({ ticketId }: { ticketId?: string | null }) =>
     setIsLoading(true);
     
     try {
-      // Check if there are online officers
-      const onlineOfficers = officers.filter(o => o.status === 'online');
-      
       // Create new chat session linked to ticket
       const { data: session, error: sessionError } = await supabase
         .from('chat_sessions')
         .insert({
           user_id: user.id,
           ticket_id: ticketId,
-          status: onlineOfficers.length > 0 ? 'waiting' : 'waiting'
+          status: 'waiting'
         })
         .select()
         .single();
@@ -291,23 +288,9 @@ export const LiveChatInterface = ({ ticketId }: { ticketId?: string | null }) =>
       setCurrentSession(chatSession);
       setIsChatStarted(true);
 
-      // Send welcome message
-      const welcomeText = onlineOfficers.length > 0 
-        ? "Halo! Terima kasih telah menghubungi layanan konsultasi SDM. Petugas kami akan segera merespon pertanyaan Anda."
-        : "Halo! Saat ini tidak ada petugas yang online. Silakan tinggalkan pesan Anda dan kami akan merespon sesegera mungkin.";
-
-      await supabase
-        .from('chat_messages')
-        .insert({
-          session_id: session.id,
-          sender_id: user.id,
-          message_text: welcomeText,
-          message_type: 'system'
-        });
-
       toast({
         title: "Chat dimulai",
-        description: "Anda dapat mulai mengetik pesan Anda",
+        description: "Sesi chat telah dibuka. Konselor akan merespon segera.",
       });
     } catch (error: any) {
       console.error('Error starting chat:', error);
