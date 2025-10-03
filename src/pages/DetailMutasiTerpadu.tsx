@@ -138,6 +138,7 @@ export default function DetailMutasiTerpadu() {
   
   const loadWorkflowLinks = async () => {
     try {
+      console.log('Loading workflow links for application:', id);
       const { data, error } = await supabase
         .from('workflows')
         .select('to_status, file_link, created_at')
@@ -145,17 +146,24 @@ export default function DetailMutasiTerpadu() {
         .not('file_link', 'is', null)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading workflow links:', error);
+        throw error;
+      }
+      
+      console.log('Workflow data from database:', data);
       
       if (data) {
         const links: { [key: string]: string } = {};
         data.forEach(workflow => {
           // Map status to timeline step key
           const statusKey = workflow.to_status;
+          console.log('Processing workflow:', { statusKey, file_link: workflow.file_link });
           if (workflow.file_link && !links[statusKey]) {
             links[statusKey] = workflow.file_link;
           }
         });
+        console.log('Final workflow links:', links);
         setWorkflowLinks(links);
       }
     } catch (error) {
@@ -1301,6 +1309,11 @@ export default function DetailMutasiTerpadu() {
                 </div>
 
                 {/* Supporting Documents for Advanced Timeline Stages */}
+                {(() => {
+                  console.log('Current application status:', application.status);
+                  console.log('Available workflow links:', workflowLinks);
+                  return null;
+                })()}
                 {(application.status === 'biro_osdma_submitted' || 
                   application.status === 'biro_osdma_review' || 
                   application.status === 'completed') && (
