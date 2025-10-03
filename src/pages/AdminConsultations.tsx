@@ -107,13 +107,28 @@ export default function AdminConsultations() {
 
   const loadOfficers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, name')
+      // Get admin_pusat users from user_roles
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
         .eq('role', 'admin_pusat');
 
-      if (error) throw error;
-      setOfficers(data || []);
+      if (rolesError) throw rolesError;
+
+      if (!userRoles || userRoles.length === 0) {
+        setOfficers([]);
+        return;
+      }
+
+      // Get profile names for these users
+      const userIds = userRoles.map(ur => ur.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+      setOfficers(profiles || []);
     } catch (error) {
       console.error('Error loading officers:', error);
     }

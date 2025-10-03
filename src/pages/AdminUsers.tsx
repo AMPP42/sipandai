@@ -71,22 +71,36 @@ export default function AdminUsers() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // Get user profiles with email stored in profiles table
+      // Get user profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, name, unit, created_at, updated_at')
         .order('created_at', { ascending: false });
 
       if (profilesError) throw profilesError;
 
+      // Get roles from user_roles table
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role, unit');
+
+      if (rolesError) throw rolesError;
+
       // Get current user session info
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Combine profile data and session data where available
+      // Create a map of user roles
+      const rolesMap = new Map(userRoles?.map(ur => [ur.user_id, ur]) || []);
+
+      // Combine profile data with role data
       const enrichedUsers: UserProfile[] = profiles?.map(profile => {
         const isCurrentUser = profile.id === session?.user?.id;
+        const roleData = rolesMap.get(profile.id);
+        
         return {
           ...profile,
+          role: roleData?.role || 'admin_unit',
+          unit: roleData?.unit || profile.unit,
           email: isCurrentUser ? session?.user?.email || 'Email tidak tersedia' : 'Email tidak tersedia',
           last_sign_in_at: isCurrentUser ? session?.user?.last_sign_in_at || null : null,
           email_confirmed_at: isCurrentUser ? session?.user?.email_confirmed_at || null : profile.created_at
@@ -165,24 +179,40 @@ export default function AdminUsers() {
       // Generate a new UUID for the user profile
       const userId = crypto.randomUUID();
       
-      // Create user profile in profiles table
-      const { data, error } = await supabase
+      // Create user profile in profiles table (with deprecated role field for compatibility)
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .insert({
+        .insert([{
           id: userId,
           name: newUser.name,
-          role: newUser.role,
+          role: newUser.role, // Kept for backward compatibility
           unit: newUser.unit || null
-        })
+        }])
         .select()
         .single();
 
-      if (error) {
-        console.error('Database error:', error);
-        throw error;
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        throw profileError;
       }
 
-      console.log('User profile created successfully:', data);
+      // Create role in user_roles table
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert([{
+          user_id: userId,
+          role: newUser.role as 'admin_pusat' | 'admin_unit',
+          unit: newUser.unit || null
+        }]);
+
+      if (roleError) {
+        console.error('Role creation error:', roleError);
+        // Rollback profile creation
+        await supabase.from('profiles').delete().eq('id', userId);
+        throw roleError;
+      }
+
+      console.log('User profile and role created successfully:', profileData);
 
       toast({
         title: "Berhasil",
@@ -216,16 +246,27 @@ export default function AdminUsers() {
     if (!editingUser) return;
 
     try {
-      const { error } = await supabase
+      // Update profile
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           name: editingUser.name,
-          role: editingUser.role,
           unit: editingUser.unit
         })
         .eq('id', editingUser.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update role in user_roles table
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .update({
+          role: editingUser.role as 'admin_pusat' | 'admin_unit',
+          unit: editingUser.unit
+        })
+        .eq('user_id', editingUser.id);
+
+      if (roleError) throw roleError;
 
       toast({
         title: "Berhasil",

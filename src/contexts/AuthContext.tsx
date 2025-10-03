@@ -36,25 +36,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (!isMounted) return;
             
             try {
-              const { data: profile, error } = await supabase
+              // Fetch profile data
+              const { data: profile, error: profileError } = await supabase
                 .from('profiles')
-                .select('*')
+                .select('id, name, unit, created_at, updated_at')
                 .eq('id', session.user.id)
                 .single();
 
-              if (isMounted && profile && !error) {
+              if (profileError) {
+                console.error('Error fetching user profile:', profileError);
+                if (isMounted) setUser(null);
+                return;
+              }
+
+              // Fetch role from user_roles table
+              const { data: roleData, error: roleError } = await supabase
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', session.user.id)
+                .single();
+
+              if (roleError) {
+                console.error('Error fetching user role:', roleError);
+                if (isMounted) setUser(null);
+                return;
+              }
+
+              if (isMounted && profile && roleData) {
                 setUser({
                   id: profile.id,
                   email: session.user.email!,
                   name: profile.name,
-                  role: profile.role as 'admin_pusat' | 'admin_unit',
+                  role: roleData.role as 'admin_pusat' | 'admin_unit',
                   unit: profile.unit,
                   created_at: profile.created_at,
                   updated_at: profile.updated_at,
                 });
-              } else if (isMounted && error) {
-                console.error('Error fetching user profile:', error);
-                setUser(null);
               }
             } catch (err) {
               console.error('Profile fetch error:', err);
