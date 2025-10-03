@@ -504,10 +504,13 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
         if (error) throw error;
       }
 
-      loadApplications();
+      toast.success('Usulan berhasil dihapus');
+      
+      // Force reload to ensure fresh data
+      await loadApplications();
     } catch (error) {
       console.error('Error deleting application:', error);
-      alert('Gagal menghapus usulan. Silakan coba lagi.');
+      toast.error('Gagal menghapus usulan. Silakan coba lagi.');
     } finally {
       setProcessing(false);
     }
