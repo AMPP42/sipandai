@@ -1,40 +1,67 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  ArrowLeft,
-  FileText,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Upload,
-  ExternalLink,
-  Calendar
-} from "lucide-react";
-import UpdateStatusModal from "@/components/verifikasi/UpdateStatusModal";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import DocumentVerificationStatus from '@/components/applications/DocumentVerificationStatus';
+import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CheckCircle, AlertCircle, Clock, Send, Loader2, AlertTriangle, Eye, FileCheck, XCircle, ExternalLink } from 'lucide-react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
 
 type Application = Database['public']['Tables']['applications']['Row'];
-type Workflow = Database['public']['Tables']['workflows']['Row'];
+
+interface ApplicationDetail extends Application {
+  employee_data?: {
+    employee_id: string;
+    employee_name: string;
+    employee_nip: string;
+    nomor_usulan: string;
+    kategori?: string;
+    kategori_name?: string;
+    unit?: string;
+    jabatan?: string;
+    pangkat?: string;
+  };
+}
+
+interface DocumentVerificationStatus {
+  [key: string]: {
+    status: 'approved' | 'needs_fix' | 'pending';
+    admin_notes?: string;
+    document_name: string;
+  };
+}
 
 export default function DetailPensiun() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [application, setApplication] = useState<Application | null>(null);
-  const [workflows, setWorkflows] = useState<Workflow[]>([]);
-  const [workflowData, setWorkflowData] = useState<Record<string, { note?: string; created_at?: string }>>({});
   const [loading, setLoading] = useState(true);
-  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [application, setApplication] = useState<ApplicationDetail | null>(null);
+  const [documents, setDocuments] = useState<{ [key: string]: string }>({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [documentVerificationStatus, setDocumentVerificationStatus] = useState<DocumentVerificationStatus>({});
+  const [fixedDocuments, setFixedDocuments] = useState<Set<string>>(new Set());
+  const [savedDocuments, setSavedDocuments] = useState<Set<string>>(new Set());
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [additionalNotes, setAdditionalNotes] = useState('');
+  const [showSubmitConfirmation, setShowSubmitConfirmation] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [applicationSubmitted, setApplicationSubmitted] = useState(false);
+  const [documentRequirements, setDocumentRequirements] = useState<string[]>([]);
+  const [workflowLinks, setWorkflowLinks] = useState<{ [key: string]: string }>({});
+  const [workflowData, setWorkflowData] = useState<{ [key: string]: { note?: string; created_at?: string; file_link?: string } }>({});
 
   useEffect(() => {
     loadApplication();
