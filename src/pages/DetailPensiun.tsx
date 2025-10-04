@@ -13,8 +13,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import DocumentVerificationStatus from '@/components/applications/DocumentVerificationStatus';
-import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CheckCircle, AlertCircle, Clock, Send, Loader2, AlertTriangle, Eye, FileCheck, XCircle, ExternalLink } from 'lucide-react';
+import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CheckCircle, CheckCircle2, AlertCircle, Clock, Send, Loader2, AlertTriangle, Eye, FileCheck, XCircle, ExternalLink } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import UpdateStatusModal from "@/components/verifikasi/UpdateStatusModal";
 import type { Database } from '@/integrations/supabase/types';
 
 type Application = Database['public']['Tables']['applications']['Row'];
@@ -62,6 +63,7 @@ export default function DetailPensiun() {
   const [documentRequirements, setDocumentRequirements] = useState<string[]>([]);
   const [workflowLinks, setWorkflowLinks] = useState<{ [key: string]: string }>({});
   const [workflowData, setWorkflowData] = useState<{ [key: string]: { note?: string; created_at?: string; file_link?: string } }>({});
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
 
   useEffect(() => {
     loadApplication();
@@ -100,7 +102,7 @@ export default function DetailPensiun() {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setWorkflows(data || []);
+      // setWorkflows is not used in this page
 
       // Extract workflow data for timeline
       const dataMap: Record<string, { note?: string; created_at?: string }> = {};
