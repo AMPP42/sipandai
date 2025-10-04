@@ -645,13 +645,12 @@ export default function ReminderPensiun() {
                   <SelectTrigger className="bg-background">
                     <SelectValue placeholder="Pilih kategori pensiun" />
                   </SelectTrigger>
-                  <SelectContent className="z-[100] bg-popover border shadow-lg">
-                    <SelectItem value="pensiun_reguler">
-                      Pensiun Reguler
-                    </SelectItem>
-                    <SelectItem value="pensiun_janda_duda">
-                      Pensiun Janda/Duda (PNS Meninggal)
-                    </SelectItem>
+                  <SelectContent className="z-[100] bg-popover border shadow-lg max-h-[300px]">
+                    {Object.entries(retirementCategories).map(([key, value]) => (
+                      <SelectItem key={key} value={key}>
+                        {value.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
