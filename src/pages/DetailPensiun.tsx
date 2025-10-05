@@ -14,7 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import DocumentVerificationStatus from '@/components/applications/DocumentVerificationStatus';
-import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CheckCircle, AlertCircle, Clock, Send, Loader2, AlertTriangle, Eye, FileCheck, XCircle, ExternalLink } from 'lucide-react';
+import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Clock, Send, Loader as Loader2, TriangleAlert as AlertTriangle, Eye, FileCheck, Circle as XCircle, ExternalLink } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
 
