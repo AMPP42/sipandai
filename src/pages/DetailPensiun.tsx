@@ -8,12 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import DocumentVerificationStatus from '@/components/applications/DocumentVerificationStatus';
-import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CheckCircle, CheckCircle2, AlertCircle, Clock, Send, Loader2, AlertTriangle, Eye, FileCheck, XCircle, ExternalLink } from 'lucide-react';
+import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CheckCircle, AlertCircle, Clock, Send, Loader2, AlertTriangle, Eye, FileCheck, XCircle, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import UpdateStatusModal from "@/components/verifikasi/UpdateStatusModal";
 import type { Database } from '@/integrations/supabase/types';
@@ -25,6 +26,7 @@ interface ApplicationDetail extends Application {
     employee_id: string;
     employee_name: string;
     employee_nip: string;
+    unit_asal: string;
     nomor_usulan: string;
     kategori?: string;
     kategori_name?: string;
@@ -41,6 +43,53 @@ interface DocumentVerificationStatus {
     document_name: string;
   };
 }
+
+const PENSIUN_DOCUMENT_REQUIREMENTS: { [key: string]: string[] } = {
+  "pensiun_reguler": [
+    "Surat Permohonan Pensiun dari Ybs (tanpa kop unit kerja)",
+    "Daftar Susunan Keluarga - pastikan jumlah anak sama dengan di DPCPP",
+    "Kartu Pegawai (KARPEG)",
+    "Surat Nikah (Optional)",
+    "Akte Kelahiran Anak (apabila masih ada anak yang menjadi tanggungan)",
+    "SK Pengangkatan sebagai CPNS",
+    "SK Pengangkatan CPNS menjadi PNS",
+    "SK Kenaikan Pangkat terakhir",
+    "Kenaikan Gaji Berkala Terakhir",
+    "Penilaian Prestasi Kerja (SKP) 2 Tahun Terakhir",
+    "Surat Pernyataan Tidak Pernah Dijatuhi Hukuman Disiplin Sedang/Berat dalam 1 Tahun Terakhir",
+    "Surat Pernyataan Tidak Sedang Menjalani Proses Pidana",
+    "Foto Pegawai ybs",
+    "Data Perorangan Calon Penerima Pensiun (DPCPP)",
+    "Surat Keterangan Kematian (Bila ada suami/istri yang sudah meninggal dunia)",
+    "KTP",
+    "NPWP",
+    "Buku Tabungan (lembar yang terdapat nomor rekening)",
+    "Surat Keterangan Sekolah / Kuliah (bila terdapat anak yang masih menjadi tanggungan)"
+  ],
+  "pensiun_janda_duda": [
+    "Surat Permohonan Pensiun dari Janda / Duda Ybs (tanpa kop)",
+    "Daftar Susunan Keluarga (Dokumen Asli)",
+    "Kartu Pegawai (KARPEG) almarhum/ah",
+    "Surat Nikah",
+    "Akte Kelahiran Anak",
+    "SK Pengangkatan sebagai CPNS almarhum/ah",
+    "SK Pengangkatan CPNS menjadi PNS almarhum/ah",
+    "SK Kenaikan Pangkat almarhum/ah",
+    "Gaji Berkala Terakhir almarhum/ah",
+    "Penilaian Prestasi Kerja 2 Tahun Terakhir almarhum/ah",
+    "Surat Pernyataan Tidak Pernah Dijatuhi Hukuman Disiplin Sedang/Berat dalam 1 Tahun Terakhir almarhum/ah",
+    "Surat Pernyataan Tidak Sedang Menjalani Proses Pidana almarhum/ah",
+    "Data Perorangan Calon Penerima Pensiun (DPCPP)",
+    "Foto Janda / Duda ybs",
+    "Surat Keterangan Kematian yang Sah (harus dari Dukcapil)",
+    "Surat Keterangan Janda / Duda dari Kelurahan",
+    "Kartu Istri (KARIS) utk pensiun janda atau Kartu Suami (KARSU) untuk pensiun duda",
+    "KTP janda/duda/KK",
+    "NPWP janda/duda",
+    "Buku Tabungan janda/duda",
+    "Surat Keterangan Sekolah / Kuliah (bila terdapat anak yang masih menjadi tanggungan)"
+  ]
+};
 
 export default function DetailPensiun() {
   const { id } = useParams<{ id: string }>();
