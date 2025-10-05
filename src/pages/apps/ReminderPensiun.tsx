@@ -44,7 +44,7 @@ export default function ReminderPensiun() {
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  const [activeTab, setActiveTab] = useState("reminder");
+  const [activeTab, setActiveTab] = useState("create");
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -279,17 +279,6 @@ export default function ReminderPensiun() {
     }
   };
 
-  // Helper: compute retirement date from tmt_pensiun or tanggal_lahir (+60 years)
-  const getRetirementDate = (emp: Employee): Date | null => {
-    if (emp.tmt_pensiun) return new Date(emp.tmt_pensiun);
-    if (emp.tanggal_lahir) {
-      const d = new Date(emp.tanggal_lahir);
-      d.setFullYear(d.getFullYear() + 60);
-      return d;
-    }
-    return null;
-  };
-
   const handleSubmitApplication = async () => {
     if (!selectedEmployee || !selectedKategori) {
       toast({
@@ -311,7 +300,7 @@ export default function ReminderPensiun() {
         .gte('created_at', `${currentYear}-01-01`);
       
       const sequence = String(existingApps?.length + 1 || 1).padStart(4, '0');
-      const nomorUsulan = `PNS/${currentYear}/${sequence}`;
+      const nomorUsulan = `PSN/${currentYear}/${sequence}`;
 
       const applicationData: ApplicationInsert = {
         jenis: 'pensiun' as const,
@@ -320,7 +309,6 @@ export default function ReminderPensiun() {
         submitter_name: user?.name || '',
         submitter_unit: user?.unit || '',
         status: 'draft' as const,
-        keterangan: `Kategori: ${retirementCategories[selectedKategori].label}`,
         estimasi: JSON.stringify({
           employee_id: selectedEmployee.id,
           employee_name: selectedEmployee.nama,
@@ -364,20 +352,9 @@ export default function ReminderPensiun() {
 
   const getStatusBadge = (app: Application) => {
     const status = app.status;
-    let isResubmission = false;
-    if (app.estimasi) {
-      const trimmed = app.estimasi.trim();
-      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-        try {
-          const parsed: any = JSON.parse(trimmed);
-          isResubmission = Boolean(parsed?.is_resubmission);
-        } catch {
-          // ignore malformed JSON and treat as no resubmission flag
-        }
-      }
-    }
+    const estimasi = app.estimasi ? JSON.parse(app.estimasi) : {};
+    const isResubmission = estimasi.is_resubmission || false;
     
-    // Additional status badges for completed workflow
     if (status === 'biro_osdma_submitted' || app.biro_osdma_status === 'submitted') {
       return <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">Berkas di Ajukan ke Biro OSDMA</Badge>;
     }
@@ -396,6 +373,7 @@ export default function ReminderPensiun() {
       'rejected': 'destructive',
       'revision_needed': 'warning'
     };
+
     const getLabel = () => {
       if (status === 'submitted') {
         return isResubmission ? 'Menunggu Verifikasi Ulang' : 'Menunggu Verifikasi';
@@ -817,3 +795,13 @@ export default function ReminderPensiun() {
     </div>
   );
 }
+
+  const getRetirementDate = (emp: Employee): Date | null => {
+    if (emp.tmt_pensiun) return new Date(emp.tmt_pensiun);
+    if (emp.tanggal_lahir) {
+      const d = new Date(emp.tanggal_lahir);
+      d.setFullYear(d.getFullYear() + 60);
+      return d;
+    }
+    return null;
+  };
