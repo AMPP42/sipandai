@@ -1413,6 +1413,84 @@ export default function DetailKenaikanPangkat() {
         </Card>
       )}
 
+      {/* Bottom Submit Button */}
+      {canEdit && (
+        <Card className="sticky bottom-4 z-10 shadow-lg border-2">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-sm font-medium">
+                  {application.status === 'revision_needed' 
+                    ? `Dokumen perbaikan: ${Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix' && documents[Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === v) || '']?.trim() !== '').length}/${Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length} selesai`
+                    : `Dokumen diupload: ${submittedDocumentsCount}/${documentRequirements.length}`}
+                </p>
+                <Progress 
+                  value={application.status === 'revision_needed'
+                    ? Math.round((Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').filter(verification => {
+                        const docKey = Object.keys(documentVerificationStatus).find(key => documentVerificationStatus[key] === verification);
+                        return docKey && fixedDocuments.has(docKey);
+                      }).length / Math.max(Object.values(documentVerificationStatus).filter(v => v.status === 'needs_fix').length, 1)) * 100)
+                    : progressPercentage}
+                  className="h-2 mt-2"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                {canSaveDraft && (
+                  <Button
+                    onClick={handleSaveDraft}
+                    disabled={isSubmitting || draftSaved}
+                    variant={draftSaved ? "default" : "outline"}
+                    className={draftSaved ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Menyimpan...
+                      </>
+                    ) : draftSaved ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Draft Tersimpan
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="w-4 h-4 mr-2" />
+                        Simpan Draft
+                      </>
+                    )}
+                  </Button>
+                )}
+                {canSubmit && (
+                  <Button
+                    onClick={() => setShowSubmitConfirmation(true)}
+                    disabled={isSubmitting || applicationSubmitted}
+                    className={applicationSubmitted ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+                    size="lg"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {isEditing ? 'Mengirim Perbaikan...' : 'Mengirim...'}
+                      </>
+                    ) : applicationSubmitted ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Pengajuan Terkirim
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        {isEditing ? 'Submit Perbaikan' : 'Submit Pengajuan'}
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Submit Confirmation Dialog */}
       <Dialog open={showSubmitConfirmation} onOpenChange={setShowSubmitConfirmation}>
         <DialogContent>
