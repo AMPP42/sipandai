@@ -24,7 +24,8 @@ import {
   AlertCircle,
   Clock,
   User,
-  Building
+  Building,
+  Trash2
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
@@ -293,6 +294,39 @@ export default function PengajuanMutasiTerpadu() {
       toast({
         title: "Error",
         description: error.message || "Gagal menyimpan pengajuan",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteDraft = async (applicationId: string, nomorUsulan: string) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus draft "${nomorUsulan}"? Tindakan ini tidak dapat dibatalkan.`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('applications')
+        .delete()
+        .eq('id', applicationId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Berhasil",
+        description: "Draft berhasil dihapus",
+        variant: "default"
+      });
+
+      loadApplications();
+    } catch (error: any) {
+      console.error('Error deleting draft:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Gagal menghapus draft",
         variant: "destructive"
       });
     } finally {
@@ -843,14 +877,26 @@ export default function PengajuanMutasiTerpadu() {
                             {getStatusTimestamp(app)}
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/detail-mutasi-terpadu/${app.id}`)}
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              Detail
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate(`/detail-mutasi-terpadu/${app.id}`)}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                Detail
+                              </Button>
+                              {app.status === 'draft' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteDraft(app.id, employeeData.nomor_usulan)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                        </TableRow>
                        );
