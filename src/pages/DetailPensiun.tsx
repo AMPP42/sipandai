@@ -606,21 +606,19 @@ export default function DetailPensiun() {
           if (documentsError) throw documentsError;
         }
 
-        toast({
-          title: "Berhasil",
-          description: `Perbaikan usulan untuk ${application.employee_data.employee_name} berhasil dikirim ulang!`
-        });
-
-        setApplicationSubmitted(true);
         setIsEditing(false);
         setDocumentVerificationStatus({});
         setFixedDocuments(new Set());
         setDocuments({});
         setAdditionalNotes('');
+        setApplicationSubmitted(true);
 
-        setTimeout(() => {
-          navigate('/apps/reminder-pensiun?tab=list');
-        }, 1000);
+        toast({
+          title: "Berhasil",
+          description: `Perbaikan usulan untuk ${application.employee_data.employee_name} berhasil dikirim ulang!`
+        });
+
+        navigate('/apps/reminder-pensiun?tab=list');
       } else {
         const { error } = await supabase
           .from('applications')
@@ -656,16 +654,14 @@ export default function DetailPensiun() {
           if (documentsError) throw documentsError;
         }
 
+        setApplicationSubmitted(true);
+
         toast({
           title: "Berhasil",
           description: `Pengajuan untuk ${application.employee_data.employee_name} berhasil disubmit dan sedang menunggu verifikasi!`
         });
 
-        setApplicationSubmitted(true);
-
-        setTimeout(() => {
-          navigate('/apps/reminder-pensiun?tab=list');
-        }, 1000);
+        navigate('/apps/reminder-pensiun?tab=list');
       }
     } catch (error: any) {
       console.error('Error submitting application:', error);

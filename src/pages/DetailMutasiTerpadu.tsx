@@ -618,29 +618,27 @@ export default function DetailMutasiTerpadu() {
           status: 'submitted',
           documentsCount: documentInserts.length
         });
-        toast({
-          title: "Berhasil",
-          description: `Perbaikan usulan untuk ${application.employee_data.employee_name} berhasil dikirim ulang!`
-        });
-        setApplicationSubmitted(true);
-
         // Clear edit state
         setIsEditing(false);
         setDocumentVerificationStatus({});
         setFixedDocuments(new Set());
         setDocuments({});
         setAdditionalNotes('');
+        setApplicationSubmitted(true);
+
+        toast({
+          title: "Berhasil",
+          description: `Perbaikan usulan untuk ${application.employee_data.employee_name} berhasil dikirim ulang!`
+        });
 
         // Navigate to appropriate list page based on application type
-        setTimeout(() => {
-          if (application.jenis === 'kenaikan_pangkat') {
-            navigate('/apps/kenaikan-pangkat?tab=list');
-          } else if (application.jenis === 'pensiun') {
-            navigate('/apps/reminder-pensiun?tab=list');
-          } else {
-            navigate('/apps/pengajuan-mutasi-terpadu?tab=list');
-          }
-        }, 1000);
+        if (application.jenis === 'kenaikan_pangkat') {
+          navigate('/apps/kenaikan-pangkat?tab=list');
+        } else if (application.jenis === 'pensiun') {
+          navigate('/apps/reminder-pensiun?tab=list');
+        } else {
+          navigate('/apps/pengajuan-mutasi-terpadu?tab=list');
+        }
       } else {
         // Submit new application
         const {
@@ -674,22 +672,21 @@ export default function DetailMutasiTerpadu() {
           } = await supabase.from('documents').insert(documentInserts);
           if (documentsError) throw documentsError;
         }
+        setApplicationSubmitted(true);
+
         toast({
           title: "Berhasil",
           description: `Pengajuan untuk ${application.employee_data.employee_name} berhasil disubmit dan sedang menunggu verifikasi!`
         });
-        setApplicationSubmitted(true);
 
         // Navigate to appropriate list page based on application type
-        setTimeout(() => {
-          if (application.jenis === 'kenaikan_pangkat') {
-            navigate('/apps/kenaikan-pangkat?tab=list');
-          } else if (application.jenis === 'pensiun') {
-            navigate('/apps/reminder-pensiun?tab=list');
-          } else {
-            navigate('/apps/pengajuan-mutasi-terpadu?tab=list');
-          }
-        }, 1000);
+        if (application.jenis === 'kenaikan_pangkat') {
+          navigate('/apps/kenaikan-pangkat?tab=list');
+        } else if (application.jenis === 'pensiun') {
+          navigate('/apps/reminder-pensiun?tab=list');
+        } else {
+          navigate('/apps/pengajuan-mutasi-terpadu?tab=list');
+        }
       }
     } catch (error: any) {
       console.error('Error submitting application:', error);
