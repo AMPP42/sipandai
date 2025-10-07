@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, Send } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from '@/integrations/supabase/types';
 
@@ -23,6 +24,7 @@ export default function RevisionSubmissionModal({
   application,
   onRevisionSubmitted
 }: RevisionSubmissionModalProps) {
+  const navigate = useNavigate();
   const [revisionNotes, setRevisionNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -60,6 +62,16 @@ export default function RevisionSubmissionModal({
 
       onRevisionSubmitted();
       onOpenChange(false);
+
+      // Redirect to daftar pengajuan tab of the corresponding app
+      const target =
+        application.jenis === 'mutasi_terpadu'
+          ? '/apps/pengajuan-mutasi-terpadu?tab=list'
+          : application.jenis === 'kenaikan_pangkat'
+          ? '/apps/kenaikan-pangkat?tab=list'
+          : '/apps/reminder-pensiun?tab=list';
+      navigate(target, { replace: true });
+
       setRevisionNotes("");
 
     } catch (error: any) {

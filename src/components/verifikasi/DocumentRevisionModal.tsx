@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { AlertTriangle, FileText, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from '@/integrations/supabase/types';
 type Application = Database['public']['Tables']['applications']['Row'];
@@ -24,6 +25,7 @@ export default function DocumentRevisionModal({
   application,
   onRevisionSubmitted
 }: DocumentRevisionModalProps) {
+  const navigate = useNavigate();
   const [documentVerifications, setDocumentVerifications] = useState<DocumentVerification[]>([]);
   const [revisedDocuments, setRevisedDocuments] = useState<{
     [key: string]: string;
@@ -100,6 +102,15 @@ export default function DocumentRevisionModal({
       });
       onRevisionSubmitted();
       onOpenChange(false);
+
+      // Redirect to daftar pengajuan tab
+      const target =
+        application.jenis === 'mutasi_terpadu'
+          ? '/apps/pengajuan-mutasi-terpadu?tab=list'
+          : application.jenis === 'kenaikan_pangkat'
+          ? '/apps/kenaikan-pangkat?tab=list'
+          : '/apps/reminder-pensiun?tab=list';
+      navigate(target, { replace: true });
 
       // Reset form
       setRevisedDocuments({});

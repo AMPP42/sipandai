@@ -21,7 +21,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import DocumentVerificationStatus from "@/components/applications/DocumentVerificationStatus";
 import type { Database } from '@/integrations/supabase/types';
 
@@ -43,8 +43,11 @@ interface Employee {
 export default function KenaikanPangkat() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const urlParams = new URLSearchParams(location.search);
+  const tabParam = urlParams.get('tab');
   
-  const [activeTab, setActiveTab] = useState("create");
+  const [activeTab, setActiveTab] = useState(tabParam || "create");
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
