@@ -50,11 +50,11 @@ const KENAIKAN_PANGKAT_DOCUMENT_REQUIREMENTS: { [key: string]: string[] } = {
     "Fotocopy SK PNS yang telah dilegalisir",
     "Fotocopy SK Pangkat Terakhir yang telah dilegalisir",
     "Fotocopy SK Jabatan Terakhir yang telah dilegalisir (khusus JFU dan JFT)",
-    "SKP 2 Tahun Terakhir",
+    "SKP 2 Tahun Terakhir (atau sejak diangkat jika belum genap 2 tahun)",
     "Surat Pernyataan Melaksanakan Tugas",
     "Daftar Penilaian DP3/PPKP (jika ada periode sebelum 2014)",
-    "Sertifikat Akreditasi Program Studi (untuk verifikasi ijazah)",
-    "Fotocopy Ijazah yang telah dilegalisir (S1/S2/S3)"
+    "Fotocopy Ijazah yang telah dilegalisir",
+    "Sertifikat Akreditasi Program Studi (untuk verifikasi ijazah)"
   ],
   "fungsional": [
     "Surat Pengantar dari Unit Kerja",
@@ -63,11 +63,12 @@ const KENAIKAN_PANGKAT_DOCUMENT_REQUIREMENTS: { [key: string]: string[] } = {
     "Fotocopy SK Pangkat Terakhir yang telah dilegalisir",
     "Fotocopy SK Jabatan Fungsional yang telah dilegalisir",
     "Fotocopy SK Angka Kredit Terakhir",
-    "SKP 2 Tahun Terakhir",
-    "Penetapan Angka Kredit (PAK) terbaru",
+    "SKP 2 Tahun Terakhir (atau sejak diangkat jika belum genap 2 tahun)",
+    "Penetapan Angka Kredit (PAK) terbaru yang sudah ditandatangani pejabat yang berwenang",
     "Surat Pernyataan Melaksanakan Tugas Jabatan Fungsional",
     "Fotocopy Ijazah yang telah dilegalisir sesuai jenjang jabatan",
-    "Sertifikat Kompetensi Jabatan Fungsional (jika ada)"
+    "Daftar Penilaian DP3/PPKP (jika ada periode sebelum 2014)",
+    "Sertifikat Kompetensi/Diklat Teknis Fungsional (jika dipersyaratkan)"
   ],
   "struktural": [
     "Surat Pengantar dari Unit Kerja",
@@ -75,10 +76,11 @@ const KENAIKAN_PANGKAT_DOCUMENT_REQUIREMENTS: { [key: string]: string[] } = {
     "Fotocopy SK PNS yang telah dilegalisir",
     "Fotocopy SK Pangkat Terakhir yang telah dilegalisir",
     "Fotocopy SK Jabatan Struktural yang telah dilegalisir",
-    "SKP 2 Tahun Terakhir",
+    "SKP 2 Tahun Terakhir (atau sejak diangkat jika belum genap 2 tahun)",
     "Surat Pernyataan Melaksanakan Tugas Jabatan Struktural",
     "Fotocopy Ijazah yang telah dilegalisir sesuai persyaratan jabatan",
-    "Sertifikat Diklat Kepemimpinan (Diklatpim) sesuai jenjang jabatan"
+    "Daftar Penilaian DP3/PPKP (jika ada periode sebelum 2014)",
+    "Sertifikat Diklat Kepemimpinan (Diklatpim) sesuai jenjang jabatan (jika dipersyaratkan)"
   ],
   "pertama_kali": [
     "Surat Pengantar dari Unit Kerja",
@@ -88,7 +90,8 @@ const KENAIKAN_PANGKAT_DOCUMENT_REQUIREMENTS: { [key: string]: string[] } = {
     "Surat Pernyataan Melaksanakan Tugas",
     "Fotocopy Ijazah yang telah dilegalisir",
     "Fotocopy Transkrip Nilai yang telah dilegalisir",
-    "Sertifikat Akreditasi Program Studi"
+    "Sertifikat Akreditasi Program Studi",
+    "Daftar Penilaian DP3/PPKP (jika ada periode sebelum 2014)"
   ],
   "penyesuaian_ijazah": [
     "Surat Pengantar dari Unit Kerja",
@@ -96,25 +99,28 @@ const KENAIKAN_PANGKAT_DOCUMENT_REQUIREMENTS: { [key: string]: string[] } = {
     "Fotocopy SK CPNS yang telah dilegalisir",
     "Fotocopy SK PNS yang telah dilegalisir",
     "Fotocopy SK Pangkat Terakhir yang telah dilegalisir",
-    "Fotocopy Ijazah Baru yang telah dilegalisir",
+    "Fotocopy Ijazah Baru yang telah dilegalisir (harus lebih tinggi dari ijazah sebelumnya)",
     "Fotocopy Transkrip Nilai yang telah dilegalisir",
-    "Sertifikat Akreditasi Program Studi",
-    "SKP 2 Tahun Terakhir",
+    "Sertifikat Akreditasi Program Studi (minimum B untuk S1, atau akreditasi institusi untuk S2/S3)",
+    "SKP 2 Tahun Terakhir (atau sejak diangkat jika belum genap 2 tahun)",
     "Surat Pernyataan Melaksanakan Tugas",
-    "Surat Keterangan dari Perguruan Tinggi (untuk S2/S3)"
+    "Surat Keterangan Lulus dari Perguruan Tinggi (untuk S2/S3)",
+    "Daftar Penilaian DP3/PPKP (jika ada periode sebelum 2014)",
+    "Fotocopy Ijazah Lama yang telah dilegalisir (untuk perbandingan)"
   ],
   "iid_ke_iiia": [
     "Surat Pengantar dari Unit Kerja",
     "Fotocopy SK CPNS yang telah dilegalisir",
     "Fotocopy SK PNS yang telah dilegalisir",
-    "Fotocopy SK Pangkat II/d yang telah dilegalisir",
+    "Fotocopy SK Pangkat II/d yang telah dilegalisir (harus sudah 4 tahun)",
     "Fotocopy SK Jabatan Terakhir yang telah dilegalisir",
-    "SKP 2 Tahun Terakhir",
+    "SKP 2 Tahun Terakhir (atau sejak diangkat jika belum genap 2 tahun)",
     "Surat Pernyataan Melaksanakan Tugas",
-    "Fotocopy Ijazah S1 yang telah dilegalisir",
+    "Fotocopy Ijazah S1 yang telah dilegalisir (minimal akreditasi B)",
     "Fotocopy Transkrip Nilai yang telah dilegalisir",
-    "Sertifikat Akreditasi Program Studi",
-    "Surat Pernyataan telah 4 tahun dalam pangkat II/d"
+    "Sertifikat Akreditasi Program Studi (minimum B)",
+    "Surat Pernyataan telah menjalani masa kerja minimal 4 tahun dalam pangkat II/d",
+    "Daftar Penilaian DP3/PPKP (jika ada periode sebelum 2014)"
   ]
 };
 
@@ -1035,8 +1041,201 @@ export default function DetailKenaikanPangkat() {
                     </div>
                   );
 
-                  // Remaining timeline steps (Biro OSDMA submission, decision, SK) similar to pensiun
-                  // Truncated for brevity but same structure
+                  const duration4 = calculateDuration(notaDinasUploadedAt, biroDecisionAt);
+                  steps.push(
+                    <div key="biro-submitted" className="flex flex-col items-center relative flex-1 min-w-[180px]">
+                      <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 z-10 relative ${notaDinasUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}>
+                        {notaDinasUploadedAt ? <FileCheck className="w-7 h-7 text-white" /> : <Clock className="w-7 h-7 text-gray-500" />}
+                      </div>
+                      {biroDecisionAt !== null && (
+                        <div className={`absolute left-[calc(50%+28px)] top-7 right-[-50%] h-0.5 ${
+                          application.biro_osdma_status === 'approved' ? 'bg-green-500' :
+                          application.biro_osdma_status === 'rejected' ? 'bg-red-500' :
+                          'bg-gray-300'
+                        }`}></div>
+                      )}
+                      {biroDecisionAt === null && (
+                        <div className="absolute left-[calc(50%+28px)] top-7 right-[-50%] h-0.5 bg-gray-300"></div>
+                      )}
+
+                      <div className="text-center">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-1">Berkas Diajukan ke Biro OSDMA</h4>
+                        {notaDinasUploadedAt ? (
+                          <>
+                            <p className="text-xs text-gray-600">
+                              {notaDinasUploadedAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {notaDinasUploadedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            {workflowLinks['biro_osdma_submitted'] && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="mt-2 h-7 text-xs"
+                                onClick={() => window.open(workflowLinks['biro_osdma_submitted'], '_blank')}
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Lihat Bukti
+                              </Button>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-xs text-gray-500">Belum diajukan</p>
+                        )}
+                        {duration4 && (
+                          <p className={`text-xs font-medium mt-2 ${
+                            application.biro_osdma_status === 'approved' ? 'text-green-600' :
+                            application.biro_osdma_status === 'rejected' ? 'text-red-600' :
+                            'text-gray-500'
+                          }`}>{duration4}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+
+                  const duration5 = calculateDuration(biroDecisionAt, skUploadedAt);
+                  const isBiroReview = application.status === 'biro_osdma_review';
+                  steps.push(
+                    <div key="biro-decision" className="flex flex-col items-center relative flex-1 min-w-[180px]">
+                      <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 z-10 relative ${
+                        application.biro_osdma_status === 'approved' ? 'bg-green-500' :
+                        application.biro_osdma_status === 'rejected' ? 'bg-red-500' :
+                        isBiroReview ? 'bg-green-500' :
+                        'bg-gray-300'
+                      }`}>
+                        {application.biro_osdma_status === 'approved' ? <CheckCircle className="w-7 h-7 text-white" /> :
+                         application.biro_osdma_status === 'rejected' ? <XCircle className="w-7 h-7 text-white" /> :
+                         <Clock className="w-7 h-7 text-gray-500" />}
+                      </div>
+                      {skUploadedAt !== null && (
+                        <div className={`absolute left-[calc(50%+28px)] top-7 right-[-50%] h-0.5 ${skUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                      )}
+                      {skUploadedAt === null && (
+                        <div className="absolute left-[calc(50%+28px)] top-7 right-[-50%] h-0.5 bg-gray-300"></div>
+                      )}
+
+                      <div className="text-center">
+                        {application.biro_osdma_status === 'approved' ? (
+                          <>
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1">Pengajuan Disetujui</h4>
+                            <p className="text-xs text-green-700 mb-1">Menunggu penerbitan SK</p>
+                            {biroDecisionAt && (
+                              <>
+                                <p className="text-xs text-gray-600">
+                                  {biroDecisionAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {biroDecisionAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </>
+                            )}
+                            {workflowLinks['biro_osdma_review'] && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="mt-2 h-7 text-xs"
+                                onClick={() => window.open(workflowLinks['biro_osdma_review'], '_blank')}
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Lihat Bukti
+                              </Button>
+                            )}
+                          </>
+                        ) : application.biro_osdma_status === 'rejected' ? (
+                          <>
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1">Pengajuan Ditolak</h4>
+                            {biroDecisionAt && (
+                              <>
+                                <p className="text-xs text-gray-600">
+                                  {biroDecisionAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {biroDecisionAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </>
+                            )}
+                            {application.biro_osdma_rejection_notes && (
+                              <p className="text-xs text-red-700 mt-2 bg-red-50 p-2 rounded">
+                                {application.biro_osdma_rejection_notes}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1">Menunggu Keputusan</h4>
+                            {workflowData['biro_osdma_review']?.created_at && (
+                              <>
+                                <p className="text-xs text-gray-600">
+                                  {new Date(workflowData['biro_osdma_review'].created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {new Date(workflowData['biro_osdma_review'].created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </>
+                            )}
+                            {workflowData['biro_osdma_review']?.note && (
+                              <p className="text-xs text-blue-700 mt-2 bg-blue-50 p-2 rounded">
+                                {workflowData['biro_osdma_review'].note}
+                              </p>
+                            )}
+                            {!workflowData['biro_osdma_review']?.created_at && (
+                              <p className="text-xs text-gray-500">Dalam proses review</p>
+                            )}
+                          </>
+                        )}
+                        {duration5 && (
+                          <p className="text-xs text-green-600 font-medium mt-2">{duration5}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+
+                  steps.push(
+                    <div key="sk-published" className="flex flex-col items-center relative flex-1 min-w-[180px]">
+                      <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 z-10 relative ${skUploadedAt ? 'bg-green-500' : 'bg-gray-300'}`}>
+                        {skUploadedAt ? <CheckCircle className="w-7 h-7 text-white" /> : <Clock className="w-7 h-7 text-gray-500" />}
+                      </div>
+
+                      <div className="text-center">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-1">SK Telah Terbit</h4>
+                        {skUploadedAt ? (
+                          <>
+                            <p className="text-xs text-gray-600">
+                              {skUploadedAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {skUploadedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            {application.sk_url && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="mt-2 h-7 text-xs"
+                                onClick={() => window.open(application.sk_url!, '_blank')}
+                              >
+                                <Eye className="w-3 h-3 mr-1" />
+                                Lihat SK
+                              </Button>
+                            )}
+                            {workflowLinks['completed'] && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="mt-2 h-7 text-xs ml-1"
+                                onClick={() => window.open(workflowLinks['completed'], '_blank')}
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Lihat Bukti
+                              </Button>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-xs text-gray-500">Belum terbit</p>
+                        )}
+                      </div>
+                    </div>
+                  );
 
                   return steps;
                 })()}
@@ -1186,7 +1385,58 @@ export default function DetailKenaikanPangkat() {
                           </div>
                         )}
 
-                        {!workflowLinks['approved'] && (
+                        {(application.status === 'biro_osdma_submitted' ||
+                          application.status === 'biro_osdma_review' ||
+                          application.status === 'completed') && workflowLinks['biro_osdma_submitted'] && (
+                          <div className="flex items-center justify-between p-2 bg-purple-50 border border-purple-200 rounded-lg">
+                            <span className="text-sm text-purple-800">Bukti Pengajuan ke Biro OSDMA</span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(workflowLinks['biro_osdma_submitted'], '_blank')}
+                              className="h-8 gap-2 border-purple-300 hover:bg-purple-100"
+                            >
+                              <Eye className="w-3 h-3" />
+                              Lihat
+                            </Button>
+                          </div>
+                        )}
+
+                        {(application.status === 'biro_osdma_review' ||
+                          application.status === 'completed') && workflowLinks['biro_osdma_review'] && (
+                          <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                            <span className="text-sm text-blue-800">Bukti Review Biro OSDMA</span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(workflowLinks['biro_osdma_review'], '_blank')}
+                              className="h-8 gap-2 border-blue-300 hover:bg-blue-100"
+                            >
+                              <Eye className="w-3 h-3" />
+                              Lihat
+                            </Button>
+                          </div>
+                        )}
+
+                        {application.status === 'completed' && workflowLinks['completed'] && (
+                          <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg">
+                            <span className="text-sm text-green-800">Bukti SK Telah Terbit</span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(workflowLinks['completed'], '_blank')}
+                              className="h-8 gap-2 border-green-300 hover:bg-green-100"
+                            >
+                              <Eye className="w-3 h-3" />
+                              Lihat
+                            </Button>
+                          </div>
+                        )}
+
+                        {!workflowLinks['approved'] &&
+                         !workflowLinks['biro_osdma_submitted'] &&
+                         !workflowLinks['biro_osdma_review'] &&
+                         !workflowLinks['completed'] && (
                           <p className="text-sm text-muted-foreground italic">
                             Belum ada bukti dukung yang diupload
                           </p>
