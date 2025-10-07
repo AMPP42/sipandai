@@ -107,21 +107,18 @@ export default function DetailMutasiTerpadu() {
   }, [application]);
   useEffect(() => {
     if (application) {
-      // Check if we're in edit mode or if status is revision_needed
       const urlParams = new URLSearchParams(location.search);
       const editMode = urlParams.get('edit');
       
-      // Load existing documents first to preserve them
-      if (application.status !== 'draft') {
-        loadDocumentsForViewing();
-      }
+      // Load existing documents for all statuses including draft
+      loadDocumentsForViewing();
       
       if (editMode || application.status === 'revision_needed') {
         setIsEditing(true);
         loadApplicationForEdit();
-      } else if (application.status === 'approved' || application.status === 'submitted') {
-        // Load documents for viewing in approved/submitted status
-        loadDocumentsForViewing();
+      } else if (application.status === 'draft') {
+        // For draft status, enable editing automatically and load existing documents
+        setIsEditing(true);
       }
     }
   }, [application, location.search]);

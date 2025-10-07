@@ -176,15 +176,15 @@ export default function DetailKenaikanPangkat() {
       const urlParams = new URLSearchParams(location.search);
       const editMode = urlParams.get('edit');
 
-      if (application.status !== 'draft') {
-        loadDocumentsForViewing();
-      }
+      // Load existing documents for all statuses including draft
+      loadDocumentsForViewing();
 
       if (editMode || application.status === 'revision_needed') {
         setIsEditing(true);
         loadApplicationForEdit();
-      } else if (application.status === 'approved' || application.status === 'submitted') {
-        loadDocumentsForViewing();
+      } else if (application.status === 'draft') {
+        // For draft status, enable editing automatically and load existing documents
+        setIsEditing(true);
       }
     }
   }, [application, location.search]);
