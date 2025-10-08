@@ -618,7 +618,7 @@ export default function DetailPensiun() {
           description: `Perbaikan usulan untuk ${application.employee_data.employee_name} berhasil dikirim ulang!`
         });
 
-        navigate('/apps/reminder-pensiun?tab=list');
+        navigate('/apps/reminder-pensiun?tab=list', { replace: true });
       } else {
         const { error } = await supabase
           .from('applications')
@@ -661,7 +661,7 @@ export default function DetailPensiun() {
           description: `Pengajuan untuk ${application.employee_data.employee_name} berhasil disubmit dan sedang menunggu verifikasi!`
         });
 
-        navigate('/apps/reminder-pensiun?tab=list');
+        navigate('/apps/reminder-pensiun?tab=list', { replace: true });
       }
     } catch (error: any) {
       console.error('Error submitting application:', error);
@@ -1806,7 +1806,7 @@ export default function DetailPensiun() {
             <Button variant="outline" onClick={() => setShowSubmitConfirmation(false)}>
               Tidak
             </Button>
-            <Button onClick={handleSubmitApplication} disabled={isSubmitting}>
+            <Button type="button" onClick={handleSubmitApplication} disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

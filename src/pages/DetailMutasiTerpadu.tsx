@@ -633,11 +633,11 @@ export default function DetailMutasiTerpadu() {
 
         // Navigate to appropriate list page based on application type
         if (application.jenis === 'kenaikan_pangkat') {
-          navigate('/apps/kenaikan-pangkat?tab=list');
+          navigate('/apps/kenaikan-pangkat?tab=list', { replace: true });
         } else if (application.jenis === 'pensiun') {
-          navigate('/apps/reminder-pensiun?tab=list');
+          navigate('/apps/reminder-pensiun?tab=list', { replace: true });
         } else {
-          navigate('/apps/pengajuan-mutasi-terpadu?tab=list');
+          navigate('/apps/pengajuan-mutasi-terpadu?tab=list', { replace: true });
         }
       } else {
         // Submit new application
@@ -681,11 +681,11 @@ export default function DetailMutasiTerpadu() {
 
         // Navigate to appropriate list page based on application type
         if (application.jenis === 'kenaikan_pangkat') {
-          navigate('/apps/kenaikan-pangkat?tab=list');
+          navigate('/apps/kenaikan-pangkat?tab=list', { replace: true });
         } else if (application.jenis === 'pensiun') {
-          navigate('/apps/reminder-pensiun?tab=list');
+          navigate('/apps/reminder-pensiun?tab=list', { replace: true });
         } else {
-          navigate('/apps/pengajuan-mutasi-terpadu?tab=list');
+          navigate('/apps/pengajuan-mutasi-terpadu?tab=list', { replace: true });
         }
       }
     } catch (error: any) {
@@ -1736,7 +1736,7 @@ export default function DetailMutasiTerpadu() {
             <Button variant="outline" onClick={() => setShowSubmitConfirmation(false)}>
               Tidak
             </Button>
-            <Button onClick={handleSubmitApplication} disabled={isSubmitting}>
+            <Button type="button" onClick={handleSubmitApplication} disabled={isSubmitting}>
               {isSubmitting ? <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Mengirim...
