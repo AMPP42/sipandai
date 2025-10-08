@@ -532,7 +532,12 @@ export default function DetailMutasiTerpadu() {
     }
   };
 
-  const handleSubmitApplication = async () => {
+  const handleSubmitApplication = async (skipConfirmation: boolean = false) => {
+    if (!skipConfirmation && !isEditing) {
+      setShowSubmitConfirmation(true);
+      return;
+    }
+
     setShowSubmitConfirmation(false);
     if (!application || !application.employee_data) return;
 
@@ -858,7 +863,7 @@ export default function DetailMutasiTerpadu() {
                   Simpan Draft ({savedDocuments.size}/{documentRequirements.length})
                 </>}
             </Button>}
-          {canSubmit && <Button onClick={() => setShowSubmitConfirmation(true)} disabled={isSubmitting || applicationSubmitted} className={applicationSubmitted ? "bg-green-600 hover:bg-green-700 text-white" : ""}>
+          {canSubmit && <Button onClick={() => handleSubmitApplication(true)} disabled={isSubmitting || applicationSubmitted} className={applicationSubmitted ? "bg-green-600 hover:bg-green-700 text-white" : ""}>
               {isSubmitting ? <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   {isEditing ? 'Mengirim Perbaikan...' : 'Mengirim...'}
@@ -1694,7 +1699,7 @@ export default function DetailMutasiTerpadu() {
                 )}
                 {canSubmit && (
                   <Button
-                    onClick={() => setShowSubmitConfirmation(true)}
+                    onClick={() => handleSubmitApplication(true)}
                     disabled={isSubmitting || applicationSubmitted}
                     className={applicationSubmitted ? "bg-green-600 hover:bg-green-700 text-white" : ""}
                     size="lg"
@@ -1724,27 +1729,29 @@ export default function DetailMutasiTerpadu() {
       )}
 
       {/* Submit Confirmation Dialog */}
-      <Dialog open={showSubmitConfirmation} onOpenChange={setShowSubmitConfirmation}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Konfirmasi Submit Pengajuan</DialogTitle>
-          </DialogHeader>
-          <p className="text-muted-foreground">
-            Apakah anda sudah yakin untuk submit pengajuan?
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSubmitConfirmation(false)}>
-              Tidak
-            </Button>
-            <Button type="button" onClick={handleSubmitApplication} disabled={isSubmitting}>
-              {isSubmitting ? <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Mengirim...
-                </> : 'Ya'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {!isEditing && (
+        <Dialog open={showSubmitConfirmation} onOpenChange={setShowSubmitConfirmation}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Konfirmasi Submit Pengajuan</DialogTitle>
+            </DialogHeader>
+            <p className="text-muted-foreground">
+              Apakah anda sudah yakin untuk submit pengajuan?
+            </p>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowSubmitConfirmation(false)}>
+                Tidak
+              </Button>
+              <Button type="button" onClick={() => handleSubmitApplication(true)} disabled={isSubmitting}>
+                {isSubmitting ? <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Mengirim...
+                  </> : 'Ya'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Upload Nota Dinas Dialog */}
       <Dialog open={showUploadNotaDinasDialog} onOpenChange={setShowUploadNotaDinasDialog}>
