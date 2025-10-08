@@ -1128,6 +1128,90 @@ export type Database = {
         }
         Relationships: []
       }
+      retirement_reminder_templates: {
+        Row: {
+          body_template: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          months_before_retirement: number
+          subject: string | null
+          template_name: string
+          template_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          body_template: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          months_before_retirement: number
+          subject?: string | null
+          template_name: string
+          template_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          body_template?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          months_before_retirement?: number
+          subject?: string | null
+          template_name?: string
+          template_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      retirement_reminders_sent: {
+        Row: {
+          employee_id: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          reminder_type: string
+          sent_at: string | null
+          status: string
+          template_id: string | null
+        }
+        Insert: {
+          employee_id: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          reminder_type: string
+          sent_at?: string | null
+          status: string
+          template_id?: string | null
+        }
+        Update: {
+          employee_id?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          reminder_type?: string
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retirement_reminders_sent_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retirement_reminders_sent_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "retirement_reminder_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
