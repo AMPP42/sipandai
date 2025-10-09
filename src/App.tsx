@@ -7,16 +7,27 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import ErrorBoundary from '@/components/ui/error-boundary';
 
+import Dashboard from "./pages/Dashboard";
 // Import pages
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
 import Apps from "./pages/Apps";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import ChatDashboard from "./pages/ChatDashboard";
 
 // Application pages
+import PengajuanUsulanBaru from "./pages/apps/PengajuanUsulanBaru";
+import EditDraftUsulan from "./pages/apps/EditDraftUsulan";
+import EditPerbaikanUsulan from "./pages/apps/EditPerbaikanUsulan";
+import PengajuanKenaikanPangkatBaru from "./pages/apps/PengajuanKenaikanPangkatBaru";
+import EditDraftKenaikanPangkat from "./pages/apps/EditDraftKenaikanPangkat";
+import EditPerbaikanKenaikanPangkat from "./pages/apps/EditPerbaikanKenaikanPangkat";
+import UploadDokumenKenaikanPangkat from "./pages/apps/UploadDokumenKenaikanPangkat";
+import PengajuanPensiunBaru from "./pages/apps/PengajuanPensiunBaru";
+import EditDraftPensiun from "./pages/apps/EditDraftPensiun";
+import EditPerbaikanPensiun from "./pages/apps/EditPerbaikanPensiun";
+import Pensiun from "./pages/apps/Pensiun";
 import PengajuanMutasi from "./pages/apps/PengajuanMutasi";
 import KenaikanPangkat from "./pages/apps/KenaikanPangkat";
 import ReminderPensiun from "./pages/apps/ReminderPensiun";
@@ -115,15 +126,17 @@ const App = () => (
                 </ProtectedRoute>
               } />
 
-              <Route path="/apps/reminder-pensiun" element={
+              <Route path="/apps/pensiun" element={
                 <ProtectedRoute>
                   <DashboardLayout>
                     <ErrorBoundary>
-                      <ReminderPensiun />
+                      <Pensiun />
                     </ErrorBoundary>
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
+
+              <Route path="/apps/reminder-pensiun" element={<Navigate to="/apps/pensiun" replace />} />
 
               <Route path="/apps/konsultasi-sdm" element={
                 <ProtectedRoute>
@@ -145,11 +158,101 @@ const App = () => (
                 </ProtectedRoute>
               } />
 
-              <Route path="/apps/jadwal-konsultasi" element={
+              <Route path="/apps/pengajuan-usulan-baru" element={
                 <ProtectedRoute>
                   <DashboardLayout>
                     <ErrorBoundary>
-                      <JadwalKonsultasi />
+                      <PengajuanUsulanBaru />
+                    </ErrorBoundary>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/apps/edit-draft-usulan/:id" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ErrorBoundary>
+                      <EditDraftUsulan />
+                    </ErrorBoundary>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/apps/edit-perbaikan-usulan/:id" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ErrorBoundary>
+                      <EditPerbaikanUsulan />
+                    </ErrorBoundary>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/apps/pengajuan-kenaikan-pangkat-baru" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ErrorBoundary>
+                      <PengajuanKenaikanPangkatBaru />
+                    </ErrorBoundary>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/apps/upload-dokumen-kenaikan-pangkat/:id" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ErrorBoundary>
+                      <UploadDokumenKenaikanPangkat />
+                    </ErrorBoundary>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/apps/edit-draft-kenaikan-pangkat/:id" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ErrorBoundary>
+                      <EditDraftKenaikanPangkat />
+                    </ErrorBoundary>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/apps/edit-perbaikan-kenaikan-pangkat/:id" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ErrorBoundary>
+                      <EditPerbaikanKenaikanPangkat />
+                    </ErrorBoundary>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/apps/pengajuan-pensiun-baru" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ErrorBoundary>
+                      <PengajuanPensiunBaru />
+                    </ErrorBoundary>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/apps/edit-draft-pensiun/:id" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ErrorBoundary>
+                      <EditDraftPensiun />
+                    </ErrorBoundary>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/apps/edit-perbaikan-pensiun/:id" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ErrorBoundary>
+                      <EditPerbaikanPensiun />
                     </ErrorBoundary>
                   </DashboardLayout>
                 </ProtectedRoute>

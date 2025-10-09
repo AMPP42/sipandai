@@ -292,16 +292,15 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
 
     } catch (error) {
       console.error('Error submitting review:', error);
-    } finally {
       setProcessing(false);
     }
   };
 
   const getStatusBadge = (status: string, application?: ApplicationItem) => {
     // Check if this is a resubmitted application (revision submitted)
-    const isRevisionSubmitted = (status === 'submitted' || status === 'in_review') && 
-      (application?.keterangan?.includes('Perbaikan - Diajukan Ulang') || 
-       application?.catatan_reviewer);
+    const isRevisionSubmitted = application?.catatan_reviewer && 
+      (status === 'submitted' || status === 'in_review') &&
+      application.keterangan?.includes('Perbaikan - Diajukan Ulang');
     
     switch (status) {
       case 'draft':

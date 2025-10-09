@@ -43,84 +43,76 @@ interface DocumentVerificationStatusType {
   };
 }
 
+// Document requirements for each promotion category
 const KENAIKAN_PANGKAT_DOCUMENT_REQUIREMENTS: { [key: string]: string[] } = {
+  // Kenaikan Pangkat Reguler (Jabatan Pelaksana)
   "reguler": [
-    "Surat Pengantar dari Unit Kerja",
-    "Fotocopy SK CPNS yang telah dilegalisir",
-    "Fotocopy SK PNS yang telah dilegalisir",
-    "Fotocopy SK Pangkat Terakhir yang telah dilegalisir",
-    "Fotocopy SK Jabatan Terakhir yang telah dilegalisir (khusus JFU dan JFT)",
-    "SKP 2 Tahun Terakhir (atau sejak diangkat jika belum genap 2 tahun)",
-    "Surat Pernyataan Melaksanakan Tugas",
-    "Daftar Penilaian DP3/PPKP (jika ada periode sebelum 2014)",
-    "Fotocopy Ijazah yang telah dilegalisir",
-    "Sertifikat Akreditasi Program Studi (untuk verifikasi ijazah)"
+    'SKP 2 tahun terakhir (Catatan: Nilai minimal "Baik"; Nilai "Sangat Baik" perlu dilampirkan bukti inovasi; Wajib ada lembar "Dokumen Evaluasi Kinerja Pegawai")',
+    'SK Jabatan terakhir',
+    'SK Pangkat terakhir',
+    'Kartu Pegawai',
+    'Ijazah + Transkrip nilai terakhir',
+    'Nota dinas'
   ],
+  // Kenaikan Pangkat Jabatan Fungsional
   "fungsional": [
-    "Surat Pengantar dari Unit Kerja",
-    "Fotocopy SK CPNS yang telah dilegalisir",
-    "Fotocopy SK PNS yang telah dilegalisir",
-    "Fotocopy SK Pangkat Terakhir yang telah dilegalisir",
-    "Fotocopy SK Jabatan Fungsional yang telah dilegalisir",
-    "Fotocopy SK Angka Kredit Terakhir",
-    "SKP 2 Tahun Terakhir (atau sejak diangkat jika belum genap 2 tahun)",
-    "Penetapan Angka Kredit (PAK) terbaru yang sudah ditandatangani pejabat yang berwenang",
-    "Surat Pernyataan Melaksanakan Tugas Jabatan Fungsional",
-    "Fotocopy Ijazah yang telah dilegalisir sesuai jenjang jabatan",
-    "Daftar Penilaian DP3/PPKP (jika ada periode sebelum 2014)",
-    "Sertifikat Kompetensi/Diklat Teknis Fungsional (jika dipersyaratkan)"
+    'PAK tahun 2022 hingga saat ini (Catatan: Wajib 3 lembar di setiap tahun)',
+    'SKP 2 tahun terakhir (Catatan: Nilai minimal "Baik"; Nilai "Sangat Baik" perlu dilampirkan bukti inovasi; Wajib ada lembar "Dokumen Evaluasi Kinerja Pegawai")',
+    'SK Jabatan terakhir (Catatan: Wajib disertai sertifikat uji kompetensi bagi pegawai yang naik jenjang)',
+    'SK Pangkat terakhir',
+    'Kartu Pegawai',
+    'Ijazah + transkrip nilai terakhir',
+    'Nota dinas'
   ],
+  // Kenaikan Pangkat Jabatan Struktural
   "struktural": [
-    "Surat Pengantar dari Unit Kerja",
-    "Fotocopy SK CPNS yang telah dilegalisir",
-    "Fotocopy SK PNS yang telah dilegalisir",
-    "Fotocopy SK Pangkat Terakhir yang telah dilegalisir",
-    "Fotocopy SK Jabatan Struktural yang telah dilegalisir",
-    "SKP 2 Tahun Terakhir (atau sejak diangkat jika belum genap 2 tahun)",
-    "Surat Pernyataan Melaksanakan Tugas Jabatan Struktural",
-    "Fotocopy Ijazah yang telah dilegalisir sesuai persyaratan jabatan",
-    "Daftar Penilaian DP3/PPKP (jika ada periode sebelum 2014)",
-    "Sertifikat Diklat Kepemimpinan (Diklatpim) sesuai jenjang jabatan (jika dipersyaratkan)"
+    'SKP 2 tahun terakhir (Catatan: Nilai minimal "Baik"; Nilai "Sangat Baik" perlu dilampirkan bukti inovasi; Wajib ada lembar "Dokumen Evaluasi Kinerja Pegawai")',
+    'SK Jabatan terakhir',
+    'SK Pangkat terakhir',
+    'Kartu Pegawai',
+    'Ijazah + Transkrip Nilai terakhir',
+    'Surat Pernyataan Pelantikan',
+    'Surat Pernyataan Melaksanakan Tugas',
+    'Surat Pernyataan Menduduki Jabatan',
+    'Khusus untuk Pejabat Struktural Eselon III yang pendidikan terakhirnya S1 dan pangkat terakhirnya III/d, wajib lulus diklat PIM III',
+    'Nota dinas'
   ],
+  // Kenaikan Pangkat Pertama Kali
+  // Kenaikan Pangkat Pertama Kali
   "pertama_kali": [
-    "Surat Pengantar dari Unit Kerja",
-    "Fotocopy SK CPNS yang telah dilegalisir",
-    "Fotocopy SK PNS yang telah dilegalisir",
-    "SKP sejak diangkat menjadi CPNS",
-    "Surat Pernyataan Melaksanakan Tugas",
-    "Fotocopy Ijazah yang telah dilegalisir",
-    "Fotocopy Transkrip Nilai yang telah dilegalisir",
-    "Sertifikat Akreditasi Program Studi",
-    "Daftar Penilaian DP3/PPKP (jika ada periode sebelum 2014)"
+    'SK CPNS',
+    'SK PNS',
+    'SKP 2 tahun terakhir (Catatan: Nilai minimal "Baik"; Nilai "Sangat Baik" perlu dilampirkan bukti inovasi; Wajib ada lembar "Dokumen Evaluasi Kinerja Pegawai")',
+    'PAK tahun 2022 hingga saat ini (Catatan: Khusus untuk jabatan fungsional; Wajib 3 lembar di setiap tahun)',
+    'SK Jabatan (Catatan: Khusus untuk jabatan fungsional)',
+    'Berita Acara Pengambilan Sumpah Jabatan PNS (Catatan: Khusus untuk jabatan fungsional)',
+    'SK Pangkat terakhir',
+    'Kartu Pegawai',
+    'Ijazah + Transkrip Nilai terakhir',
+    'Nota dinas'
   ],
+  
+  // Kenaikan Pangkat Penyesuaian Ijazah
   "penyesuaian_ijazah": [
-    "Surat Pengantar dari Unit Kerja",
-    "Surat Permohonan Kenaikan Pangkat Penyesuaian Ijazah",
-    "Fotocopy SK CPNS yang telah dilegalisir",
-    "Fotocopy SK PNS yang telah dilegalisir",
-    "Fotocopy SK Pangkat Terakhir yang telah dilegalisir",
-    "Fotocopy Ijazah Baru yang telah dilegalisir (harus lebih tinggi dari ijazah sebelumnya)",
-    "Fotocopy Transkrip Nilai yang telah dilegalisir",
-    "Sertifikat Akreditasi Program Studi (minimum B untuk S1, atau akreditasi institusi untuk S2/S3)",
-    "SKP 2 Tahun Terakhir (atau sejak diangkat jika belum genap 2 tahun)",
-    "Surat Pernyataan Melaksanakan Tugas",
-    "Surat Keterangan Lulus dari Perguruan Tinggi (untuk S2/S3)",
-    "Daftar Penilaian DP3/PPKP (jika ada periode sebelum 2014)",
-    "Fotocopy Ijazah Lama yang telah dilegalisir (untuk perbandingan)"
+    'Surat Tanda Lulus Ujian Penyesuaian Kenaikan Pangkat',
+    'Ijazah + Transkrip Nilai terakhir yang telah dilegalisir',
+    'Uraian Tugas',
+    'SKP 2 tahun terakhir (Catatan: Nilai minimal "Baik"; Nilai "Sangat Baik" perlu dilampirkan bukti inovasi; Wajib ada lembar "Dokumen Evaluasi Kinerja Pegawai")',
+    'SK Jabatan terakhir',
+    'SK Pangkat terakhir',
+    'Kartu Pegawai',
+    'Nota dinas'
   ],
+  
+  // Kenaikan Pangkat Golongan II/d ke III/a
   "iid_ke_iiia": [
-    "Surat Pengantar dari Unit Kerja",
-    "Fotocopy SK CPNS yang telah dilegalisir",
-    "Fotocopy SK PNS yang telah dilegalisir",
-    "Fotocopy SK Pangkat II/d yang telah dilegalisir (harus sudah 4 tahun)",
-    "Fotocopy SK Jabatan Terakhir yang telah dilegalisir",
-    "SKP 2 Tahun Terakhir (atau sejak diangkat jika belum genap 2 tahun)",
-    "Surat Pernyataan Melaksanakan Tugas",
-    "Fotocopy Ijazah S1 yang telah dilegalisir (minimal akreditasi B)",
-    "Fotocopy Transkrip Nilai yang telah dilegalisir",
-    "Sertifikat Akreditasi Program Studi (minimum B)",
-    "Surat Pernyataan telah menjalani masa kerja minimal 4 tahun dalam pangkat II/d",
-    "Daftar Penilaian DP3/PPKP (jika ada periode sebelum 2014)"
+    'Surat Tanda Lulus Ujian Dinas',
+    'SKP 2 tahun terakhir (Catatan: Nilai minimal "Baik"; Nilai "Sangat Baik" perlu dilampirkan bukti inovasi; Wajib ada lembar "Dokumen Evaluasi Kinerja Pegawai")',
+    'SK Jabatan terakhir',
+    'SK Pangkat terakhir',
+    'Ijazah + Transkrip nilai terakhir',
+    'Kartu Pegawai',
+    'Nota dinas'
   ]
 };
 
