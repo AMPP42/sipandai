@@ -63,6 +63,13 @@ export default function PengajuanMutasiTerpadu() {
   const urlParams = new URLSearchParams(location.search);
   const tabParam = urlParams.get('tab');
   const [activeTab, setActiveTab] = useState(tabParam || 'create');
+
+  // Keep tab in sync with URL query param
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const next = params.get('tab') || 'create';
+    setActiveTab(next);
+  }, [location.search]);
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);

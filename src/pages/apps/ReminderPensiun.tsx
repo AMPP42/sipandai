@@ -49,6 +49,13 @@ export default function ReminderPensiun() {
   const tabParam = urlParams.get('tab');
   
   const [activeTab, setActiveTab] = useState(tabParam || "create");
+
+  // Keep tab in sync with URL query param
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const next = params.get('tab') || 'create';
+    setActiveTab(next);
+  }, [location.search]);
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
