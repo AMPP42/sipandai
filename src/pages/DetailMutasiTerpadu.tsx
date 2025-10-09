@@ -872,7 +872,7 @@ export default function DetailMutasiTerpadu() {
                   Pengajuan Terkirim
                 </> : <>
                   <Send className="w-4 h-4 mr-2" />
-                  {isEditing ? 'Submit Perbaikan' : 'Submit Pengajuan'}
+                  {application?.status === 'revision_needed' ? 'Submit Perbaikan' : 'Submit Usulan'}
                 </>}
             </Button>}
         </div>
@@ -1717,7 +1717,7 @@ export default function DetailMutasiTerpadu() {
                     ) : (
                       <>
                         <Send className="w-4 h-4 mr-2" />
-                        {isEditing ? 'Submit Perbaikan' : 'Submit Pengajuan'}
+                        {application?.status === 'revision_needed' ? 'Submit Perbaikan' : 'Submit Usulan'}
                       </>
                     )}
                   </Button>
