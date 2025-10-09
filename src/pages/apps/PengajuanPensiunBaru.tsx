@@ -299,7 +299,8 @@ export default function PengajuanPensiunBaru() {
         variant: "default"
       });
 
-      navigate(`/apps/edit-draft-pensiun/${insertedApp.id}`);
+      // Redirect to detail page instead of edit page
+      navigate(`/detail-pensiun/${insertedApp.id}`);
 
     } catch (error: any) {
       console.error('Error submitting application:', error);
