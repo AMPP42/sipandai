@@ -11,6 +11,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from 'react-router-dom';
 import DocumentVerificationStatus from "@/components/applications/DocumentVerificationStatus";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
+import {
   ArrowLeft,
   Plus,
   Eye,
@@ -18,7 +27,9 @@ import {
   Loader2,
   FileText,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import type { Database } from '@/integrations/supabase/types';
 
@@ -47,6 +58,8 @@ export default function Pensiun() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [searchEmployee, setSearchEmployee] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Keep tab in sync with URL query param
   useEffect(() => {
@@ -212,22 +225,43 @@ export default function Pensiun() {
                 Pegawai Yang Akan Memasuki Masa Pensiun
               </CardTitle>
               <CardDescription>
-                Daftar pegawai yang akan memasuki masa pensiun dalam 12 bulan ke depan
+                Daftar pegawai yang akan memasuki masa pensiun dalam 6 bulan ke depan
+                {user?.role === 'admin_unit' && ` (Unit: ${user.unit})`}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {employees.filter(emp => {
-                const pensiunDate = getRetirementDate(emp);
-                if (!pensiunDate) return false;
-                const today = new Date();
-                const monthsUntilRetirement = (pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30);
-                return monthsUntilRetirement > 0 && monthsUntilRetirement <= 12;
-              }).length === 0 ? (
-                <div className="text-center py-8">
-                  <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Tidak ada pegawai yang akan pensiun dalam 12 bulan ke depan</p>
-                </div>
-              ) : (
+              {(() => {
+                const retirementEmployees = employees.filter(emp => {
+                  const pensiunDate = getRetirementDate(emp);
+                  if (!pensiunDate) return false;
+                  const today = new Date();
+                  const monthsUntilRetirement = (pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30);
+                  return monthsUntilRetirement > 0 && monthsUntilRetirement <= 6;
+                }).sort((a, b) => {
+                  const dateA = getRetirementDate(a);
+                  const dateB = getRetirementDate(b);
+                  return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
+                });
+
+                const totalPages = Math.ceil(retirementEmployees.length / itemsPerPage);
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedEmployees = retirementEmployees.slice(startIndex, endIndex);
+
+                if (retirementEmployees.length === 0) {
+                  return (
+                    <div className="text-center py-8">
+                      <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">Tidak ada pegawai yang akan pensiun dalam 6 bulan ke depan</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+                      <p>Menampilkan {startIndex + 1}-{Math.min(endIndex, retirementEmployees.length)} dari {retirementEmployees.length} pegawai</p>
+                    </div>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -241,20 +275,7 @@ export default function Pensiun() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {employees
-                      .filter(emp => {
-                        const pensiunDate = getRetirementDate(emp);
-                        if (!pensiunDate) return false;
-                        const today = new Date();
-                        const monthsUntilRetirement = (pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30);
-                        return monthsUntilRetirement > 0 && monthsUntilRetirement <= 12;
-                      })
-                      .sort((a, b) => {
-                        const dateA = getRetirementDate(a);
-                        const dateB = getRetirementDate(b);
-                        return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
-                      })
-                      .map((employee) => {
+                    {paginatedEmployees.map((employee) => {
                         const pensiunDate = getRetirementDate(employee);
                         if (!pensiunDate) return null;
                         const today = new Date();
@@ -291,10 +312,71 @@ export default function Pensiun() {
                             </TableCell>
                           </TableRow>
                         );
-                      })}
+                    })}
                   </TableBody>
                 </Table>
-              )}
+
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center mt-4">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                          >
+                            <ChevronLeft className="h-4 w-4 mr-1" />
+                            Previous
+                          </Button>
+                        </PaginationItem>
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                          if (
+                            page === 1 ||
+                            page === totalPages ||
+                            (page >= currentPage - 1 && page <= currentPage + 1)
+                          ) {
+                            return (
+                              <PaginationItem key={page}>
+                                <PaginationLink
+                                  onClick={() => setCurrentPage(page)}
+                                  isActive={currentPage === page}
+                                  className="cursor-pointer"
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          } else if (page === currentPage - 2 || page === currentPage + 2) {
+                            return (
+                              <PaginationItem key={page}>
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            );
+                          }
+                          return null;
+                        })}
+
+                        <PaginationItem>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                          >
+                            Next
+                            <ChevronRight className="h-4 w-4 ml-1" />
+                          </Button>
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
             </CardContent>
           </Card>
         </TabsContent>
