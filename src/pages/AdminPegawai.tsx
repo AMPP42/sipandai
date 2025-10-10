@@ -550,7 +550,13 @@ export default function AdminPegawai() {
                       <TableCell>{employee.pangkat || '-'}</TableCell>
                       <TableCell>{getStatusBadge(employee)}</TableCell>
                       <TableCell>
-                        {employee.tmt_pensiun ? new Date(employee.tmt_pensiun).toLocaleDateString('id-ID') : '-'}
+                        {employee.tmt_pensiun 
+                          ? new Date(employee.tmt_pensiun + 'T00:00:00').toLocaleDateString('id-ID', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric'
+                            })
+                          : '-'}
                       </TableCell>
                       {user?.role === 'admin_unit' && (
                         <TableCell>
