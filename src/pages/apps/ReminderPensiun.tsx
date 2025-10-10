@@ -474,7 +474,8 @@ export default function ReminderPensiun() {
                 Pegawai Yang Akan Memasuki Masa Pensiun
               </CardTitle>
               <CardDescription>
-                Daftar pegawai yang akan memasuki masa pensiun dalam 12 bulan ke depan
+                Daftar pegawai yang akan memasuki masa pensiun dalam 6 bulan ke depan
+                {user?.role === 'admin_unit' && ` (Unit: ${user.unit})`}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -483,11 +484,11 @@ export default function ReminderPensiun() {
                 if (!pensiunDate) return false;
                 const today = new Date();
                 const monthsUntilRetirement = (pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30);
-                return monthsUntilRetirement > 0 && monthsUntilRetirement <= 12;
+                return monthsUntilRetirement > 0 && monthsUntilRetirement <= 6;
               }).length === 0 ? (
                 <div className="text-center py-8">
                   <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Tidak ada pegawai yang akan pensiun dalam 12 bulan ke depan</p>
+                  <p className="text-muted-foreground">Tidak ada pegawai yang akan pensiun dalam 6 bulan ke depan</p>
                 </div>
               ) : (
                 <Table>
@@ -509,7 +510,7 @@ export default function ReminderPensiun() {
                         if (!pensiunDate) return false;
                         const today = new Date();
                         const monthsUntilRetirement = (pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30);
-                        return monthsUntilRetirement > 0 && monthsUntilRetirement <= 12;
+                        return monthsUntilRetirement > 0 && monthsUntilRetirement <= 6;
                       })
                       .sort((a, b) => {
                         const dateA = getRetirementDate(a);
