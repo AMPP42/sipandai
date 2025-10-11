@@ -61,6 +61,11 @@ export default function Pensiun() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Reset halaman saat data atau pencarian berubah agar tidak "nyangkut" di halaman kosong
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [employees, searchEmployee, activeTab]);
+
   // Keep tab in sync with URL query param
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -184,11 +189,21 @@ export default function Pensiun() {
   );
 
   const getRetirementDate = (emp: Employee): Date | null => {
+    // Prioritaskan TMT pensiun dari DB jika tersedia
     if (emp.tmt_pensiun) return new Date(emp.tmt_pensiun);
+
+    // Jika tidak ada TMT, hitung dari tanggal lahir + usia pensiun berdasarkan jabatan
     if (emp.tanggal_lahir) {
-      const d = new Date(emp.tanggal_lahir);
-      d.setFullYear(d.getFullYear() + 60);
-      return d;
+      const birth = new Date(emp.tanggal_lahir);
+      let retirementAge = 58; // default
+      const jab = (emp.jabatan || '').toLowerCase();
+      if (jab.includes('ahli utama')) retirementAge = 65;
+      else if (jab.includes('ahli madya')) retirementAge = 60;
+      else if (jab.includes('direktur jenderal')) retirementAge = 60;
+      // 'ahli pertama' / 'ahli muda' / lainnya tetap 58
+      const ret = new Date(birth);
+      ret.setFullYear(birth.getFullYear() + retirementAge);
+      return ret;
     }
     return null;
   };
@@ -231,12 +246,15 @@ export default function Pensiun() {
             </CardHeader>
             <CardContent>
               {(() => {
+                const today = new Date();
+                const sixMonthsLater = new Date();
+                sixMonthsLater.setMonth(today.getMonth() + 6);
+
                 const retirementEmployees = employees.filter(emp => {
                   const pensiunDate = getRetirementDate(emp);
                   if (!pensiunDate) return false;
-                  const today = new Date();
-                  const monthsUntilRetirement = (pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30);
-                  return monthsUntilRetirement > 0 && monthsUntilRetirement <= 6;
+                  // TMT pensiun jatuh antara hari ini dan 6 bulan ke depan
+                  return pensiunDate >= today && pensiunDate <= sixMonthsLater;
                 }).sort((a, b) => {
                   const dateA = getRetirementDate(a);
                   const dateB = getRetirementDate(b);
