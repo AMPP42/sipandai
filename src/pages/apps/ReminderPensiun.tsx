@@ -439,6 +439,37 @@ export default function ReminderPensiun() {
     );
   };
 
+  const getRetirementDate = (emp: Employee): Date | null => {
+    // Prioritas: gunakan tmt_pensiun jika ada
+    if (emp.tmt_pensiun) {
+      return new Date(emp.tmt_pensiun);
+    }
+    
+    // Jika tidak ada tmt_pensiun, hitung dari tanggal lahir
+    if (emp.tanggal_lahir && emp.jabatan) {
+      const birthDate = new Date(emp.tanggal_lahir);
+      let retirementAge = 58; // default
+      
+      // Tentukan usia pensiun berdasarkan jabatan
+      const jabatanLower = emp.jabatan.toLowerCase();
+      if (jabatanLower.includes('ahli utama')) {
+        retirementAge = 65;
+      } else if (jabatanLower.includes('ahli madya')) {
+        retirementAge = 60;
+      } else if (jabatanLower.includes('ahli pertama') || jabatanLower.includes('ahli muda') || jabatanLower.includes('ahli')) {
+        retirementAge = 58;
+      } else if (jabatanLower.includes('direktur jenderal')) {
+        retirementAge = 60;
+      }
+      
+      const retirementDate = new Date(birthDate);
+      retirementDate.setFullYear(birthDate.getFullYear() + retirementAge);
+      return retirementDate;
+    }
+    
+    return null;
+  };
+
   const filteredEmployees = employees.filter(emp => 
     emp.nama.toLowerCase().includes(searchEmployee.toLowerCase()) ||
     (emp.nip && emp.nip.includes(searchEmployee))
@@ -479,18 +510,33 @@ export default function ReminderPensiun() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {employees.filter(emp => {
-                const pensiunDate = getRetirementDate(emp);
-                if (!pensiunDate) return false;
+              {(() => {
                 const today = new Date();
-                const monthsUntilRetirement = (pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30);
-                return monthsUntilRetirement > 0 && monthsUntilRetirement <= 6;
-              }).length === 0 ? (
-                <div className="text-center py-8">
-                  <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Tidak ada pegawai yang akan pensiun dalam 6 bulan ke depan</p>
-                </div>
-              ) : (
+                const sixMonthsLater = new Date();
+                sixMonthsLater.setMonth(today.getMonth() + 6);
+                
+                const retirementEmployees = employees.filter(emp => {
+                  const pensiunDate = getRetirementDate(emp);
+                  if (!pensiunDate) return false;
+                  
+                  // Filter: tanggal pensiun antara hari ini dan 6 bulan ke depan
+                  return pensiunDate >= today && pensiunDate <= sixMonthsLater;
+                }).sort((a, b) => {
+                  const dateA = getRetirementDate(a);
+                  const dateB = getRetirementDate(b);
+                  return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
+                });
+                
+                if (retirementEmployees.length === 0) {
+                  return (
+                    <div className="text-center py-8">
+                      <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">Tidak ada pegawai yang akan pensiun dalam 6 bulan ke depan</p>
+                    </div>
+                  );
+                }
+                
+                return (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -504,20 +550,7 @@ export default function ReminderPensiun() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {employees
-                      .filter(emp => {
-                        const pensiunDate = getRetirementDate(emp);
-                        if (!pensiunDate) return false;
-                        const today = new Date();
-                        const monthsUntilRetirement = (pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30);
-                        return monthsUntilRetirement > 0 && monthsUntilRetirement <= 6;
-                      })
-                      .sort((a, b) => {
-                        const dateA = getRetirementDate(a);
-                        const dateB = getRetirementDate(b);
-                        return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
-                      })
-                      .map((employee) => {
+                    {retirementEmployees.map((employee) => {
                         const pensiunDate = getRetirementDate(employee);
                         if (!pensiunDate) return null;
                         const today = new Date();
@@ -556,7 +589,8 @@ export default function ReminderPensiun() {
                       })}
                   </TableBody>
                 </Table>
-              )}
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
