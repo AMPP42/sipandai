@@ -32,6 +32,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import type { Database } from '@/integrations/supabase/types';
+import { addMonths, startOfDay, endOfDay, parseISO, isValid, differenceInDays, differenceInCalendarMonths, parse } from 'date-fns';
 
 type Application = Database['public']['Tables']['applications']['Row'];
 interface Employee {
@@ -85,7 +86,8 @@ export default function Pensiun() {
       let query = supabase
         .from('employees')
         .select('id,nama,nip,tanggal_lahir,tmt_pensiun,unit,jabatan,pangkat,masa_kerja')
-        .order('nama');
+        .order('nama')
+        .limit(5000);
 
       if (user?.role === 'admin_unit' && user?.unit) {
         query = query.eq('unit', user.unit);
@@ -188,13 +190,32 @@ export default function Pensiun() {
     (emp.nip && emp.nip.includes(searchEmployee))
   );
 
+  const parseDateFlexible = (s: string): Date | null => {
+    if (!s) return null;
+    let d = parseISO(s);
+    if (isValid(d)) return d;
+    // Coba format umum Indonesia dd/MM/yyyy
+    d = parse(s, 'dd/MM/yyyy', new Date());
+    if (isValid(d)) return d;
+    // Coba format yyyy/MM/dd
+    d = parse(s, 'yyyy/MM/dd', new Date());
+    if (isValid(d)) return d;
+    // Fallback native parser
+    d = new Date(s);
+    return isValid(d) ? d : null;
+  };
+
   const getRetirementDate = (emp: Employee): Date | null => {
     // Prioritaskan TMT pensiun dari DB jika tersedia
-    if (emp.tmt_pensiun) return new Date(emp.tmt_pensiun);
+    if (emp.tmt_pensiun) {
+      const d = parseDateFlexible(emp.tmt_pensiun);
+      if (d) return d;
+    }
 
     // Jika tidak ada TMT, hitung dari tanggal lahir + usia pensiun berdasarkan jabatan
     if (emp.tanggal_lahir) {
-      const birth = new Date(emp.tanggal_lahir);
+      const birth = parseDateFlexible(emp.tanggal_lahir);
+      if (!birth) return null;
       let retirementAge = 58; // default
       const jab = (emp.jabatan || '').toLowerCase();
       if (jab.includes('ahli utama')) retirementAge = 65;
@@ -246,9 +267,8 @@ export default function Pensiun() {
             </CardHeader>
             <CardContent>
               {(() => {
-                const today = new Date();
-                const sixMonthsLater = new Date();
-                sixMonthsLater.setMonth(today.getMonth() + 6);
+                const today = startOfDay(new Date());
+                const sixMonthsLater = endOfDay(addMonths(today, 6));
 
                 const retirementEmployees = employees.filter(emp => {
                   const pensiunDate = getRetirementDate(emp);
@@ -296,9 +316,9 @@ export default function Pensiun() {
                     {paginatedEmployees.map((employee) => {
                         const pensiunDate = getRetirementDate(employee);
                         if (!pensiunDate) return null;
-                        const today = new Date();
-                        const daysUntilRetirement = Math.ceil((pensiunDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                        const monthsUntilRetirement = Math.floor(daysUntilRetirement / 30);
+                        const today = startOfDay(new Date());
+                        const daysUntilRetirement = differenceInDays(pensiunDate, today);
+                        const monthsUntilRetirement = Math.max(0, differenceInCalendarMonths(pensiunDate, today));
 
                         return (
                           <TableRow key={employee.id}>
