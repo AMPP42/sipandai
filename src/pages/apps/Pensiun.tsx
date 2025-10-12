@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from 'react-router-dom';
 import DocumentVerificationStatus from "@/components/applications/DocumentVerificationStatus";
+import RiwayatReminderPensiun from "@/components/pensiun/RiwayatReminderPensiun";
 import {
   Pagination,
   PaginationContent,
@@ -289,8 +290,9 @@ export default function Pensiun() {
         setActiveTab(value);
         navigate(`/apps/pensiun?tab=${value}`, { replace: true });
       }}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="reminder">Reminder Pensiun</TabsTrigger>
+          <TabsTrigger value="riwayat">Riwayat Reminder</TabsTrigger>
           <TabsTrigger value="list">Daftar Pengajuan</TabsTrigger>
         </TabsList>
 
@@ -458,6 +460,10 @@ export default function Pensiun() {
           })()}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="riwayat" className="space-y-6">
+          <RiwayatReminderPensiun />
         </TabsContent>
 
         <TabsContent value="list" className="space-y-6">
