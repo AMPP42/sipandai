@@ -29,7 +29,8 @@ import {
   Calendar,
   AlertCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Send
 } from "lucide-react";
 import type { Database } from '@/integrations/supabase/types';
 import { addMonths, startOfDay, endOfDay, parseISO, isValid, differenceInDays, differenceInCalendarMonths, parse } from 'date-fns';
@@ -379,13 +380,13 @@ export default function Pensiun() {
                             <TableCell>
                               <Button
                                 size="sm"
+                                variant="outline"
                                 onClick={() => {
-                                  // Set employee data and navigate to create form
-                                  navigate('/apps/pengajuan-pensiun-baru');
+                                  navigate(`/apps/kirim-reminder-pensiun/${employee.id}`);
                                 }}
                               >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Buat Pengajuan
+                                <Send className="w-4 h-4 mr-2" />
+                                Kirim Reminder
                               </Button>
                             </TableCell>
                           </TableRow>

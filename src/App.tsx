@@ -28,6 +28,7 @@ import PengajuanPensiunBaru from "./pages/apps/PengajuanPensiunBaru";
 import EditDraftPensiun from "./pages/apps/EditDraftPensiun";
 import EditPerbaikanPensiun from "./pages/apps/EditPerbaikanPensiun";
 import Pensiun from "./pages/apps/Pensiun";
+import KirimReminderPensiun from "./pages/apps/KirimReminderPensiun";
 import PengajuanMutasi from "./pages/apps/PengajuanMutasi";
 import KenaikanPangkat from "./pages/apps/KenaikanPangkat";
 import ReminderPensiun from "./pages/apps/ReminderPensiun";
@@ -253,6 +254,16 @@ const App = () => (
                   <DashboardLayout>
                     <ErrorBoundary>
                       <EditPerbaikanPensiun />
+                    </ErrorBoundary>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/apps/kirim-reminder-pensiun/:employeeId" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ErrorBoundary>
+                      <KirimReminderPensiun />
                     </ErrorBoundary>
                   </DashboardLayout>
                 </ProtectedRoute>
