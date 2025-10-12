@@ -83,30 +83,70 @@ export default function Pensiun() {
 
   const loadEmployees = async () => {
     try {
-      let query = supabase
+      setLoading(true);
+      const pageSize = 1000;
+
+      // First, get total count with HEAD request (fast, no payload)
+      let countQuery = supabase
         .from('employees')
-        .select('id,nama,nip,tanggal_lahir,tmt_pensiun,unit,jabatan,pangkat,masa_kerja')
-        .order('nama')
-        .limit(5000);
+        .select('id', { count: 'exact', head: true });
 
       if (user?.role === 'admin_unit' && user?.unit) {
-        query = query.eq('unit', user.unit);
+        countQuery = countQuery.eq('unit', user.unit);
       }
 
-      const { data, error } = await query;
+      const { count, error: countError } = await countQuery;
+      if (countError) throw countError;
 
-      if (error) throw error;
-      setEmployees(data || []);
+      const total = count || 0;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const allEmployees: Employee[] = [];
+
+      // Fetch all pages to avoid cutting off results (we only select required columns)
+      for (let i = 0; i < totalPages; i++) {
+        const from = i * pageSize;
+        const to = from + pageSize - 1;
+        let pageQuery = supabase
+          .from('employees')
+          .select('id,nama,nip,tanggal_lahir,tmt_pensiun,unit,jabatan,pangkat,masa_kerja')
+          .order('nama', { ascending: true })
+          .range(from, to);
+
+        if (user?.role === 'admin_unit' && user?.unit) {
+          pageQuery = pageQuery.eq('unit', user.unit);
+        }
+
+        const { data, error } = await pageQuery;
+        if (error) throw error;
+        if (data && data.length > 0) allEmployees.push(...data as any);
+      }
+
+      console.log('[Reminder Pensiun] Loaded employees:', {
+        totalCount: total,
+        fetched: allEmployees.length,
+        sample: allEmployees.slice(0, 5).map(e => ({ nama: e.nama, tmt_pensiun: (e as any).tmt_pensiun, unit: (e as any).unit }))
+      });
+
+      // Debug specific case mentioned by user
+      const rasijo = allEmployees.find(e => e.nama?.toLowerCase().includes('rasijo'));
+      if (rasijo) {
+        console.log('[Reminder Pensiun] Found Rasijo entry:', rasijo);
+      } else {
+        console.log('[Reminder Pensiun] Rasijo not found in fetched employees');
+      }
+
+      setEmployees(allEmployees);
     } catch (error: any) {
       console.error('Error loading employees:', error);
       toast({
-        title: "Error",
+        title: 'Error',
         description: `Gagal memuat data pegawai: ${error.message}`,
-        variant: "destructive"
+        variant: 'destructive'
       });
+    } finally {
+      setLoading(false);
     }
   };
-
   const loadApplications = async () => {
     try {
       setLoading(true);
