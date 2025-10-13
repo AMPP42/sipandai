@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,8 +17,64 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Index() {
+  const [stats, setStats] = useState({
+    totalEmployees: 0,
+    totalApplications: 0,
+    satisfactionRate: 0,
+    activeTickets: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Fetch total employees
+        const { count: employeesCount } = await supabase
+          .from('employees')
+          .select('*', { count: 'exact', head: true });
+
+        // Fetch total applications
+        const { count: applicationsCount } = await supabase
+          .from('applications')
+          .select('*', { count: 'exact', head: true });
+
+        // Fetch consultation tickets with ratings
+        const { data: ticketsData } = await supabase
+          .from('consultation_tickets')
+          .select('rating')
+          .not('rating', 'is', null);
+
+        // Calculate average satisfaction rate
+        const avgRating = ticketsData && ticketsData.length > 0
+          ? ticketsData.reduce((sum, t) => sum + (t.rating || 0), 0) / ticketsData.length
+          : 0;
+        const satisfactionRate = Math.round((avgRating / 5) * 100);
+
+        // Fetch active consultation tickets
+        const { count: activeTicketsCount } = await supabase
+          .from('consultation_tickets')
+          .select('*', { count: 'exact', head: true })
+          .in('status', ['open', 'in_progress']);
+
+        setStats({
+          totalEmployees: employeesCount || 0,
+          totalApplications: applicationsCount || 0,
+          satisfactionRate: satisfactionRate || 0,
+          activeTickets: activeTicketsCount || 0
+        });
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const features = [
     {
       icon: Shield,
@@ -137,20 +193,28 @@ export default function Index() {
 
           <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
             <div className="text-center">
-              <p className="text-3xl font-bold text-brand-600">2,847</p>
+              <p className="text-3xl font-bold text-brand-600">
+                {loading ? '...' : stats.totalEmployees.toLocaleString()}
+              </p>
               <p className="text-sm text-gray-600">Pegawai Terdaftar</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-brand-600">4</p>
-              <p className="text-sm text-gray-600">Aplikasi Terintegrasi</p>
+              <p className="text-3xl font-bold text-brand-600">
+                {loading ? '...' : stats.totalApplications.toLocaleString()}
+              </p>
+              <p className="text-sm text-gray-600">Pengajuan Diproses</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-brand-600">95%</p>
+              <p className="text-3xl font-bold text-brand-600">
+                {loading ? '...' : `${stats.satisfactionRate}%`}
+              </p>
               <p className="text-sm text-gray-600">Tingkat Kepuasan</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-brand-600">24/7</p>
-              <p className="text-sm text-gray-600">Layanan Online</p>
+              <p className="text-3xl font-bold text-brand-600">
+                {loading ? '...' : stats.activeTickets.toLocaleString()}
+              </p>
+              <p className="text-sm text-gray-600">Konsultasi Aktif</p>
             </div>
           </div>
         </div>
