@@ -45,53 +45,65 @@ export default function Apps() {
 
       const { data: applications } = await applicationsQuery;
 
-      // Calculate stats for each app type
-      const mutasiApps = applications?.filter(a => a.jenis === 'mutasi') || [];
-      const pangkatApps = applications?.filter(a => a.jenis === 'kenaikan_pangkat') || [];
+    // Calculate stats for each app type
+    const mutasiApps = applications?.filter(a => a.jenis === 'mutasi' || a.jenis === 'mutasi_terpadu') || [];
+    const pangkatApps = applications?.filter(a => a.jenis === 'kenaikan_pangkat') || [];
+    const pensiunApps = applications?.filter(a => a.jenis === 'pensiun') || [];
 
-      // For pension, query employees table
-      let employeesQuery = supabase
-        .from('employees')
-        .select('tmt_pensiun, unit');
+    // For pension, query employees table
+    let employeesQuery = supabase
+      .from('employees')
+      .select('tmt_pensiun, unit');
 
-      if (!isAdminPusat && userUnit) {
-        employeesQuery = employeesQuery.eq('unit', userUnit);
-      }
+    if (!isAdminPusat && userUnit) {
+      employeesQuery = employeesQuery.eq('unit', userUnit);
+    }
 
-      const { data: employees } = await employeesQuery;
+    const { data: employees } = await employeesQuery;
 
-      const now = new Date();
-      const oneYear = new Date();
-      oneYear.setFullYear(now.getFullYear() + 1);
+    const now = new Date();
+    const oneYear = new Date();
+    oneYear.setFullYear(now.getFullYear() + 1);
 
-      const pensiunSoon = employees?.filter(e => {
-        if (!e.tmt_pensiun) return false;
-        const pensiunDate = new Date(e.tmt_pensiun);
-        return pensiunDate >= now && pensiunDate <= oneYear;
-      }) || [];
+    const pensiunSoon = employees?.filter(e => {
+      if (!e.tmt_pensiun) return false;
+      const pensiunDate = new Date(e.tmt_pensiun);
+      return pensiunDate >= now && pensiunDate <= oneYear;
+    }) || [];
 
-      return {
-        mutasi: {
-          total: mutasiApps.length,
-          pending: mutasiApps.filter(a => a.status === 'submitted').length,
-          approved: mutasiApps.filter(a => a.status === 'approved').length,
-        },
-        pangkat: {
-          total: pangkatApps.length,
-          pending: pangkatApps.filter(a => a.status === 'submitted').length,
-          approved: pangkatApps.filter(a => a.status === 'approved').length,
-        },
-        pensiun: {
-          total: employees?.length || 0,
-          reminder: pensiunSoon.length,
-          processed: 5, // Placeholder
-        },
-        konsultasi: isAdminPusat ? {
-          active: 8,
-          resolved: 45,
-          pending: 3,
-        } : null, // Only admin_pusat can see consultation stats
-      };
+    // Query consultation tickets for konsultasi stats
+    let consultationQuery = supabase
+      .from('consultation_tickets')
+      .select('status');
+
+    if (!isAdminPusat && userUnit) {
+      consultationQuery = consultationQuery.eq('user_unit', userUnit);
+    }
+
+    const { data: tickets } = isAdminPusat ? await consultationQuery : { data: null };
+
+    return {
+      mutasi: {
+        total: mutasiApps.length,
+        pending: mutasiApps.filter(a => a.status === 'submitted' || a.status === 'biro_osdma_review').length,
+        approved: mutasiApps.filter(a => a.status === 'approved' || a.status === 'completed').length,
+      },
+      pangkat: {
+        total: pangkatApps.length,
+        pending: pangkatApps.filter(a => a.status === 'submitted' || a.status === 'biro_osdma_review').length,
+        approved: pangkatApps.filter(a => a.status === 'approved' || a.status === 'completed').length,
+      },
+      pensiun: {
+        total: employees?.length || 0,
+        reminder: pensiunSoon.length,
+        processed: pensiunApps.filter(a => a.status === 'approved' || a.status === 'completed').length,
+      },
+      konsultasi: isAdminPusat && tickets ? {
+        active: tickets.filter(t => t.status === 'in_progress').length,
+        resolved: tickets.filter(t => t.status === 'resolved').length,
+        pending: tickets.filter(t => t.status === 'open').length,
+      } : null,
+    };
     },
     enabled: !!user,
   });
