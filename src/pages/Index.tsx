@@ -180,7 +180,7 @@ export default function Index() {
               <p className="text-3xl font-bold text-brand-600">
                 {loading ? '...' : stats.totalApplications.toLocaleString()}
               </p>
-              <p className="text-sm text-gray-600">Pengajuan Diproses</p>
+              <p className="text-sm text-gray-600">Pengajuan Diajukan</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-bold text-brand-600">
