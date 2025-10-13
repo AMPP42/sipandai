@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -113,7 +112,7 @@ export default function Index() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-brand-50">
+    <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-brand-50" style={{ scrollBehavior: 'smooth' }}>
       {/* Navigation */}
       <nav className="bg-white/80 backdrop-blur-sm border-b border-brand-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -243,14 +242,178 @@ export default function Index() {
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">{app.title}</h3>
                       <p className="text-gray-600 mb-4">{app.description}</p>
-                      <Button size="sm" className="btn-secondary">
-                        Pelajari <ArrowRight className="w-4 h-4 ml-1" />
-                      </Button>
+                      <a href={`#${app.color}-app`}>
+                        <Button size="sm" className="btn-secondary">
+                          Pelajari <ArrowRight className="w-4 h-4 ml-1" />
+                        </Button>
+                      </a>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Detailed Applications Info Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              Tentang Aplikasi Terintegrasi
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Kenali lebih dalam setiap aplikasi dan manfaatnya untuk administrasi ASN Anda
+            </p>
+          </div>
+
+          <div className="space-y-16">
+            {/* Pengajuan Mutasi */}
+            <div id="blue-app" className="scroll-mt-20">
+              <div className="flex flex-col lg:flex-row gap-8 items-center">
+                <div className="lg:w-1/3">
+                  <div className="p-6 bg-blue-100 rounded-2xl inline-block">
+                    <FileText className="w-16 h-16 text-blue-600" />
+                  </div>
+                </div>
+                <div className="lg:w-2/3">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">Pengajuan Mutasi</h3>
+                  <p className="text-gray-600 mb-4">
+                    Sistem pengajuan mutasi pegawai yang terintegrasi memungkinkan Anda untuk mengajukan perpindahan 
+                    tugas dengan mudah dan transparan. Fitur tracking real-time memastikan Anda selalu mengetahui 
+                    status pengajuan Anda.
+                  </p>
+                  <ul className="space-y-2 text-gray-600">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Proses pengajuan digital yang cepat dan mudah</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Tracking status real-time</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Upload dokumen pendukung secara online</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Notifikasi otomatis untuk setiap perubahan status</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Kenaikan Pangkat */}
+            <div id="green-app" className="scroll-mt-20">
+              <div className="flex flex-col lg:flex-row-reverse gap-8 items-center">
+                <div className="lg:w-1/3">
+                  <div className="p-6 bg-green-100 rounded-2xl inline-block">
+                    <Star className="w-16 h-16 text-green-600" />
+                  </div>
+                </div>
+                <div className="lg:w-2/3">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">Kenaikan Pangkat</h3>
+                  <p className="text-gray-600 mb-4">
+                    Aplikasi kenaikan pangkat dilengkapi dengan validasi otomatis syarat kepangkatan dan 
+                    kelengkapan dokumen. Sistem akan membantu Anda memastikan semua persyaratan terpenuhi 
+                    sebelum pengajuan diproses.
+                  </p>
+                  <ul className="space-y-2 text-gray-600">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Validasi otomatis persyaratan kenaikan pangkat</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Checklist dokumen yang diperlukan</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Reminder otomatis untuk kelengkapan berkas</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Riwayat pengajuan kenaikan pangkat</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Administrasi Pensiun */}
+            <div id="orange-app" className="scroll-mt-20">
+              <div className="flex flex-col lg:flex-row gap-8 items-center">
+                <div className="lg:w-1/3">
+                  <div className="p-6 bg-orange-100 rounded-2xl inline-block">
+                    <Clock className="w-16 h-16 text-orange-600" />
+                  </div>
+                </div>
+                <div className="lg:w-2/3">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">Administrasi Pensiun</h3>
+                  <p className="text-gray-600 mb-4">
+                    Sistem reminder otomatis akan memberi tahu Anda tentang persiapan pensiun jauh-jauh hari. 
+                    Dilengkapi dengan panduan lengkap administrasi pensiun dan checklist dokumen yang diperlukan.
+                  </p>
+                  <ul className="space-y-2 text-gray-600">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Auto-reminder 6 bulan sebelum tanggal pensiun</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Panduan lengkap persiapan administrasi pensiun</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Tracking dokumen persyaratan pensiun</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Notifikasi melalui WhatsApp, Email, dan SMS</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Konsultasi SDM */}
+            <div id="purple-app" className="scroll-mt-20">
+              <div className="flex flex-col lg:flex-row-reverse gap-8 items-center">
+                <div className="lg:w-1/3">
+                  <div className="p-6 bg-purple-100 rounded-2xl inline-block">
+                    <MessageSquare className="w-16 h-16 text-purple-600" />
+                  </div>
+                </div>
+                <div className="lg:w-2/3">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">Konsultasi SDM</h3>
+                  <p className="text-gray-600 mb-4">
+                    Platform konsultasi dan bimbingan untuk berbagai masalah kepegawaian. Dapatkan bantuan 
+                    profesional dari tim SDM melalui sistem ticketing yang terorganisir dan live chat yang responsif.
+                  </p>
+                  <ul className="space-y-2 text-gray-600">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Sistem ticketing untuk konsultasi terstruktur</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Live chat dengan konselor SDM profesional</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Jadwal konsultasi yang fleksibel</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span>Riwayat konsultasi untuk referensi di masa mendatang</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
