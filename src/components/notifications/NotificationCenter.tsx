@@ -33,31 +33,45 @@ export default function NotificationCenter() {
       
       // Subscribe to real-time notifications
       const subscription = supabase
-        .channel('notifications')
+        .channel(`notifications_${user.id}`)
         .on('postgres_changes', 
           { 
-            event: 'INSERT', 
+            event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
             schema: 'public', 
             table: 'notifications',
             filter: `recipient_id=eq.${user.id}`
           }, 
           (payload) => {
-            const newNotification: Notification = {
-              id: (payload.new as any).id,
-              title: (payload.new as any).title,
-              body: (payload.new as any).body,
-              notification_type: (payload.new as any).notification_type || 'info',
-              priority: (payload.new as any).priority,
-              action_url: (payload.new as any).action_url,
-              action_label: (payload.new as any).action_label,
-              read_at: (payload.new as any).read_at,
-              created_at: (payload.new as any).created_at
-            };
-            setNotifications(prev => [newNotification, ...prev]);
-            setUnreadCount(prev => prev + 1);
+            if (payload.eventType === 'INSERT') {
+              const newNotification: Notification = {
+                id: (payload.new as any).id,
+                title: (payload.new as any).title,
+                body: (payload.new as any).body,
+                notification_type: (payload.new as any).notification_type || 'info',
+                priority: (payload.new as any).priority,
+                action_url: (payload.new as any).action_url,
+                action_label: (payload.new as any).action_label,
+                read_at: (payload.new as any).read_at,
+                created_at: (payload.new as any).created_at
+              };
+              setNotifications(prev => [newNotification, ...prev]);
+              setUnreadCount(prev => prev + 1);
+            } else if (payload.eventType === 'UPDATE') {
+              // Handle updates to existing notifications (e.g., marking as read)
+              setNotifications(prev => 
+                prev.map(n => 
+                  n.id === (payload.old as any).id 
+                    ? { ...n, ...(payload.new as any) }
+                    : n
+                )
+              );
+            }
           }
         )
-        .subscribe();
+        .subscribe((status, err) => {
+          if (err) console.error('Subscription error:', err);
+          console.log('Notification subscription status:', status);
+        });
 
       return () => {
         subscription.unsubscribe();
@@ -103,13 +117,20 @@ export default function NotificationCenter() {
 
   const markAsRead = async (notificationId: string) => {
     try {
+      const notification = notifications.find(n => n.id === notificationId);
+      if (notification?.read_at) return; // Already read
+
       const { error } = await supabase
         .from('notifications')
-        .update({ read_at: new Date().toISOString() })
+        .update({ 
+          read_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
         .eq('id', notificationId);
 
       if (error) throw error;
 
+      // Update local state optimistically
       setNotifications(prev => 
         prev.map(n => 
           n.id === notificationId 

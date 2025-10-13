@@ -274,8 +274,10 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
 
         if (workflowError) console.error('Workflow error:', workflowError);
 
-        // Send notification to the applicant
+        // Send notifications to all relevant parties
         const applicationTitle = selectedApplication.judul || `${selectedApplication.jenis || 'Usulan'} - ${selectedApplication.submitter_name}`;
+        
+        // 1. Notify the applicant
         await createApplicationStatusNotification(
           selectedApplication.submitter_id || selectedApplication.user_id || '',
           applicationTitle,
@@ -283,6 +285,28 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
           newStatus,
           reviewNote
         );
+
+        // 2. Notify all admins in the same unit (for unit admins)
+        if (user.role === 'admin_pusat' && selectedApplication.submitter_unit) {
+          // Get all admins in the same unit as the application
+          const { data: unitAdmins } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('unit', selectedApplication.submitter_unit)
+            .or('role.eq.admin_unit,role.eq.admin_pusat');
+
+          if (unitAdmins) {
+            await Promise.all(unitAdmins.map(admin => 
+              createApplicationStatusNotification(
+                admin.id,
+                `Update Status: ${applicationTitle}`,
+                selectedApplication.status,
+                newStatus,
+                `Status usulan diubah oleh ${user.name || 'admin'}: ${newStatus}`
+              )
+            ));
+          }
+        }
       }
 
       setShowReviewDialog(false);

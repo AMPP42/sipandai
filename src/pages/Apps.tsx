@@ -50,6 +50,13 @@ export default function Apps() {
     const pangkatApps = applications?.filter(a => a.jenis === 'kenaikan_pangkat') || [];
     const pensiunApps = applications?.filter(a => a.jenis === 'pensiun') || [];
 
+    // Helper function to count by status
+    const countByStatus = (apps: any[]) => ({
+      submitted: apps.filter(a => a.status === 'submitted').length,
+      inProgress: apps.filter(a => a.status === 'in_progress' || a.status === 'biro_osdma_review').length,
+      completed: apps.filter(a => a.status === 'approved' || a.status === 'completed').length
+    });
+
     // For pension, query employees table
     let employeesQuery = supabase
       .from('employees')
@@ -84,19 +91,14 @@ export default function Apps() {
 
     return {
       mutasi: {
-        total: mutasiApps.length,
-        pending: mutasiApps.filter(a => a.status === 'submitted' || a.status === 'biro_osdma_review').length,
-        approved: mutasiApps.filter(a => a.status === 'approved' || a.status === 'completed').length,
+        ...countByStatus(mutasiApps)
       },
       pangkat: {
-        total: pangkatApps.length,
-        pending: pangkatApps.filter(a => a.status === 'submitted' || a.status === 'biro_osdma_review').length,
-        approved: pangkatApps.filter(a => a.status === 'approved' || a.status === 'completed').length,
+        ...countByStatus(pangkatApps)
       },
       pensiun: {
-        total: employees?.length || 0,
-        reminder: pensiunSoon.length,
-        processed: pensiunApps.filter(a => a.status === 'approved' || a.status === 'completed').length,
+        ...countByStatus(pensiunApps),
+        reminder: pensiunSoon.length
       },
       konsultasi: isAdminPusat && tickets ? {
         active: tickets.filter(t => t.status === 'in_progress').length,
@@ -236,11 +238,10 @@ export default function Apps() {
                         <div key={key} className="text-center">
                           <p className="font-bold text-gray-900">{value as number}</p>
                           <p className="text-gray-600 capitalize">
-                            {key === 'total' ? 'Total' : 
-                             key === 'pending' ? 'Pending' : 
-                             key === 'approved' ? 'Disetujui' : 
+                            {key === 'submitted' ? 'Diajukan' : 
+                             key === 'inProgress' ? 'Diproses' : 
+                             key === 'completed' ? 'Selesai (SK Terbit)' :
                              key === 'reminder' ? 'Reminder' : 
-                             key === 'processed' ? 'Diproses' :
                              key === 'active' ? 'Aktif' :
                              key === 'resolved' ? 'Selesai' : key}
                           </p>
