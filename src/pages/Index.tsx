@@ -2,22 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Building2, 
-  Shield, 
-  Users, 
-  FileText, 
-  ArrowRight, 
-  CheckCircle, 
-  Clock, 
-  Star,
-  Zap,
-  Database,
-  MessageSquare
-} from 'lucide-react';
+import { Building2, Shield, Users, FileText, ArrowRight, CheckCircle, Clock, Star, Zap, Database, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-
 export default function Index() {
   const [stats, setStats] = useState({
     totalEmployees: 0,
@@ -25,17 +12,22 @@ export default function Index() {
     activeConsultations: 0
   });
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const fetchStats = async () => {
       try {
         // Call the public statistics function
-        const { data, error } = await supabase.rpc('get_public_statistics');
-        
+        const {
+          data,
+          error
+        } = await supabase.rpc('get_public_statistics');
         if (error) {
           console.error('Error fetching stats:', error);
         } else if (data) {
-          const statsData = data as { totalEmployees: number; totalApplications: number; activeConsultations: number };
+          const statsData = data as {
+            totalEmployees: number;
+            totalApplications: number;
+            activeConsultations: number;
+          };
           setStats({
             totalEmployees: statsData.totalEmployees || 0,
             totalApplications: statsData.totalApplications || 0,
@@ -48,71 +40,50 @@ export default function Index() {
         setLoading(false);
       }
     };
-
     fetchStats();
   }, []);
-
-  const features = [
-    {
-      icon: Shield,
-      title: 'Single Sign-On (SSO)',
-      description: 'Akses semua aplikasi dengan satu akun yang terintegrasi'
-    },
-    {
-      icon: Database,
-      title: 'Database Terpusat',
-      description: 'Data pegawai tersinkronisasi di semua aplikasi'
-    },
-    {
-      icon: Users,
-      title: 'Role-Based Access',
-      description: 'Akses yang disesuaikan dengan peran dan tanggung jawab'
-    },
-    {
-      icon: Zap,
-      title: 'Workflow Otomatis',
-      description: 'Proses persetujuan yang efisien dan terstruktur'
-    }
-  ];
-
-  const applications = [
-    {
-      title: 'Pengajuan Mutasi',
-      description: 'Proses pengajuan mutasi pegawai dengan tracking real-time',
-      icon: FileText,
-      color: 'blue'
-    },
-    {
-      title: 'Kenaikan Pangkat',
-      description: 'Validasi otomatis syarat dan dokumen kenaikan pangkat',
-      icon: Star,
-      color: 'green'
-    },
-    {
-      title: 'Administrasi Pensiun',
-      description: 'Auto-reminder dan persiapan administrasi pensiun',
-      icon: Clock,
-      color: 'orange'
-    },
-    {
-      title: 'Konsultasi SDM',
-      description: 'Platform konsultasi dan bimbingan masalah kepegawaian',
-      icon: MessageSquare,
-      color: 'purple'
-    }
-  ];
-
-  const benefits = [
-    'Efisiensi waktu pemrosesan hingga 60%',
-    'Akurasi data pegawai meningkat 95%', 
-    'Transparansi proses administrasi',
-    'Pengurangan biaya operasional',
-    'Pelayanan 24/7 online',
-    'Integrasi seamless antar unit'
-  ];
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-brand-50" style={{ scrollBehavior: 'smooth' }}>
+  const features = [{
+    icon: Shield,
+    title: 'Single Sign-On (SSO)',
+    description: 'Akses semua aplikasi dengan satu akun yang terintegrasi'
+  }, {
+    icon: Database,
+    title: 'Database Terpusat',
+    description: 'Data pegawai tersinkronisasi di semua aplikasi'
+  }, {
+    icon: Users,
+    title: 'Role-Based Access',
+    description: 'Akses yang disesuaikan dengan peran dan tanggung jawab'
+  }, {
+    icon: Zap,
+    title: 'Workflow Otomatis',
+    description: 'Proses persetujuan yang efisien dan terstruktur'
+  }];
+  const applications = [{
+    title: 'Pengajuan Mutasi',
+    description: 'Proses pengajuan mutasi pegawai dengan tracking real-time',
+    icon: FileText,
+    color: 'blue'
+  }, {
+    title: 'Kenaikan Pangkat',
+    description: 'Validasi otomatis syarat dan dokumen kenaikan pangkat',
+    icon: Star,
+    color: 'green'
+  }, {
+    title: 'Administrasi Pensiun',
+    description: 'Auto-reminder dan persiapan administrasi pensiun',
+    icon: Clock,
+    color: 'orange'
+  }, {
+    title: 'Konsultasi SDM',
+    description: 'Platform konsultasi dan bimbingan masalah kepegawaian',
+    icon: MessageSquare,
+    color: 'purple'
+  }];
+  const benefits = ['Efisiensi waktu pemrosesan hingga 60%', 'Akurasi data pegawai meningkat 95%', 'Transparansi proses administrasi', 'Pengurangan biaya operasional', 'Pelayanan 24/7 online', 'Integrasi seamless antar unit'];
+  return <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-brand-50" style={{
+    scrollBehavior: 'smooth'
+  }}>
       {/* Navigation */}
       <nav className="bg-white/80 backdrop-blur-sm border-b border-brand-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -204,8 +175,7 @@ export default function Index() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="text-center hover:shadow-lg transition-all duration-200 border-gray-200">
+            {features.map((feature, index) => <Card key={index} className="text-center hover:shadow-lg transition-all duration-200 border-gray-200">
                 <CardContent className="p-6">
                   <div className="p-3 bg-brand-100 rounded-xl inline-block mb-4">
                     <feature.icon className="w-6 h-6 text-brand-600" />
@@ -213,8 +183,7 @@ export default function Index() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
                   <p className="text-gray-600 text-sm">{feature.description}</p>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </div>
       </section>
@@ -232,8 +201,7 @@ export default function Index() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {applications.map((app, index) => (
-              <Card key={index} className="hover:shadow-lg transition-all duration-200 border-gray-200">
+            {applications.map((app, index) => <Card key={index} className="hover:shadow-lg transition-all duration-200 border-gray-200">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <div className={`p-3 bg-${app.color}-100 rounded-xl flex-shrink-0`}>
@@ -250,8 +218,7 @@ export default function Index() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </div>
       </section>
@@ -432,12 +399,10 @@ export default function Index() {
               </p>
               
               <div className="space-y-4 mb-8">
-                {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-center gap-3">
+                {benefits.map((benefit, index) => <div key={index} className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                     <span className="text-gray-700">{benefit}</span>
-                  </div>
-                ))}
+                  </div>)}
               </div>
 
               <Link to="/auth">
@@ -490,9 +455,7 @@ export default function Index() {
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-brand-600 px-8 py-3">
-              Hubungi Tim Sales
-            </Button>
+            
           </div>
         </div>
       </section>
@@ -518,6 +481,5 @@ export default function Index() {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 }
