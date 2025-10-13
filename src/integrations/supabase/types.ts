@@ -1409,6 +1409,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_public_statistics: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_retirement_status: {
         Args: { employee_id_param: string }
         Returns: {

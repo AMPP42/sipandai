@@ -23,48 +23,26 @@ export default function Index() {
   const [stats, setStats] = useState({
     totalEmployees: 0,
     totalApplications: 0,
-    satisfactionRate: 0,
-    activeTickets: 0
+    activeConsultations: 0
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch total employees
-        const { count: employeesCount } = await supabase
-          .from('employees')
-          .select('*', { count: 'exact', head: true });
-
-        // Fetch total applications
-        const { count: applicationsCount } = await supabase
-          .from('applications')
-          .select('*', { count: 'exact', head: true });
-
-        // Fetch consultation tickets with ratings
-        const { data: ticketsData } = await supabase
-          .from('consultation_tickets')
-          .select('rating')
-          .not('rating', 'is', null);
-
-        // Calculate average satisfaction rate
-        const avgRating = ticketsData && ticketsData.length > 0
-          ? ticketsData.reduce((sum, t) => sum + (t.rating || 0), 0) / ticketsData.length
-          : 0;
-        const satisfactionRate = Math.round((avgRating / 5) * 100);
-
-        // Fetch active consultation tickets
-        const { count: activeTicketsCount } = await supabase
-          .from('consultation_tickets')
-          .select('*', { count: 'exact', head: true })
-          .in('status', ['open', 'in_progress']);
-
-        setStats({
-          totalEmployees: employeesCount || 0,
-          totalApplications: applicationsCount || 0,
-          satisfactionRate: satisfactionRate || 0,
-          activeTickets: activeTicketsCount || 0
-        });
+        // Call the public statistics function
+        const { data, error } = await supabase.rpc('get_public_statistics');
+        
+        if (error) {
+          console.error('Error fetching stats:', error);
+        } else if (data) {
+          const statsData = data as { totalEmployees: number; totalApplications: number; activeConsultations: number };
+          setStats({
+            totalEmployees: statsData.totalEmployees || 0,
+            totalApplications: statsData.totalApplications || 0,
+            activeConsultations: statsData.activeConsultations || 0
+          });
+        }
       } catch (error) {
         console.error('Error fetching stats:', error);
       } finally {
@@ -191,7 +169,7 @@ export default function Index() {
             </Button>
           </div>
 
-          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div className="text-center">
               <p className="text-3xl font-bold text-brand-600">
                 {loading ? '...' : stats.totalEmployees.toLocaleString()}
@@ -206,13 +184,7 @@ export default function Index() {
             </div>
             <div className="text-center">
               <p className="text-3xl font-bold text-brand-600">
-                {loading ? '...' : `${stats.satisfactionRate}%`}
-              </p>
-              <p className="text-sm text-gray-600">Tingkat Kepuasan</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-brand-600">
-                {loading ? '...' : stats.activeTickets.toLocaleString()}
+                {loading ? '...' : stats.activeConsultations.toLocaleString()}
               </p>
               <p className="text-sm text-gray-600">Konsultasi Aktif</p>
             </div>
