@@ -8,7 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Mail, MessageSquare, Phone, Loader2, Send, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Mail, MessageSquare, Phone, Loader2, Send, CheckCircle2, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface Employee {
@@ -382,10 +383,20 @@ export default function KirimReminderPensiun() {
       {/* Template Selection */}
       <Card>
         <CardHeader>
-          <CardTitle>Pilih Template Reminder</CardTitle>
-          <CardDescription>
-            Pilih template pesan yang akan dikirim kepada pegawai
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Pilih Template Reminder</CardTitle>
+              <CardDescription>
+                Pilih template pesan yang akan dikirim kepada pegawai
+              </CardDescription>
+            </div>
+            <Link to="/apps/manage-reminder-templates">
+              <Button variant="outline" size="sm">
+                <Settings className="w-4 h-4 mr-2" />
+                Kelola Template
+              </Button>
+            </Link>
+          </div>
         </CardHeader>
         <CardContent>
           <RadioGroup value={selectedTemplate} onValueChange={setSelectedTemplate}>
@@ -397,27 +408,31 @@ export default function KirimReminderPensiun() {
                     <h3 className="font-semibold text-sm text-muted-foreground">
                       Reminder {months} Bulan Sebelum Pensiun
                     </h3>
-                    {monthTemplates.map((template) => (
-                      <div key={template.id} className="flex items-start space-x-2 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
-                        <RadioGroupItem value={template.id} id={template.id} className="mt-1" />
-                        <Label htmlFor={template.id} className="flex-1 cursor-pointer">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium">{template.template_name}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {template.template_type.toUpperCase()}
-                            </Badge>
-                          </div>
-                          {template.subject && (
-                            <p className="text-sm text-muted-foreground mb-1">
-                              Subject: {template.subject}
+                    {monthTemplates.map((template) => {
+                      const Icon = template.template_type === 'email' ? Mail : template.template_type === 'sms' ? Phone : MessageSquare;
+                      return (
+                        <div key={template.id} className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                          <RadioGroupItem value={template.id} id={template.id} className="mt-1" />
+                          <Icon className="w-5 h-5 mt-1 text-muted-foreground" />
+                          <Label htmlFor={template.id} className="flex-1 cursor-pointer">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="font-semibold">{template.template_name}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {template.template_type.toUpperCase()}
+                              </Badge>
+                            </div>
+                            {template.subject && (
+                              <p className="text-sm font-medium text-foreground mb-1">
+                                Subject: {template.subject}
+                              </p>
+                            )}
+                            <p className="text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap">
+                              {template.body_template.substring(0, 200)}...
                             </p>
-                          )}
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {template.body_template.substring(0, 150)}...
-                          </p>
-                        </Label>
-                      </div>
-                    ))}
+                          </Label>
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
             </div>
