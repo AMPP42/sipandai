@@ -45,17 +45,25 @@ export default function Apps() {
 
       const { data: applications } = await applicationsQuery;
 
-    // Calculate stats for each app type
+    // Calculate stats for each app type - ensure all data is dynamic from database
     const mutasiApps = applications?.filter(a => a.jenis === 'mutasi' || a.jenis === 'mutasi_terpadu') || [];
     const pangkatApps = applications?.filter(a => a.jenis === 'kenaikan_pangkat') || [];
     const pensiunApps = applications?.filter(a => a.jenis === 'pensiun') || [];
 
-    // Helper function to count by status
-    const countByStatus = (apps: any[]) => ({
-      submitted: apps.filter(a => a.status === 'submitted').length,
-      inProgress: apps.filter(a => a.status === 'in_progress' || a.status === 'biro_osdma_review').length,
-      completed: apps.filter(a => a.status === 'approved' || a.status === 'completed').length
-    });
+    // Helper function to count by status - dynamically count all statuses
+    const countByStatus = (apps: any[]) => {
+      const total = apps.length;
+      const submitted = apps.filter(a => a.status === 'submitted').length;
+      const inProgress = apps.filter(a => ['in_progress', 'biro_osdma_review', 'revision_needed'].includes(a.status)).length;
+      const completed = apps.filter(a => ['approved', 'completed'].includes(a.status)).length;
+      
+      return {
+        total,
+        submitted,
+        inProgress,
+        completed
+      };
+    };
 
     // For pension, query employees table
     let employeesQuery = supabase
@@ -98,9 +106,11 @@ export default function Apps() {
       },
       pensiun: {
         ...countByStatus(pensiunApps),
-        reminder: pensiunSoon.length
+        reminder: pensiunSoon.length,
+        total: employees?.length || 0
       },
       konsultasi: isAdminPusat && tickets ? {
+        total: tickets.length,
         active: tickets.filter(t => t.status === 'in_progress').length,
         resolved: tickets.filter(t => t.status === 'resolved').length,
         pending: tickets.filter(t => t.status === 'open').length,
@@ -238,12 +248,14 @@ export default function Apps() {
                         <div key={key} className="text-center">
                           <p className="font-bold text-gray-900">{value as number}</p>
                           <p className="text-gray-600 capitalize">
-                            {key === 'submitted' ? 'Diajukan' : 
+                            {key === 'total' ? 'Total' :
+                             key === 'submitted' ? 'Diajukan' : 
                              key === 'inProgress' ? 'Diproses' : 
-                             key === 'completed' ? 'Selesai (SK Terbit)' :
+                             key === 'completed' ? 'Selesai' :
                              key === 'reminder' ? 'Reminder' : 
                              key === 'active' ? 'Aktif' :
-                             key === 'resolved' ? 'Selesai' : key}
+                             key === 'resolved' ? 'Selesai' :
+                             key === 'pending' ? 'Pending' : key}
                           </p>
                         </div>
                       ))}
