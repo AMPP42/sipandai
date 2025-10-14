@@ -106,7 +106,7 @@ serve(async (req) => {
     // Send email using Resend
     console.log("Sending email to:", employee.email);
     const emailResponse = await resend.emails.send({
-      from: "Sipandai - Sistem Kepegawaian <onboarding@resend.dev>",
+      from: "Sipandai - Sistem Kepegawaian <noreply@sipandai.site>",
       to: [employee.email],
       subject: subject,
       html: `
