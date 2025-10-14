@@ -244,12 +244,11 @@ export default function Apps() {
                       Statistik {user?.role === 'admin_unit' ? `(${user.unit})` : ''}:
                     </h4>
                     <div className="flex gap-4 text-xs">
-                      {Object.entries(appStats).map(([key, value]) => (
+                      {Object.entries(appStats).filter(([key]) => key !== 'total').map(([key, value]) => (
                         <div key={key} className="text-center">
                           <p className="font-bold text-gray-900">{value as number}</p>
                           <p className="text-gray-600 capitalize">
-                            {key === 'total' ? 'Total' :
-                             key === 'submitted' ? 'Diajukan' : 
+                            {key === 'submitted' ? 'Diajukan' : 
                              key === 'inProgress' ? 'Diproses' : 
                              key === 'completed' ? 'Selesai' :
                              key === 'reminder' ? 'Reminder' : 
