@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { notifyAdminPusatOnSubmission } from '@/lib/notifications';
 import DocumentVerificationStatus from '@/components/applications/DocumentVerificationStatus';
 import { ArrowLeft, User, Building, Calendar, FileText, Upload, Download, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Clock, Send, Loader as Loader2, TriangleAlert as AlertTriangle, Eye, FileCheck, Circle as XCircle, ExternalLink, TrendingUp } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
@@ -546,6 +547,14 @@ export default function DetailKenaikanPangkat() {
         setAdditionalNotes('');
         setApplicationSubmitted(true);
 
+        // Notify admin pusat about resubmission
+        await notifyAdminPusatOnSubmission(
+          `Kenaikan Pangkat - ${application.employee_data.employee_name}`,
+          user.name || 'Pengguna',
+          application.submitter_unit || user.unit || 'Unit tidak diketahui',
+          true
+        );
+
         toast({
           title: "Berhasil",
           description: `Perbaikan usulan untuk ${application.employee_data.employee_name} berhasil dikirim ulang!`
@@ -588,6 +597,14 @@ export default function DetailKenaikanPangkat() {
         }
 
         setApplicationSubmitted(true);
+
+        // Notify admin pusat
+        await notifyAdminPusatOnSubmission(
+          `Kenaikan Pangkat - ${application.employee_data.employee_name}`,
+          user.name || 'Pengguna',
+          application.submitter_unit || user.unit || 'Unit tidak diketahui',
+          false
+        );
 
         toast({
           title: "Berhasil",

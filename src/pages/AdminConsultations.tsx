@@ -15,6 +15,7 @@ import { MessageSquare, User, Calendar, CheckCircle, Clock, XCircle, Search, Fil
 import { formatDistanceToNow } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { AdminChatView } from '@/components/chat/AdminChatView';
+import { notifyUserOnConsultationUpdate } from '@/lib/notifications';
 
 interface ConsultationTicket {
   id: string;
@@ -167,7 +168,7 @@ export default function AdminConsultations() {
 
   const handleOpenChatSession = async (ticket: ConsultationTicket) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('consultation_tickets')
         .update({
           konselor_id: user?.id,
@@ -175,9 +176,21 @@ export default function AdminConsultations() {
           status: 'in_progress',
           updated_at: new Date().toISOString(),
         })
-        .eq('id', ticket.id);
+        .eq('id', ticket.id)
+        .select('user_id')
+        .single();
 
       if (error) throw error;
+
+      // Notify user that chat session has started
+      if (data?.user_id) {
+        await notifyUserOnConsultationUpdate(
+          data.user_id,
+          ticket.nomor_ticket,
+          'in_progress',
+          user?.name || 'Admin'
+        );
+      }
 
       toast({
         title: 'Berhasil',
@@ -199,15 +212,26 @@ export default function AdminConsultations() {
 
   const handleCloseTicket = async (ticketId: string) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('consultation_tickets')
         .update({
           status: 'closed',
           updated_at: new Date().toISOString(),
         })
-        .eq('id', ticketId);
+        .eq('id', ticketId)
+        .select('user_id, nomor_ticket')
+        .single();
 
       if (error) throw error;
+
+      // Notify user that ticket is closed
+      if (data?.user_id) {
+        await notifyUserOnConsultationUpdate(
+          data.user_id,
+          data.nomor_ticket,
+          'closed'
+        );
+      }
 
       toast({
         title: 'Berhasil',

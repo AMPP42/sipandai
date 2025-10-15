@@ -30,7 +30,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import DetailedVerificationModal from '@/components/verifikasi/DetailedVerificationModal';
 import UpdateStatusModal from '@/components/verifikasi/UpdateStatusModal';
-import { createApplicationStatusNotification } from '@/lib/notifications';
+import { 
+  createApplicationStatusNotification, 
+  notifyAdminUnitOnApplicationUpdate 
+} from '@/lib/notifications';
 
 interface ApplicationItem {
   id: string;
@@ -286,26 +289,16 @@ export default function Verifikasi({ showResubmittedOnly = false }: VerifikasiPr
           reviewNote
         );
 
-        // 2. Notify all admins in the same unit (for unit admins)
+        // 2. Notify admin_unit in the same unit when admin_pusat makes a decision
         if (user.role === 'admin_pusat' && selectedApplication.submitter_unit) {
-          // Get all admins in the same unit as the application
-          const { data: unitAdmins } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('unit', selectedApplication.submitter_unit)
-            .or('role.eq.admin_unit,role.eq.admin_pusat');
-
-          if (unitAdmins) {
-            await Promise.all(unitAdmins.map(admin => 
-              createApplicationStatusNotification(
-                admin.id,
-                `Update Status: ${applicationTitle}`,
-                selectedApplication.status,
-                newStatus,
-                `Status usulan diubah oleh ${user.name || 'admin'}: ${newStatus}`
-              )
-            ));
-          }
+          await notifyAdminUnitOnApplicationUpdate(
+            selectedApplication.id,
+            selectedApplication.submitter_unit,
+            applicationTitle,
+            newStatus,
+            user.name || 'Admin Pusat',
+            reviewNote
+          );
         }
       }
 

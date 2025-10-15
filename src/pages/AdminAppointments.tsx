@@ -12,6 +12,7 @@ import { id } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { notifyUserOnAppointmentUpdate } from '@/lib/notifications';
 import {
   Dialog,
   DialogContent,
@@ -138,20 +139,33 @@ export default function AdminAppointments() {
     if (!selectedAppointment) return;
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('appointments')
         .update({
           status: updateData.status,
           catatan_admin: updateData.catatan_admin || null,
           konselor_id: updateData.konselor_id || null
         })
-        .eq('id', selectedAppointment.id);
+        .eq('id', selectedAppointment.id)
+        .select('user_id')
+        .single();
 
       if (error) throw error;
 
+      // Notify user about appointment status change
+      if (data?.user_id && updateData.status !== selectedAppointment.status) {
+        const appointmentDetails = `${selectedAppointment.jenis_konsultasi} - ${format(new Date(selectedAppointment.tanggal_konsultasi), 'dd MMM yyyy', { locale: id })} ${selectedAppointment.jam_konsultasi}`;
+        await notifyUserOnAppointmentUpdate(
+          data.user_id,
+          appointmentDetails,
+          updateData.status,
+          updateData.catatan_admin
+        );
+      }
+
       toast({
         title: "Berhasil",
-        description: "Appointment berhasil diperbarui"
+        description: "Appointment berhasil diperbarui dan notifikasi telah dikirim"
       });
 
       setShowDetailDialog(false);
