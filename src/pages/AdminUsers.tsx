@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Users, 
@@ -19,9 +21,20 @@ import {
   Lock,
   Unlock,
   RefreshCw,
-  Search
+  Search,
+  Upload,
+  Activity,
+  History,
+  CheckCircle,
+  XCircle,
+  Clock
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import BulkUserImport from '@/components/users/BulkUserImport';
+import UserActivityLogs from '@/components/users/UserActivityLogs';
+import UserRoleHistory from '@/components/users/UserRoleHistory';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
 
 interface UserProfile {
   id: string;
@@ -40,21 +53,41 @@ interface UserStats {
   adminPusat: number;
   adminUnit: number;
   activeToday: number;
+  pendingRequests: number;
+}
+
+interface RegistrationRequest {
+  id: string;
+  email: string;
+  name: string;
+  requested_role: string;
+  requested_unit: string | null;
+  status: string;
+  requested_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  rejection_reason: string | null;
 }
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [registrationRequests, setRegistrationRequests] = useState<RegistrationRequest[]>([]);
   const [stats, setStats] = useState<UserStats>({
     totalUsers: 0,
     adminPusat: 0,
     adminUnit: 0,
-    activeToday: 0
+    activeToday: 0,
+    pendingRequests: 0
   });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<RegistrationRequest | null>(null);
+  const [isApprovalDialogOpen, setIsApprovalDialogOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
@@ -66,7 +99,27 @@ export default function AdminUsers() {
 
   useEffect(() => {
     loadUsers();
+    loadRegistrationRequests();
   }, []);
+
+  const loadRegistrationRequests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_registration_requests')
+        .select('*')
+        .order('requested_at', { ascending: false });
+
+      if (error) throw error;
+
+      setRegistrationRequests(data || []);
+      
+      // Update pending count in stats
+      const pendingCount = data?.filter(r => r.status === 'pending').length || 0;
+      setStats(prev => ({ ...prev, pendingRequests: pendingCount }));
+    } catch (error) {
+      console.error('Error loading registration requests:', error);
+    }
+  };
 
   const loadUsers = async () => {
     setLoading(true);
@@ -127,7 +180,8 @@ export default function AdminUsers() {
         totalUsers,
         adminPusat,
         adminUnit,
-        activeToday
+        activeToday,
+        pendingRequests: 0 // Will be loaded separately
       });
 
     } catch (error) {
@@ -286,17 +340,85 @@ export default function AdminUsers() {
     }
   };
 
+  const approveRegistration = async (requestId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.rpc('approve_user_registration', {
+        request_id: requestId,
+        admin_user_id: user.id
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Berhasil",
+        description: `Pendaftaran berhasil disetujui. User akan menerima notifikasi.`
+      });
+
+      loadRegistrationRequests();
+      loadUsers();
+      setIsApprovalDialogOpen(false);
+      setSelectedRequest(null);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Gagal menyetujui pendaftaran",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const rejectRegistration = async (requestId: string) => {
+    if (!rejectionReason.trim()) {
+      toast({
+        title: "Error",
+        description: "Alasan penolakan harus diisi",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.rpc('reject_user_registration', {
+        request_id: requestId,
+        admin_user_id: user.id,
+        reason: rejectionReason
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Berhasil",
+        description: "Pendaftaran ditolak"
+      });
+
+      loadRegistrationRequests();
+      setIsApprovalDialogOpen(false);
+      setSelectedRequest(null);
+      setRejectionReason('');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Gagal menolak pendaftaran",
+        variant: "destructive"
+      });
+    }
+  };
+
   const deleteUser = async (userId: string) => {
     if (!confirm('Apakah Anda yakin ingin menghapus user ini?')) return;
 
     try {
-      // For now, we'll show a message that this feature requires server-side implementation
       toast({
         title: "Info",
         description: "Fitur penghapusan user memerlukan implementasi server-side. Silakan hubungi administrator sistem.",
         variant: "default"
       });
-
     } catch (error: any) {
       toast({
         title: "Error",
@@ -349,11 +471,21 @@ export default function AdminUsers() {
           <div className="flex gap-2">
             <Button 
               variant="outline" 
-              onClick={loadUsers} 
+              onClick={() => {
+                loadUsers();
+                loadRegistrationRequests();
+              }}
               disabled={loading}
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => setIsBulkImportOpen(true)}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Import Excel
             </Button>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
@@ -435,18 +567,43 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Cari berdasarkan nama, email, atau unit..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
+      {/* Tabs for different views */}
+      <Tabs defaultValue="users" className="space-y-6">
+        <TabsList className="bg-white border">
+          <TabsTrigger value="users" className="gap-2">
+            <Users className="w-4 h-4" />
+            Daftar User
+          </TabsTrigger>
+          <TabsTrigger value="requests" className="gap-2">
+            <Clock className="w-4 h-4" />
+            Approval Request
+            {stats.pendingRequests > 0 && (
+              <Badge className="ml-2 bg-red-500">{stats.pendingRequests}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="gap-2">
+            <Activity className="w-4 h-4" />
+            Activity Logs
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <History className="w-4 h-4" />
+            Role History
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="users" className="space-y-6">
+          {/* Search */}
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Cari berdasarkan nama, email, atau unit..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -626,42 +783,201 @@ export default function AdminUsers() {
         </DialogContent>
       </Dialog>
 
-      {/* Access Control */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Key className="w-5 h-5 text-brand-600" />
-            Kontrol Akses
-          </CardTitle>
-          <CardDescription>
-            Kelola hak akses dan permission untuk setiap role
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h4 className="font-semibold">Admin Pusat</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>✓ Verifikasi semua usulan</li>
-                <li>✓ Kelola database pegawai</li>
-                <li>✓ Kelola formasi jabatan</li>
-                <li>✓ User management</li>
-                <li>✓ Statistik & laporan</li>
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <h4 className="font-semibold">Admin Unit</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>✓ Akses portal aplikasi</li>
-                <li>✓ Status usulan unit</li>
-                <li>✓ Pengajuan mutasi</li>
-                <li>✓ Pengajuan kenaikan pangkat</li>
-                <li>✓ Konsultasi SDM</li>
-              </ul>
+          {/* Access Control */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="w-5 h-5 text-brand-600" />
+                Kontrol Akses
+              </CardTitle>
+              <CardDescription>
+                Kelola hak akses dan permission untuk setiap role
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Admin Pusat</h4>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    <li>✓ Verifikasi semua usulan</li>
+                    <li>✓ Kelola database pegawai</li>
+                    <li>✓ Kelola formasi jabatan</li>
+                    <li>✓ User management</li>
+                    <li>✓ Statistik & laporan</li>
+                  </ul>
+                </div>
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Admin Unit</h4>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    <li>✓ Akses portal aplikasi</li>
+                    <li>✓ Status usulan unit</li>
+                    <li>✓ Pengajuan mutasi</li>
+                    <li>✓ Pengajuan kenaikan pangkat</li>
+                    <li>✓ Konsultasi SDM</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Registration Requests Tab */}
+        <TabsContent value="requests" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Approval Pendaftaran User</CardTitle>
+              <CardDescription>
+                Kelola dan setujui permintaan pendaftaran user baru
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nama</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Unit</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Tanggal Request</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {registrationRequests.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                        Tidak ada permintaan pendaftaran
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    registrationRequests.map((request) => (
+                      <TableRow key={request.id}>
+                        <TableCell className="font-medium">{request.name}</TableCell>
+                        <TableCell>{request.email}</TableCell>
+                        <TableCell>{getRoleBadge(request.requested_role)}</TableCell>
+                        <TableCell>{request.requested_unit || '-'}</TableCell>
+                        <TableCell>
+                          {request.status === 'pending' && (
+                            <Badge className="bg-yellow-100 text-yellow-700">
+                              <Clock className="w-3 h-3 mr-1" />
+                              Pending
+                            </Badge>
+                          )}
+                          {request.status === 'approved' && (
+                            <Badge className="bg-green-100 text-green-700">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Disetujui
+                            </Badge>
+                          )}
+                          {request.status === 'rejected' && (
+                            <Badge className="bg-red-100 text-red-700">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Ditolak
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-600">
+                          {format(new Date(request.requested_at), 'dd MMM yyyy HH:mm', { locale: id })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {request.status === 'pending' && (
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-green-600 hover:bg-green-50"
+                                onClick={() => approveRegistration(request.id)}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Setuju
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 hover:bg-red-50"
+                                onClick={() => {
+                                  setSelectedRequest(request);
+                                  setIsApprovalDialogOpen(true);
+                                }}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Tolak
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Activity Logs Tab */}
+        <TabsContent value="activity">
+          <UserActivityLogs />
+        </TabsContent>
+
+        {/* Role History Tab */}
+        <TabsContent value="history">
+          <UserRoleHistory />
+        </TabsContent>
+      </Tabs>
+
+      {/* Bulk Import Dialog */}
+      <Dialog open={isBulkImportOpen} onOpenChange={setIsBulkImportOpen}>
+        <DialogContent className="max-w-3xl">
+          <BulkUserImport 
+            onUploadComplete={() => {
+              loadUsers();
+              setIsBulkImportOpen(false);
+            }}
+            onClose={() => setIsBulkImportOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Rejection Dialog */}
+      <Dialog open={isApprovalDialogOpen} onOpenChange={setIsApprovalDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tolak Pendaftaran</DialogTitle>
+            <DialogDescription>
+              Berikan alasan penolakan untuk {selectedRequest?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="rejection-reason">Alasan Penolakan</Label>
+              <Textarea
+                id="rejection-reason"
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="Jelaskan alasan penolakan..."
+                rows={4}
+              />
             </div>
           </div>
-        </CardContent>
-      </Card>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsApprovalDialogOpen(false);
+              setRejectionReason('');
+              setSelectedRequest(null);
+            }}>
+              Batal
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={() => selectedRequest && rejectRegistration(selectedRequest.id)}
+            >
+              Tolak Pendaftaran
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

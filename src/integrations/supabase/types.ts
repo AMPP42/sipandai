@@ -1212,6 +1212,87 @@ export type Database = {
           },
         ]
       }
+      user_registration_requests: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          rejection_reason: string | null
+          requested_at: string
+          requested_role: Database["public"]["Enums"]["app_role"]
+          requested_unit: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          rejection_reason?: string | null
+          requested_at?: string
+          requested_role: Database["public"]["Enums"]["app_role"]
+          requested_unit?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          rejection_reason?: string | null
+          requested_at?: string
+          requested_role?: Database["public"]["Enums"]["app_role"]
+          requested_unit?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_role_history: {
+        Row: {
+          change_reason: string | null
+          changed_at: string
+          changed_by: string
+          id: string
+          new_role: Database["public"]["Enums"]["app_role"]
+          new_unit: string | null
+          old_role: Database["public"]["Enums"]["app_role"] | null
+          old_unit: string | null
+          user_id: string
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by: string
+          id?: string
+          new_role: Database["public"]["Enums"]["app_role"]
+          new_unit?: string | null
+          old_role?: Database["public"]["Enums"]["app_role"] | null
+          old_unit?: string | null
+          user_id: string
+        }
+        Update: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by?: string
+          id?: string
+          new_role?: Database["public"]["Enums"]["app_role"]
+          new_unit?: string | null
+          old_role?: Database["public"]["Enums"]["app_role"] | null
+          old_unit?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1369,6 +1450,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_user_registration: {
+        Args: { admin_user_id: string; request_id: string }
+        Returns: Json
+      }
       archive_old_audit_logs: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -1448,6 +1533,10 @@ export type Database = {
       recount_documents: {
         Args: { app_id: string }
         Returns: undefined
+      }
+      reject_user_registration: {
+        Args: { admin_user_id: string; reason: string; request_id: string }
+        Returns: Json
       }
       submit_application_revision: {
         Args: { application_id: string }
