@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -57,7 +58,6 @@ export default function Dashboard() {
   });
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -70,7 +70,6 @@ export default function Dashboard() {
 
     try {
       setLoading(true);
-      setError(null);
 
       if (user.role === 'admin_pusat') {
         // Load admin statistics
@@ -140,20 +139,13 @@ export default function Dashboard() {
 
         setRecentActivities(activities);
       }
-    } catch (error: any) {
-      // Handle network errors gracefully
-      if (error?.message?.includes('Failed to fetch')) {
-        setError('Koneksi jaringan bermasalah. Data mungkin tidak terbaru.');
-        // Don't show toast for network errors - just set error state
-      } else {
-        console.error('Error loading dashboard data:', error);
-        setError('Gagal memuat data dashboard');
-        toast({
-          title: "Error",
-          description: "Gagal memuat data dashboard",
-          variant: "destructive"
-        });
-      }
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat data dashboard",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -279,12 +271,6 @@ export default function Dashboard() {
                 : `Akses aplikasi administrasi ASN untuk ${user?.unit || 'unit kerja Anda'}`
               }
             </p>
-            {error && (
-              <div className="mt-2 flex items-center gap-2 text-sm text-orange-600">
-                <AlertTriangle className="w-4 h-4" />
-                {error}
-              </div>
-            )}
           </div>
           <div className="flex items-center gap-4">
             <Button

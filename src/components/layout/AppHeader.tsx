@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Bell, Search, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -65,12 +66,7 @@ export function AppHeader() {
 
       if (error) throw error;
       setUnreadCount(count || 0);
-    } catch (error: any) {
-      // Silently fail for network errors - don't spam console
-      if (error?.message?.includes('Failed to fetch')) {
-        // Network error - just keep current count
-        return;
-      }
+    } catch (error) {
       console.error('Error loading unread count:', error);
     }
   };

@@ -149,7 +149,7 @@ export default function KirimReminderPensiun() {
       // Send Email
       if (channels.email) {
         try {
-          const { error } = await supabase.functions.invoke('supabase-functions-send-retirement-reminder-email', {
+          const { error } = await supabase.functions.invoke('send-retirement-reminder-email', {
             body: {
               employeeId: employee?.id,
               templateId: selectedTemplate
@@ -167,7 +167,7 @@ export default function KirimReminderPensiun() {
       // Send SMS
       if (channels.sms) {
         try {
-          const { error } = await supabase.functions.invoke('supabase-functions-send-retirement-reminder-sms', {
+          const { error } = await supabase.functions.invoke('send-retirement-reminder-sms', {
             body: {
               employeeId: employee?.id,
               templateId: selectedTemplate
@@ -185,7 +185,7 @@ export default function KirimReminderPensiun() {
       // Send WhatsApp
       if (channels.whatsapp) {
         try {
-          const { error } = await supabase.functions.invoke('supabase-functions-send-retirement-reminder-whatsapp', {
+          const { error } = await supabase.functions.invoke('send-retirement-reminder-whatsapp', {
             body: {
               employeeId: employee?.id,
               templateId: selectedTemplate
