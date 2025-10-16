@@ -47,13 +47,18 @@ serve(async (req) => {
       throw new Error("Supabase environment variables are not set");
     }
 
+    // Clone the request and parse the body once
+    const requestBody = await req.clone().json();
+    const { employeeId, templateId, monthsBeforeRetirement } = requestBody as RetirementReminderRequest;
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { employeeId, templateId, monthsBeforeRetirement } =
-      (await req.json()) as RetirementReminderRequest;
 
-    console.log("Processing SMS reminder for employee:", employeeId);
-    console.log("Template ID:", templateId);
-    console.log("Months before retirement:", monthsBeforeRetirement);
+    // Log process start with timestamp
+    console.log('\n=== SMS Sending Process Started ===');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Employee ID:', employeeId);
+    console.log('Template ID:', templateId);
+    console.log('Months before retirement:', monthsBeforeRetirement);
 
     // Get employee data
     const { data: employee, error: empError } = await supabase
@@ -71,7 +76,10 @@ serve(async (req) => {
       throw new Error("Employee not found");
     }
 
-    console.log("Employee found:", employee.nama);
+    console.log('\n[1/5] Employee Information:');
+    console.log('Employee Name:', employee.nama);
+    console.log('Employee ID:', employee.id);
+    console.log('Original Phone:', employee.handphone);
 
     if (!employee.handphone) {
       throw new Error("Employee does not have a phone number");
@@ -85,7 +93,13 @@ serve(async (req) => {
       phoneNumber = "0" + phoneNumber;
     }
 
-    console.log("Normalized phone number:", phoneNumber);
+    console.log('\n[2/5] Phone Number Processing:');
+    console.log('Original Phone:', employee.handphone);
+    console.log('Normalized Phone:', phoneNumber);
+    
+    if (phoneNumber.length < 10 || phoneNumber.length > 14) {
+      console.warn('Warning: Phone number length seems unusual');
+    }
 
     // Get template
     let template;
@@ -124,7 +138,10 @@ serve(async (req) => {
       throw new Error("Template not found");
     }
 
-    console.log("Template found:", template.template_name);
+    console.log('\n[3/5] Template Information:');
+    console.log('Template Name:', template.template_name);
+    console.log('Template Type:', template.template_type);
+    console.log('Template Content Length:', template.body_template?.length || 0);
 
     // Calculate retirement date
     const retirementDate = employee.tmt_pensiun
@@ -138,71 +155,188 @@ serve(async (req) => {
       retirementDate
     );
 
-    console.log("SMS body prepared, length:", smsBody.length);
+    console.log('\n[4/5] Message Preparation:');
+    console.log('Original Message Length:', smsBody.length);
+    console.log('Message Preview (first 50 chars):', smsBody.substring(0, 50) + (smsBody.length > 50 ? '...' : ''));
+
+    // Check for common issues in message content
+    const restrictedWords = ['token', 'otp', 'verification', 'kode', 'validasi'];
+    const foundRestrictedWords = restrictedWords.filter(word => 
+      smsBody.toLowerCase().includes(word)
+    );
+    
+    if (foundRestrictedWords.length > 0) {
+      console.warn('Warning: Message contains potentially restricted words:', foundRestrictedWords);
+    }
 
     // URL encode the message
     const encodedMessage = encodeURIComponent(smsBody);
+    console.log('Encoded Message Length:', encodedMessage.length);
 
-    // Send SMS using WebSMS
-    console.log("Sending SMS to:", phoneNumber);
-    const webSmsUrl = `https://websms.co.id/api/smsgateway?token=${webSmsToken}&to=${phoneNumber}&msg=${encodedMessage}`;
+    // Prepare and send SMS
+    console.log('\n[5/5] Sending SMS Request:');
+    
+    // WebSMS API endpoint - using the correct format
+    const webSmsUrl = 'https://websms.co.id/api/send';
+    
+    // Prepare request body according to WebSMS API documentation
+    const requestBody = {
+      phone: phoneNumber,
+      message: smsBody,
+      token: webSmsToken
+    };
 
-    const webSmsResponse = await fetch(webSmsUrl, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json",
-      },
+    console.log('Sending SMS with details:', {
+      to: phoneNumber,
+      messageLength: smsBody.length,
+      endpoint: webSmsUrl
     });
 
-    const responseText = await webSmsResponse.text();
-    console.log("WebSMS raw response:", responseText);
-
+    let webSmsResponse;
+    let responseText;
     let webSmsData;
+
     try {
-      webSmsData = JSON.parse(responseText);
-    } catch (e) {
-      console.error("Failed to parse WebSMS response:", e);
-      throw new Error(`Invalid response from WebSMS: ${responseText}`);
-    }
+      // Make the API request with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-    if (webSmsData.status !== "success") {
-      throw new Error(`WebSMS error: ${webSmsData.message || 'Failed to send SMS'}`);
-    }
-
-    console.log("SMS sent successfully:", webSmsData);
-
-    // Log the sent reminder
-    const { error: logError } = await supabase
-      .from("retirement_reminders_sent")
-      .insert({
-        employee_id: employeeId,
-        reminder_type: "sms",
-        template_id: template.id,
-        status: "sent",
-        metadata: {
-          phone: phoneNumber,
-          websms_response: webSmsData,
+      const startTime = Date.now();
+      webSmsResponse = await fetch(webSmsUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
         },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
+      const endTime = Date.now();
+      
+      console.log(`\n=== SMS API Response (${endTime - startTime}ms) ===`);
+      console.log('Status:', webSmsResponse.status, webSmsResponse.statusText);
+      
+      responseText = await webSmsResponse.text();
+      console.log('Raw Response:', responseText);
 
-    if (logError) {
-      console.error("Error logging reminder:", logError);
-    }
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Retirement reminder SMS sent successfully",
-        response: webSmsData,
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      try {
+        webSmsData = JSON.parse(responseText);
+        console.log('Parsed Response:', JSON.stringify(webSmsData, null, 2));
+      } catch (e) {
+        console.error("Failed to parse WebSMS response:", e);
+        throw new Error(`Invalid JSON response: ${responseText.substring(0, 200)}`);
       }
-    );
+
+      // Check if the response indicates success
+      // WebSMS might return status code 200 even for errors, so check the response content
+      if (!webSmsResponse.ok || (webSmsData.status && webSmsData.status !== 'success')) {
+        console.error('WebSMS API Error:', {
+          status: webSmsResponse.status,
+          statusText: webSmsResponse.statusText,
+          response: webSmsData
+        });
+        
+        // Handle specific WebSMS error messages
+        let errorMessage = webSmsData.message || 'Failed to send SMS';
+        if (webSmsData.error) {
+          errorMessage = webSmsData.error;
+        } else if (typeof webSmsData === 'string' && webSmsData.includes('error')) {
+          errorMessage = webSmsData;
+        }
+        
+        throw new Error(`WebSMS error: ${errorMessage}`);
+      }
+
+      console.log('\n=== SMS Sent Successfully ===');
+      console.log('Message ID:', webSmsData.message_id || 'Not provided');
+      console.log('Status:', webSmsData.status);
+      console.log('Timestamp:', new Date().toISOString());
+      
+      // Log reminder to Supabase
+      const { error: logError } = await supabase
+        .from("retirement_reminders_sent")
+        .insert({
+          employee_id: employeeId,
+          reminder_type: "sms",
+          template_id: template.id,
+          status: "sent",
+          metadata: {
+            phone: phoneNumber,
+            websms_response: webSmsData,
+          },
+        });
+
+      if (logError) {
+        console.error("Error logging reminder:", logError);
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Retirement reminder SMS sent successfully",
+          response: webSmsData,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    } catch (error: any) {
+      console.error('\n=== SMS Sending Failed ===');
+      console.error('Error:', error.message);
+      console.error('Error Type:', error.name);
+      console.error('Timestamp:', new Date().toISOString());
+      
+      if (error.response) {
+        console.error('Error Response Status:', error.response.status);
+        console.error('Error Response Data:', error.response.data);
+      }
+      
+      if (error.config) {
+        console.error('Request Config:', {
+          url: error.config.url,
+          method: error.config.method,
+          headers: error.config.headers
+        });
+      }
+      
+      console.error('Stack Trace:', error.stack);
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: error.message,
+          details: error.stack,
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
   } catch (error: any) {
-    console.error("Error in send-retirement-reminder-sms:", error);
-    console.error("Error stack:", error.stack);
+    console.error('\n=== SMS Sending Failed ===');
+    console.error('Error:', error.message);
+    console.error('Error Type:', error.name);
+    console.error('Timestamp:', new Date().toISOString());
+    
+    if (error.response) {
+      console.error('Error Response Status:', error.response.status);
+      console.error('Error Response Data:', error.response.data);
+    }
+    
+    if (error.config) {
+      console.error('Request Config:', {
+        url: error.config.url,
+        method: error.config.method,
+        headers: error.config.headers
+      });
+    }
+    
+    console.error('Stack Trace:', error.stack);
 
     return new Response(
       JSON.stringify({
