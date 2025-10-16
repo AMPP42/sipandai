@@ -150,6 +150,16 @@ const App = () => (
                 </ProtectedRoute>
               } />
 
+              <Route path="/apps/jadwal-konsultasi" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ErrorBoundary>
+                      <JadwalKonsultasi />
+                    </ErrorBoundary>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
               <Route path="/apps/pengajuan-mutasi-terpadu" element={
                 <ProtectedRoute>
                   <DashboardLayout>
