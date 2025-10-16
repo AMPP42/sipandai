@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID")!;
 const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN")!;
-const twilioWhatsAppNumber = Deno.env.get("TWILIO_PHONE_NUMBER")!; // Format: whatsapp:+14155238886
+const twilioWhatsAppNumber = Deno.env.get("TWILIO_WHATSAPP_NUMBER")!; // Format: whatsapp:+14155238886
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
