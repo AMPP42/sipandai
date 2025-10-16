@@ -97,7 +97,7 @@ export function EmployeeSelector({ value, onSelect }: EmployeeSelectorProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder="Cari pegawai..."
             value={searchTerm}
@@ -117,10 +117,11 @@ export function EmployeeSelector({ value, onSelect }: EmployeeSelectorProps) {
             {filteredEmployees.map((employee) => (
               <CommandItem
                 key={employee.id}
-                value={employee.id}
+                value={`${employee.nama}-${employee.nip}`}
                 onSelect={() => {
                   onSelect(employee.nip === value ? null : employee);
                   setOpen(false);
+                  setSearchTerm("");
                 }}
               >
                 <Check
