@@ -1,9 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID")!;
-const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN")!;
-const twilioWhatsAppNumber = Deno.env.get("TWILIO_WHATSAPP_NUMBER")!; // Format: whatsapp:+14155238886
+const zuwindaApiKey = Deno.env.get("ZUWINDA_API_KEY")!;
+const zuwindaWhatsAppInstanceId = Deno.env.get("ZUWINDA_WHATSAPP_INSTANCE_ID")!;
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -61,14 +60,13 @@ serve(async (req) => {
       throw new Error("Employee does not have a phone number");
     }
 
-    // Normalize phone number for WhatsApp
+    // Normalize phone number for WhatsApp (without country code prefix)
     let phoneNumber = employee.handphone.replace(/\s+/g, "");
     if (phoneNumber.startsWith("0")) {
-      phoneNumber = "+62" + phoneNumber.substring(1);
-    } else if (!phoneNumber.startsWith("+")) {
-      phoneNumber = "+62" + phoneNumber;
+      phoneNumber = "62" + phoneNumber.substring(1);
+    } else if (!phoneNumber.startsWith("62")) {
+      phoneNumber = "62" + phoneNumber;
     }
-    phoneNumber = "whatsapp:" + phoneNumber;
 
     // Get template
     let template;
@@ -110,32 +108,30 @@ serve(async (req) => {
       retirementDate
     );
 
-    // Send WhatsApp message using Twilio
+    // Send WhatsApp message using Zuwinda
     console.log("Sending WhatsApp message to:", phoneNumber);
-    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
+    const zuwindaUrl = `https://api.zuwinda.com/v1.2/whatsapp/send-text`;
 
-    const formData = new URLSearchParams();
-    formData.append("To", phoneNumber);
-    formData.append("From", twilioWhatsAppNumber.startsWith("whatsapp:") ? twilioWhatsAppNumber : `whatsapp:${twilioWhatsAppNumber}`);
-    formData.append("Body", whatsappBody);
-
-    const twilioResponse = await fetch(twilioUrl, {
+    const zuwindaResponse = await fetch(zuwindaUrl, {
       method: "POST",
       headers: {
-        Authorization:
-          "Basic " + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
-        "Content-Type": "application/x-www-form-urlencoded",
+        "x-access-key": zuwindaApiKey,
+        "Content-Type": "application/json",
       },
-      body: formData,
+      body: JSON.stringify({
+        instance_id: zuwindaWhatsAppInstanceId,
+        phone_number: phoneNumber,
+        message: whatsappBody,
+      }),
     });
 
-    const twilioData = await twilioResponse.json();
+    const zuwindaData = await zuwindaResponse.json();
 
-    if (!twilioResponse.ok) {
-      throw new Error(`Twilio error: ${twilioData.message}`);
+    if (!zuwindaResponse.ok) {
+      throw new Error(`Zuwinda error: ${zuwindaData.message || 'Failed to send WhatsApp message'}`);
     }
 
-    console.log("WhatsApp message sent successfully:", twilioData.sid);
+    console.log("WhatsApp message sent successfully:", zuwindaData);
 
     // Log the sent reminder
     const { error: logError } = await supabase
@@ -146,8 +142,8 @@ serve(async (req) => {
         template_id: template.id,
         status: "sent",
         metadata: {
-          phone: phoneNumber.replace("whatsapp:", ""),
-          twilio_sid: twilioData.sid,
+          phone: phoneNumber,
+          zuwinda_response: zuwindaData,
         },
       });
 
@@ -159,7 +155,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: "Retirement reminder WhatsApp sent successfully",
-        messageSid: twilioData.sid,
+        response: zuwindaData,
       }),
       {
         status: 200,

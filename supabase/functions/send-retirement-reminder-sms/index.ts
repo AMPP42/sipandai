@@ -1,9 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID")!;
-const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN")!;
-const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER")!;
+const zuwindaApiKey = Deno.env.get("ZUWINDA_API_KEY")!;
+const zuwindaInstanceId = Deno.env.get("ZUWINDA_SMS_INSTANCE_ID")!;
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -109,32 +108,30 @@ serve(async (req) => {
       retirementDate
     );
 
-    // Send SMS using Twilio
+    // Send SMS using Zuwinda
     console.log("Sending SMS to:", phoneNumber);
-    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
+    const zuwindaUrl = `https://api.zuwinda.com/v1.2/sms/send`;
 
-    const formData = new URLSearchParams();
-    formData.append("To", phoneNumber);
-    formData.append("From", twilioPhoneNumber);
-    formData.append("Body", smsBody);
-
-    const twilioResponse = await fetch(twilioUrl, {
+    const zuwindaResponse = await fetch(zuwindaUrl, {
       method: "POST",
       headers: {
-        Authorization:
-          "Basic " + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
-        "Content-Type": "application/x-www-form-urlencoded",
+        "x-access-key": zuwindaApiKey,
+        "Content-Type": "application/json",
       },
-      body: formData,
+      body: JSON.stringify({
+        instance_id: zuwindaInstanceId,
+        phone_number: phoneNumber,
+        message: smsBody,
+      }),
     });
 
-    const twilioData = await twilioResponse.json();
+    const zuwindaData = await zuwindaResponse.json();
 
-    if (!twilioResponse.ok) {
-      throw new Error(`Twilio error: ${twilioData.message}`);
+    if (!zuwindaResponse.ok) {
+      throw new Error(`Zuwinda error: ${zuwindaData.message || 'Failed to send SMS'}`);
     }
 
-    console.log("SMS sent successfully:", twilioData.sid);
+    console.log("SMS sent successfully:", zuwindaData);
 
     // Log the sent reminder
     const { error: logError } = await supabase
@@ -146,7 +143,7 @@ serve(async (req) => {
         status: "sent",
         metadata: {
           phone: phoneNumber,
-          twilio_sid: twilioData.sid,
+          zuwinda_response: zuwindaData,
         },
       });
 
@@ -158,7 +155,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: "Retirement reminder SMS sent successfully",
-        messageSid: twilioData.sid,
+        response: zuwindaData,
       }),
       {
         status: 200,
