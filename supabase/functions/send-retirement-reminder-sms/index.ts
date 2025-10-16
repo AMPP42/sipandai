@@ -1,11 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const zuwindaApiKey = Deno.env.get("ZUWINDA_API_KEY")!;
-const zuwindaInstanceId = Deno.env.get("ZUWINDA_SMS_INSTANCE_ID")!;
-const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -39,11 +34,26 @@ serve(async (req) => {
   }
 
   try {
+    // Check environment variables
+    const webSmsToken = Deno.env.get("WEBSMS_TOKEN");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!webSmsToken) {
+      throw new Error("WEBSMS_TOKEN environment variable is not set");
+    }
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Supabase environment variables are not set");
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
     const { employeeId, templateId, monthsBeforeRetirement } =
       (await req.json()) as RetirementReminderRequest;
 
     console.log("Processing SMS reminder for employee:", employeeId);
+    console.log("Template ID:", templateId);
+    console.log("Months before retirement:", monthsBeforeRetirement);
 
     // Get employee data
     const { data: employee, error: empError } = await supabase
@@ -52,21 +62,30 @@ serve(async (req) => {
       .eq("id", employeeId)
       .single();
 
-    if (empError || !employee) {
-      throw new Error(`Employee not found: ${empError?.message}`);
+    if (empError) {
+      console.error("Employee fetch error:", empError);
+      throw new Error(`Employee not found: ${empError.message}`);
     }
+
+    if (!employee) {
+      throw new Error("Employee not found");
+    }
+
+    console.log("Employee found:", employee.nama);
 
     if (!employee.handphone) {
       throw new Error("Employee does not have a phone number");
     }
 
-    // Normalize phone number
-    let phoneNumber = employee.handphone.replace(/\s+/g, "");
-    if (phoneNumber.startsWith("0")) {
-      phoneNumber = "+62" + phoneNumber.substring(1);
-    } else if (!phoneNumber.startsWith("+")) {
-      phoneNumber = "+62" + phoneNumber;
+    // Normalize phone number for WebSMS (format: 0823456789)
+    let phoneNumber = employee.handphone.replace(/\s+/g, "").replace(/-/g, "");
+    if (phoneNumber.startsWith("+62")) {
+      phoneNumber = "0" + phoneNumber.substring(3);
+    } else if (!phoneNumber.startsWith("0")) {
+      phoneNumber = "0" + phoneNumber;
     }
+
+    console.log("Normalized phone number:", phoneNumber);
 
     // Get template
     let template;
@@ -75,10 +94,12 @@ serve(async (req) => {
         .from("retirement_reminder_templates")
         .select("*")
         .eq("id", templateId)
-        .eq("template_type", "sms")
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Template fetch error:", error);
+        throw new Error(`Template not found: ${error.message}`);
+      }
       template = data;
     } else if (monthsBeforeRetirement) {
       const { data, error } = await supabase
@@ -90,11 +111,20 @@ serve(async (req) => {
         .limit(1)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Template fetch error:", error);
+        throw new Error(`Template not found: ${error.message}`);
+      }
       template = data;
     } else {
       throw new Error("Either templateId or monthsBeforeRetirement required");
     }
+
+    if (!template) {
+      throw new Error("Template not found");
+    }
+
+    console.log("Template found:", template.template_name);
 
     // Calculate retirement date
     const retirementDate = employee.tmt_pensiun
@@ -102,36 +132,44 @@ serve(async (req) => {
       : "Belum ditentukan";
 
     // Replace template variables
-    const smsBody = replaceTemplateVariables(
+    let smsBody = replaceTemplateVariables(
       template.body_template,
       employee,
       retirementDate
     );
 
-    // Send SMS using Zuwinda
-    console.log("Sending SMS to:", phoneNumber);
-    const zuwindaUrl = `https://api.zuwinda.com/v1.2/sms/send`;
+    console.log("SMS body prepared, length:", smsBody.length);
 
-    const zuwindaResponse = await fetch(zuwindaUrl, {
-      method: "POST",
+    // URL encode the message
+    const encodedMessage = encodeURIComponent(smsBody);
+
+    // Send SMS using WebSMS
+    console.log("Sending SMS to:", phoneNumber);
+    const webSmsUrl = `https://websms.co.id/api/smsgateway?token=${webSmsToken}&to=${phoneNumber}&msg=${encodedMessage}`;
+
+    const webSmsResponse = await fetch(webSmsUrl, {
+      method: "GET",
       headers: {
-        "x-access-key": zuwindaApiKey,
-        "Content-Type": "application/json",
+        "Accept": "application/json",
       },
-      body: JSON.stringify({
-        instance_id: zuwindaInstanceId,
-        phone_number: phoneNumber,
-        message: smsBody,
-      }),
     });
 
-    const zuwindaData = await zuwindaResponse.json();
+    const responseText = await webSmsResponse.text();
+    console.log("WebSMS raw response:", responseText);
 
-    if (!zuwindaResponse.ok) {
-      throw new Error(`Zuwinda error: ${zuwindaData.message || 'Failed to send SMS'}`);
+    let webSmsData;
+    try {
+      webSmsData = JSON.parse(responseText);
+    } catch (e) {
+      console.error("Failed to parse WebSMS response:", e);
+      throw new Error(`Invalid response from WebSMS: ${responseText}`);
     }
 
-    console.log("SMS sent successfully:", zuwindaData);
+    if (webSmsData.status !== "success") {
+      throw new Error(`WebSMS error: ${webSmsData.message || 'Failed to send SMS'}`);
+    }
+
+    console.log("SMS sent successfully:", webSmsData);
 
     // Log the sent reminder
     const { error: logError } = await supabase
@@ -143,7 +181,7 @@ serve(async (req) => {
         status: "sent",
         metadata: {
           phone: phoneNumber,
-          zuwinda_response: zuwindaData,
+          websms_response: webSmsData,
         },
       });
 
@@ -155,7 +193,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: "Retirement reminder SMS sent successfully",
-        response: zuwindaData,
+        response: webSmsData,
       }),
       {
         status: 200,
@@ -164,26 +202,13 @@ serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Error in send-retirement-reminder-sms:", error);
-
-    // Try to log the error
-    try {
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      const { employeeId } = await req.json();
-
-      await supabase.from("retirement_reminders_sent").insert({
-        employee_id: employeeId,
-        reminder_type: "sms",
-        status: "failed",
-        error_message: error.message,
-      });
-    } catch (logError) {
-      console.error("Error logging failed reminder:", logError);
-    }
+    console.error("Error stack:", error.stack);
 
     return new Response(
       JSON.stringify({
         success: false,
         error: error.message,
+        details: error.stack,
       }),
       {
         status: 500,
