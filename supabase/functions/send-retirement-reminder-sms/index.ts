@@ -1,9 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID")!;
-const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN")!;
-const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER")!;
+const webSmsToken = Deno.env.get("WEBSMS_TOKEN")!;
+const webSmsSender = Deno.env.get("WEBSMS_SENDER")!;
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -61,13 +60,23 @@ serve(async (req) => {
       throw new Error("Employee does not have a phone number");
     }
 
-    // Normalize phone number
-    let phoneNumber = employee.handphone.replace(/\s+/g, "");
-    if (phoneNumber.startsWith("0")) {
-      phoneNumber = "+62" + phoneNumber.substring(1);
-    } else if (!phoneNumber.startsWith("+")) {
-      phoneNumber = "+62" + phoneNumber;
+    // Normalize phone number for WebSMS (format: 628XXXXXXXXX)
+    let phoneNumber = employee.handphone.replace(/\s+/g, "").replace(/\-/g, "");
+    
+    // Remove leading zeros and country code variations
+    if (phoneNumber.startsWith("+62")) {
+      phoneNumber = "62" + phoneNumber.substring(3);
+    } else if (phoneNumber.startsWith("62")) {
+      // Already in correct format
+      phoneNumber = phoneNumber;
+    } else if (phoneNumber.startsWith("0")) {
+      phoneNumber = "62" + phoneNumber.substring(1);
+    } else {
+      // Assume it's already without country code
+      phoneNumber = "62" + phoneNumber;
     }
+
+    console.log("Normalized phone number:", phoneNumber);
 
     // Get template
     let template;
@@ -109,32 +118,39 @@ serve(async (req) => {
       retirementDate
     );
 
-    // Send SMS using Twilio
-    console.log("Sending SMS to:", phoneNumber);
-    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
+    // Send SMS using WebSMS API
+    console.log("Sending SMS via WebSMS to:", phoneNumber);
+    const webSmsUrl = "https://api.websms.co.id/api/v1/sms/send";
 
-    const formData = new URLSearchParams();
-    formData.append("To", phoneNumber);
-    formData.append("From", twilioPhoneNumber);
-    formData.append("Body", smsBody);
+    const webSmsPayload = {
+      token: webSmsToken,
+      phone: phoneNumber,
+      message: smsBody,
+      sender: webSmsSender || "INFO"
+    };
 
-    const twilioResponse = await fetch(twilioUrl, {
-      method: "POST",
-      headers: {
-        Authorization:
-          "Basic " + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: formData,
+    console.log("WebSMS payload:", {
+      phone: phoneNumber,
+      sender: webSmsSender,
+      messageLength: smsBody.length
     });
 
-    const twilioData = await twilioResponse.json();
+    const webSmsResponse = await fetch(webSmsUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(webSmsPayload),
+    });
 
-    if (!twilioResponse.ok) {
-      throw new Error(`Twilio error: ${twilioData.message}`);
+    const webSmsData = await webSmsResponse.json();
+    console.log("WebSMS response:", webSmsData);
+
+    if (!webSmsResponse.ok || webSmsData.status !== "success") {
+      throw new Error(`WebSMS error: ${webSmsData.message || "Unknown error"}`);
     }
 
-    console.log("SMS sent successfully:", twilioData.sid);
+    console.log("SMS sent successfully via WebSMS:", webSmsData);
 
     // Log the sent reminder
     const { error: logError } = await supabase
@@ -146,7 +162,7 @@ serve(async (req) => {
         status: "sent",
         metadata: {
           phone: phoneNumber,
-          twilio_sid: twilioData.sid,
+          websms_response: webSmsData,
         },
       });
 
@@ -157,8 +173,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Retirement reminder SMS sent successfully",
-        messageSid: twilioData.sid,
+        message: "Retirement reminder SMS sent successfully via WebSMS",
+        webSmsResponse: webSmsData,
       }),
       {
         status: 200,
