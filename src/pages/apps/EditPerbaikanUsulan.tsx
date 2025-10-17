@@ -414,14 +414,15 @@ const EditPerbaikanUsulan: React.FC = () => {
 
             if (updateDocError) throw updateDocError;
 
-            // Update corresponding verification status
+            // Update corresponding verification status to pending (waiting for re-verification)
             const { error: updateVerificationError } = await supabase
               .from('document_verifications')
               .update({
-                status: 'approved',
+                status: 'pending',
                 document_link: newLink.trim(),
-                verified_at: new Date().toISOString(),
-                admin_notes: 'Dokumen telah diperbaiki oleh pengguna'
+                verified_at: null,
+                verified_by: null,
+                admin_notes: 'Dokumen telah diperbaiki oleh pengguna - Menunggu verifikasi ulang'
               })
               .eq('application_id', id)
               .eq('document_type', docKey);
@@ -442,7 +443,7 @@ const EditPerbaikanUsulan: React.FC = () => {
 
             if (insertDocError) throw insertDocError;
 
-            // Create corresponding verification record
+            // Create corresponding verification record (pending status for re-verification)
             const { error: insertVerificationError } = await supabase
               .from('document_verifications')
               .insert({
@@ -450,9 +451,8 @@ const EditPerbaikanUsulan: React.FC = () => {
                 document_name: documentName,
                 document_type: docKey,
                 document_link: newLink.trim(),
-                status: 'approved',
-                verified_at: new Date().toISOString(),
-                verified_by: user.id
+                status: 'pending',
+                admin_notes: 'Dokumen baru - Menunggu verifikasi'
               });
 
             if (insertVerificationError) throw insertVerificationError;
