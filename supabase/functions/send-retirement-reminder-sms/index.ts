@@ -38,10 +38,13 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let requestBody: RetirementReminderRequest;
+  
   try {
+    requestBody = (await req.json()) as RetirementReminderRequest;
+    const { employeeId, templateId, monthsBeforeRetirement } = requestBody;
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { employeeId, templateId, monthsBeforeRetirement } =
-      (await req.json()) as RetirementReminderRequest;
 
     console.log("Processing SMS reminder for employee:", employeeId);
 
@@ -143,11 +146,24 @@ serve(async (req) => {
       body: JSON.stringify(webSmsPayload),
     });
 
-    const webSmsData = await webSmsResponse.json();
-    console.log("WebSMS response:", webSmsData);
+    console.log("WebSMS HTTP status:", webSmsResponse.status);
+    
+    // Get response text first to see what we're dealing with
+    const responseText = await webSmsResponse.text();
+    console.log("WebSMS raw response:", responseText);
+
+    let webSmsData;
+    try {
+      webSmsData = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error("Failed to parse WebSMS response as JSON:", parseError);
+      throw new Error(`WebSMS returned non-JSON response: ${responseText.substring(0, 200)}`);
+    }
+
+    console.log("WebSMS parsed response:", webSmsData);
 
     if (!webSmsResponse.ok || webSmsData.status !== "success") {
-      throw new Error(`WebSMS error: ${webSmsData.message || "Unknown error"}`);
+      throw new Error(`WebSMS error: ${webSmsData.message || webSmsData.error || "Unknown error"}`);
     }
 
     console.log("SMS sent successfully via WebSMS:", webSmsData);
@@ -183,18 +199,20 @@ serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Error in send-retirement-reminder-sms:", error);
+    console.error("Error stack:", error.stack);
 
-    // Try to log the error
+    // Try to log the error using already parsed request body
     try {
       const supabase = createClient(supabaseUrl, supabaseKey);
-      const { employeeId } = await req.json();
-
-      await supabase.from("retirement_reminders_sent").insert({
-        employee_id: employeeId,
-        reminder_type: "sms",
-        status: "failed",
-        error_message: error.message,
-      });
+      
+      if (requestBody?.employeeId) {
+        await supabase.from("retirement_reminders_sent").insert({
+          employee_id: requestBody.employeeId,
+          reminder_type: "sms",
+          status: "failed",
+          error_message: error.message,
+        });
+      }
     } catch (logError) {
       console.error("Error logging failed reminder:", logError);
     }
