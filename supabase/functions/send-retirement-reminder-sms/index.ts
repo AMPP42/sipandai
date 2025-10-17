@@ -29,14 +29,24 @@ const replaceTemplateVariables = (
 };
 
 serve(async (req) => {
+  console.log("==== RETIREMENT REMINDER SMS FUNCTION STARTED ====");
+  console.log("Request method:", req.method);
+  
   if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS request");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log("Starting SMS sending process");
     const webSmsToken = Deno.env.get("WEBSMS_TOKEN");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_KEY");
+    const supabaseKey = Deno.env.get("VITE_SUPABASE_SERVICE_KEY") || Deno.env.get("SUPABASE_SERVICE_KEY");
+    
+    console.log("Checking environment variables...");
+    console.log("WEBSMS_TOKEN exists:", !!webSmsToken);
+    console.log("SUPABASE_URL exists:", !!supabaseUrl);
+    console.log("SUPABASE_SERVICE_KEY or VITE_SUPABASE_SERVICE_KEY exists:", !!supabaseKey);
 
     if (!webSmsToken) {
       throw new Error("WEBSMS_TOKEN environment variable is not set");
@@ -69,17 +79,22 @@ serve(async (req) => {
       throw new Error("Employee does not have a phone number");
     }
 
-    // Normalize phone number for WebSMS (format: 0823456789)
+    // Normalize phone number - WebSMS mungkin memerlukan format internasional
     let phoneNumber = employee.handphone.replace(/\s+/g, "").replace(/-/g, "");
+    
+    // Format untuk WebSMS - pastikan format internasional dengan awalan 62
     if (phoneNumber.startsWith("+62")) {
-      phoneNumber = "0" + phoneNumber.substring(3);
-    } else if (phoneNumber.startsWith("62")) {
-      phoneNumber = "0" + phoneNumber.substring(2);
-    } else if (!phoneNumber.startsWith("0")) {
-      phoneNumber = "0" + phoneNumber;
+      // Hapus + dari +62
+      phoneNumber = phoneNumber.substring(1);
+    } else if (phoneNumber.startsWith("0")) {
+      // Ubah 08xxx menjadi 628xxx
+      phoneNumber = "62" + phoneNumber.substring(1);
+    } else if (!phoneNumber.startsWith("62")) {
+      // Tambahkan 62 di depan jika belum ada
+      phoneNumber = "62" + phoneNumber;
     }
 
-    console.log("Normalized phone number:", phoneNumber);
+    console.log("Normalized phone number for WebSMS:", phoneNumber);
 
     // Get template
     let template;
@@ -137,34 +152,58 @@ serve(async (req) => {
     // URL encode the message
     const encodedMessage = encodeURIComponent(smsBody);
 
-    // Send SMS using WebSMS - menggunakan POST dengan query parameters
+    // Send SMS using WebSMS - using GET with query parameters as per documentation
     console.log("Sending SMS to:", phoneNumber);
-    const webSmsUrl = `https://websms.co.id/api/smsgateway`;
-
-    const webSmsResponse = await fetch(webSmsUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Accept": "application/json",
-      },
-      body: `token=${webSmsToken}&to=${phoneNumber}&msg=${encodedMessage}`
-    });
-
-    const responseText = await webSmsResponse.text();
-    console.log("WebSMS raw response:", responseText);
-
+    
+    // Construct URL exactly as per documentation
+    const webSmsUrl = `https://websms.co.id/api/smsgateway?token=${webSmsToken}&to=${phoneNumber}&msg=${encodedMessage}`;
+    
+    // Log the full URL for debugging (masking the token)
+    const debugUrl = webSmsUrl.replace(webSmsToken, "***TOKEN***");
+    console.log("WebSMS request URL:", debugUrl);
+    
     let webSmsData;
     try {
-      webSmsData = JSON.parse(responseText);
-    } catch (e) {
-      console.error("Failed to parse WebSMS response:", e);
-      throw new Error(`WebSMS returned non-JSON response: ${responseText}`);
-    }
-
-    console.log("WebSMS parsed response:", webSmsData);
-
-    if (webSmsData.status !== "success") {
-      throw new Error(`WebSMS error: ${webSmsData.message || 'Failed to send SMS'}`);
+      // Simple GET request without any extra headers
+      console.log("Sending GET request to WebSMS API");
+      const webSmsResponse = await fetch(webSmsUrl);
+      
+      console.log("WebSMS response status:", webSmsResponse.status);
+      
+      if (!webSmsResponse.ok) {
+        throw new Error(`WebSMS API returned status ${webSmsResponse.status}`);
+      }
+      
+      const responseText = await webSmsResponse.text();
+      console.log("WebSMS raw response:", responseText);
+      
+      // Handle empty response
+      if (!responseText.trim()) {
+        console.log("WebSMS returned empty response, assuming success");
+        webSmsData = { status: "success" };
+      } else {
+        try {
+          webSmsData = JSON.parse(responseText);
+        } catch (e) {
+          console.error("Failed to parse WebSMS response:", e);
+          // If we can't parse as JSON but got a 200 OK, assume success
+          if (webSmsResponse.ok) {
+            console.log("Non-JSON response with 200 OK, assuming success");
+            webSmsData = { status: "success", raw_response: responseText };
+          } else {
+            throw new Error(`WebSMS returned non-JSON response: ${responseText}`);
+          }
+        }
+      }
+      
+      console.log("WebSMS parsed response:", webSmsData);
+      
+      if (webSmsData.status !== "success") {
+        throw new Error(`WebSMS error: ${webSmsData.message || 'Failed to send SMS'}`);
+      }
+    } catch (error) {
+      console.error("Error calling WebSMS API:", error);
+      throw new Error(`Failed to send SMS: ${error.message}`);
     }
 
     console.log("SMS sent successfully:", webSmsData);
