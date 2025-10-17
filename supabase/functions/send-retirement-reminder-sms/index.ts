@@ -155,11 +155,12 @@ serve(async (req) => {
     // Send SMS using WebSMS - using GET with query parameters as per documentation
     console.log("Sending SMS to:", phoneNumber);
     
-    // Construct URL exactly as per documentation
-    const webSmsUrl = `https://websms.co.id/api/smsgateway?token=${webSmsToken}&to=${phoneNumber}&msg=${encodedMessage}`;
+    // Construct URL exactly as per updated documentation for OTP/Masking endpoint
+    const webSmsUrl = `https://websms.co.id/api/smsgateway-otp?token=${webSmsToken}&to=${phoneNumber}&msg=${encodedMessage}`;
     
     // Log the full URL for debugging (masking the token)
     const debugUrl = webSmsUrl.replace(webSmsToken, "***TOKEN***");
+    console.log("Using updated WebSMS OTP/Masking endpoint due to provider signal issues");
     console.log("WebSMS request URL:", debugUrl);
     
     let webSmsData;
