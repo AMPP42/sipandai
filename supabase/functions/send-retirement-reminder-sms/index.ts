@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const webSmsToken = Deno.env.get("WEBSMS_TOKEN")!;
 const webSmsSender = Deno.env.get("WEBSMS_SENDER")!;
+const webSmsApiUrl = Deno.env.get("WEBSMS_API_URL") || "https://app.websms.co.id/api/v1/sms/send";
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -123,7 +124,7 @@ serve(async (req) => {
 
     // Send SMS using WebSMS API
     console.log("Sending SMS via WebSMS to:", phoneNumber);
-    const webSmsUrl = "https://api.websms.co.id/api/v1/sms/send";
+    const webSmsUrl = webSmsApiUrl;
 
     const webSmsPayload = {
       token: webSmsToken,
