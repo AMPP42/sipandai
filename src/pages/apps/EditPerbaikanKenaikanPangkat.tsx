@@ -523,15 +523,14 @@ export default function EditPerbaikanKenaikanPangkat() {
 
             if (updateDocError) throw updateDocError;
 
-            // Update corresponding verification status to pending (waiting for re-verification)
+            // Update corresponding verification status if it exists
             const { error: updateVerificationError } = await supabase
               .from('document_verifications')
               .update({
-                status: 'pending',
+                status: 'approved',
                 document_link: newLink.trim(),
-                verified_at: null,
-                verified_by: null,
-                admin_notes: 'Dokumen telah diperbaiki oleh pengguna - Menunggu verifikasi ulang'
+                verified_at: new Date().toISOString(),
+                admin_notes: 'Dokumen telah diperbaiki oleh pengguna'
               })
               .eq('application_id', id)
               .eq('document_type', `doc_${index}`);
