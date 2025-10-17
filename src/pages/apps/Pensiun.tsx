@@ -129,14 +129,6 @@ export default function Pensiun() {
         sample: allEmployees.slice(0, 5).map(e => ({ nama: e.nama, tmt_pensiun: (e as any).tmt_pensiun, unit: (e as any).unit }))
       });
 
-      // Debug specific case mentioned by user
-      const rasijo = allEmployees.find(e => e.nama?.toLowerCase().includes('rasijo'));
-      if (rasijo) {
-        console.log('[Reminder Pensiun] Found Rasijo entry:', rasijo);
-      } else {
-        console.log('[Reminder Pensiun] Rasijo not found in fetched employees');
-      }
-
       setEmployees(allEmployees);
     } catch (error: any) {
       console.error('Error loading employees:', error);

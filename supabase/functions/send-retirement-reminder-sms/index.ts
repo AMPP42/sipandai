@@ -1,12 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const webSmsToken = Deno.env.get("WEBSMS_TOKEN")!;
-const webSmsSender = Deno.env.get("WEBSMS_SENDER")!;
-const webSmsApiUrl = Deno.env.get("WEBSMS_API_URL") || "https://app.websms.co.id/api/v1/sms/send";
-const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -39,13 +33,22 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  let requestBody: RetirementReminderRequest;
-  
   try {
-    requestBody = (await req.json()) as RetirementReminderRequest;
-    const { employeeId, templateId, monthsBeforeRetirement } = requestBody;
-    
+    const webSmsToken = Deno.env.get("WEBSMS_TOKEN");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_KEY");
+
+    if (!webSmsToken) {
+      throw new Error("WEBSMS_TOKEN environment variable is not set");
+    }
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Supabase environment variables are not set");
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const { employeeId, templateId, monthsBeforeRetirement } =
+      (await req.json()) as RetirementReminderRequest;
 
     console.log("Processing SMS reminder for employee:", employeeId);
 
@@ -60,24 +63,20 @@ serve(async (req) => {
       throw new Error(`Employee not found: ${empError?.message}`);
     }
 
+    console.log("Employee found:", employee.nama);
+
     if (!employee.handphone) {
       throw new Error("Employee does not have a phone number");
     }
 
-    // Normalize phone number for WebSMS (format: 628XXXXXXXXX)
-    let phoneNumber = employee.handphone.replace(/\s+/g, "").replace(/\-/g, "");
-    
-    // Remove leading zeros and country code variations
+    // Normalize phone number for WebSMS (format: 0823456789)
+    let phoneNumber = employee.handphone.replace(/\s+/g, "").replace(/-/g, "");
     if (phoneNumber.startsWith("+62")) {
-      phoneNumber = "62" + phoneNumber.substring(3);
+      phoneNumber = "0" + phoneNumber.substring(3);
     } else if (phoneNumber.startsWith("62")) {
-      // Already in correct format
-      phoneNumber = phoneNumber;
-    } else if (phoneNumber.startsWith("0")) {
-      phoneNumber = "62" + phoneNumber.substring(1);
-    } else {
-      // Assume it's already without country code
-      phoneNumber = "62" + phoneNumber;
+      phoneNumber = "0" + phoneNumber.substring(2);
+    } else if (!phoneNumber.startsWith("0")) {
+      phoneNumber = "0" + phoneNumber;
     }
 
     console.log("Normalized phone number:", phoneNumber);
@@ -89,10 +88,12 @@ serve(async (req) => {
         .from("retirement_reminder_templates")
         .select("*")
         .eq("id", templateId)
-        .eq("template_type", "sms")
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Template fetch error:", error);
+        throw new Error(`Template not found: ${error.message}`);
+      }
       template = data;
     } else if (monthsBeforeRetirement) {
       const { data, error } = await supabase
@@ -104,11 +105,20 @@ serve(async (req) => {
         .limit(1)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Template fetch error:", error);
+        throw new Error(`Template not found: ${error.message}`);
+      }
       template = data;
     } else {
       throw new Error("Either templateId or monthsBeforeRetirement required");
     }
+
+    if (!template) {
+      throw new Error("Template not found");
+    }
+
+    console.log("Template found:", template.template_name);
 
     // Calculate retirement date
     const retirementDate = employee.tmt_pensiun
@@ -116,58 +126,48 @@ serve(async (req) => {
       : "Belum ditentukan";
 
     // Replace template variables
-    const smsBody = replaceTemplateVariables(
+    let smsBody = replaceTemplateVariables(
       template.body_template,
       employee,
       retirementDate
     );
 
-    // Send SMS using WebSMS API
-    console.log("Sending SMS via WebSMS to:", phoneNumber);
-    const webSmsUrl = webSmsApiUrl;
+    console.log("SMS body prepared, length:", smsBody.length);
 
-    const webSmsPayload = {
-      token: webSmsToken,
-      phone: phoneNumber,
-      message: smsBody,
-      sender: webSmsSender || "INFO"
-    };
+    // URL encode the message
+    const encodedMessage = encodeURIComponent(smsBody);
 
-    console.log("WebSMS payload:", {
-      phone: phoneNumber,
-      sender: webSmsSender,
-      messageLength: smsBody.length
-    });
+    // Send SMS using WebSMS - menggunakan POST dengan query parameters
+    console.log("Sending SMS to:", phoneNumber);
+    const webSmsUrl = `https://websms.co.id/api/smsgateway`;
 
     const webSmsResponse = await fetch(webSmsUrl, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json",
       },
-      body: JSON.stringify(webSmsPayload),
+      body: `token=${webSmsToken}&to=${phoneNumber}&msg=${encodedMessage}`
     });
 
-    console.log("WebSMS HTTP status:", webSmsResponse.status);
-    
-    // Get response text first to see what we're dealing with
     const responseText = await webSmsResponse.text();
     console.log("WebSMS raw response:", responseText);
 
     let webSmsData;
     try {
       webSmsData = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error("Failed to parse WebSMS response as JSON:", parseError);
-      throw new Error(`WebSMS returned non-JSON response: ${responseText.substring(0, 200)}`);
+    } catch (e) {
+      console.error("Failed to parse WebSMS response:", e);
+      throw new Error(`WebSMS returned non-JSON response: ${responseText}`);
     }
 
     console.log("WebSMS parsed response:", webSmsData);
 
-    if (!webSmsResponse.ok || webSmsData.status !== "success") {
-      throw new Error(`WebSMS error: ${webSmsData.message || webSmsData.error || "Unknown error"}`);
+    if (webSmsData.status !== "success") {
+      throw new Error(`WebSMS error: ${webSmsData.message || 'Failed to send SMS'}`);
     }
 
-    console.log("SMS sent successfully via WebSMS:", webSmsData);
+    console.log("SMS sent successfully:", webSmsData);
 
     // Log the sent reminder
     const { error: logError } = await supabase
@@ -190,8 +190,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Retirement reminder SMS sent successfully via WebSMS",
-        webSmsResponse: webSmsData,
+        message: "Retirement reminder SMS sent successfully",
+        response: webSmsData,
       }),
       {
         status: 200,
@@ -202,26 +202,11 @@ serve(async (req) => {
     console.error("Error in send-retirement-reminder-sms:", error);
     console.error("Error stack:", error.stack);
 
-    // Try to log the error using already parsed request body
-    try {
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      
-      if (requestBody?.employeeId) {
-        await supabase.from("retirement_reminders_sent").insert({
-          employee_id: requestBody.employeeId,
-          reminder_type: "sms",
-          status: "failed",
-          error_message: error.message,
-        });
-      }
-    } catch (logError) {
-      console.error("Error logging failed reminder:", logError);
-    }
-
     return new Response(
       JSON.stringify({
         success: false,
         error: error.message,
+        details: error.stack,
       }),
       {
         status: 500,
