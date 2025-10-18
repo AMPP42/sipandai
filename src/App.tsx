@@ -6,6 +6,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import ErrorBoundary from '@/components/ui/error-boundary';
+import { GlobalErrorBoundary } from '@/components/providers/GlobalErrorBoundary';
 
 import Dashboard from "./pages/Dashboard";
 // Import pages
@@ -65,7 +66,7 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <ErrorBoundary>
+  <GlobalErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
@@ -399,7 +400,7 @@ const App = () => (
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
-  </ErrorBoundary>
+  </GlobalErrorBoundary>
 );
 
 export default App;
