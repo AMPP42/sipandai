@@ -615,6 +615,10 @@ export default function DetailKenaikanPangkat() {
       }
     } catch (error: any) {
       console.error('Error submitting application:', error);
+      console.error('Error details:', error?.message || error);
+      console.error('Error code:', error?.code || 'No code');
+      console.error('Error hint:', error?.hint || 'No hint');
+      console.error('Error details:', error?.details || 'No details');
       toast({
         title: "Error",
         description: isEditing ? "Gagal mengirim ulang usulan kenaikan pangkat" : "Gagal submit pengajuan kenaikan pangkat",
