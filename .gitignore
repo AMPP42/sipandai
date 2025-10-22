@@ -26,3 +26,4 @@ dist-ssr
 # Tempo-specific directories
 **/tempobook/dynamic/
 **/tempobook/storyboards/
+.env
