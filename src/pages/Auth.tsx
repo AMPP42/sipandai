@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,11 +10,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Building2, Shield, Users } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Auth() {
   const { user, signIn, signUp, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [workUnits, setWorkUnits] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedUnit, setSelectedUnit] = useState<string>('');
+
+  // Fetch work units on component mount
+  useEffect(() => {
+    const fetchWorkUnits = async () => {
+      const { data, error } = await supabase
+        .from('work_units')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (data && !error) {
+        setWorkUnits(data);
+      }
+    };
+    
+    fetchWorkUnits();
+  }, []);
 
   // Redirect if already authenticated
   if (user && !loading) {
@@ -54,10 +74,15 @@ export default function Auth() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     const name = formData.get('name') as string;
-    const unit = formData.get('unit') as string;
+
+    if (!selectedUnit) {
+      setError('Silakan pilih unit kerja');
+      setIsLoading(false);
+      return;
+    }
 
     // SECURITY: Role is no longer passed - defaults to 'viewer' on backend
-    const result = await signUp(email, password, name, 'viewer', unit || undefined);
+    const result = await signUp(email, password, name, 'viewer', selectedUnit);
     if (result.error) {
       setError(result.error);
     } else {
@@ -172,14 +197,19 @@ export default function Auth() {
                     </AlertDescription>
                   </Alert>
                   <div className="space-y-2">
-                    <Label htmlFor="unit">Unit Kerja (Opsional)</Label>
-                    <Input
-                      id="unit"
-                      name="unit"
-                      type="text"
-                      placeholder="Contoh: Badan Kepegawaian Daerah"
-                      className="h-11"
-                    />
+                    <Label htmlFor="unit">Unit Kerja *</Label>
+                    <Select value={selectedUnit} onValueChange={setSelectedUnit}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Pilih Unit Kerja" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {workUnits.map((unit) => (
+                          <SelectItem key={unit.id} value={unit.name}>
+                            {unit.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Button 
                     type="submit" 
