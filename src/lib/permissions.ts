@@ -225,6 +225,12 @@ export const ADMIN_TABS: AdminTabDefinition[] = [
     requiredPermission: PERMISSIONS.MANAGE_APPOINTMENTS,
     availableForRoles: ['admin_pusat'],
   },
+  {
+    id: 'unit-management',
+    title: 'Kelola Unit',
+    requiredPermission: PERMISSIONS.MANAGE_ALL_DATA,
+    availableForRoles: ['admin_pusat'],
+  },
 ];
 
 export const getAccessibleAdminTabs = (user: User | null): AdminTabDefinition[] => {

@@ -3,9 +3,10 @@ import { useSearchParams, Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
-import { Database, CheckCircle, UserCheck, Users, BarChart3, MessageSquare, HelpCircle, Calendar } from "lucide-react";
+import { Database, CheckCircle, UserCheck, Users, BarChart3, MessageSquare, HelpCircle, Calendar, Building2 } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { getAccessibleAdminTabs, canAccessAdminTab } from '@/lib/permissions';
+import AdminUnits from '@/components/admin/AdminUnits';
 
 // Import existing admin components
 import AdminPegawai from "./AdminPegawai";
@@ -55,6 +56,7 @@ export default function PanelAdmin() {
       'konsultasi-tiket': MessageSquare,
       'faq-management': HelpCircle,
       'appointment-management': Calendar,
+      'unit-management': Building2,
     };
     return icons[tabId] || Database;
   };
@@ -251,6 +253,23 @@ export default function PanelAdmin() {
               </CardHeader>
               <CardContent>
                 <AdminAppointments />
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === 'unit-management' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="w-5 h-5" />
+                  Kelola Unit Kerja
+                </CardTitle>
+                <CardDescription>
+                  Kelola daftar unit kerja dan organisasi
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdminUnits />
               </CardContent>
             </Card>
           )}

@@ -41,6 +41,10 @@ interface UserProfile {
   name: string;
   role: string;
   unit: string | null;
+  status?: string;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  rejection_reason?: string | null;
   created_at: string;
   updated_at: string;
   email?: string;
@@ -446,10 +450,82 @@ export default function AdminUsers() {
   };
 
   const getStatusBadge = (user: UserProfile) => {
-    if (user.email_confirmed_at || user.email !== 'N/A') {
-      return <Badge className="bg-green-100 text-green-700">Aktif</Badge>;
+    switch (user.status) {
+      case 'active':
+        return <Badge className="bg-green-100 text-green-700">Aktif</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-700">Menunggu Persetujuan</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-100 text-red-700">Ditolak</Badge>;
+      case 'suspended':
+        return <Badge className="bg-orange-100 text-orange-700">Ditangguhkan</Badge>;
+      default:
+        if (user.email_confirmed_at || user.email !== 'N/A') {
+          return <Badge className="bg-green-100 text-green-700">Aktif</Badge>;
+        }
+        return <Badge className="bg-yellow-100 text-yellow-700">Terdaftar</Badge>;
     }
-    return <Badge className="bg-yellow-100 text-yellow-700">Terdaftar</Badge>;
+  };
+
+  const handleApproveUser = async (userId: string) => {
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      // Update profile status directly
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          status: 'active',
+          approved_at: new Date().toISOString(),
+          approved_by: currentUser?.id
+        } as any)
+        .eq('id', userId);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Berhasil",
+        description: "User berhasil disetujui",
+        variant: "default"
+      });
+      loadUsers();
+    } catch (error: any) {
+      console.error('Error approving user:', error);
+      toast({
+        title: "Error",
+        description: "Gagal menyetujui user: " + error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRejectUser = async (userId: string, reason: string) => {
+    try {
+      // Update profile status directly
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          status: 'rejected',
+          rejection_reason: reason
+        } as any)
+        .eq('id', userId);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Berhasil",
+        description: "User berhasil ditolak",
+        variant: "default"
+      });
+      loadUsers();
+    } catch (error: any) {
+      console.error('Error rejecting user:', error);
+      toast({
+        title: "Error",
+        description: "Gagal menolak user: " + error.message,
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -676,7 +752,7 @@ export default function AdminUsers() {
                   <TableHead>Unit</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last Login</TableHead>
-                  
+                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -700,7 +776,31 @@ export default function AdminUsers() {
                       }
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 justify-end">
+                        {user.status === 'pending' && (
+                          <>
+                            <Button 
+                              size="sm" 
+                              variant="default"
+                              onClick={() => handleApproveUser(user.id)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Setujui
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => {
+                                const reason = prompt('Alasan penolakan:');
+                                if (reason) handleRejectUser(user.id, reason);
+                              }}
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Tolak
+                            </Button>
+                          </>
+                        )}
                         <Button 
                           size="sm" 
                           variant="outline"
