@@ -1,8 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { CalendarIcon, CheckCircle, Copy, File, FileText, MessageSquare, Send, User, XCircle } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,24 +7,16 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
-import { toast } from "@/components/ui/use-toast"
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { ChatMessage, ChatSession } from '@/types/chat';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/components/ui/use-toast";
+import { useSupabase } from "@/providers/SupabaseProvider";
+import { ChatMessage, ChatSession } from "@/types/chat";
+import { useEffect, useRef, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 interface AdminChatViewProps {
   ticketId: string;
@@ -38,210 +27,168 @@ interface AdminChatViewProps {
 }
 
 export function AdminChatView(props: AdminChatViewProps) {
-  const { ticketId, ticketNumber, ticketTitle, userName, onClose } = props;
-  const { user } = useAuth();
-  const [chatSession, setChatSession] = useState<ChatSession | null>(null);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [isSessionActive, setIsSessionActive] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { supabase } = useSupabase();
+  const [session, setSession] = useState<ChatSession | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const { toast } = useToast();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadChatSession();
-    loadChatMessages();
-  }, [ticketId]);
+    const getSession = async () => {
+      const { data: session, error } = await supabase
+        .from("chat_sessions")
+        .select("*")
+        .eq("id", props.ticketId)
+        .single();
+
+      if (error) {
+        toast({
+          title: "Error getting session",
+          description: error.message,
+        });
+        return;
+      }
+
+      setSession(session);
+    };
+
+    getSession();
+  }, [props.ticketId, supabase, toast]);
+
+  useEffect(() => {
+    const getMessages = async () => {
+      const { data: messages, error } = await supabase
+        .from("chat_messages")
+        .select("*")
+        .eq("session_id", props.ticketId)
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        toast({
+          title: "Error getting messages",
+          description: error.message,
+        });
+        return;
+      }
+
+      setMessages(messages);
+    };
+
+    getMessages();
+
+    const messageListener = supabase
+      .channel("public:chat_messages")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "chat_messages" },
+        (payload) => {
+          if (
+            payload.new &&
+            (payload.new as any).session_id === props.ticketId
+          ) {
+            setMessages((prevMessages) => [...prevMessages, payload.new as any]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(messageListener);
+    };
+  }, [props.ticketId, supabase, toast]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
-    scrollToBottom();
-  }, [chatMessages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
-
-  const loadChatSession = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('chat_sessions')
-        .select('*')
-        .eq('id', ticketId)
-        .single();
-
-      if (error) {
-        console.error('Error loading chat session:', error);
-        return;
-      }
-
-      if (!data) {
-        console.log('Chat session not found');
-        return;
-      }
-
-      setChatSession(data as ChatSession);
-      setIsSessionActive(data.status === 'active');
-    } catch (error) {
-      console.error('Error loading chat session:', error);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  };
-
-  const loadChatMessages = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('session_id', ticketId)
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error('Error loading chat messages:', error);
-        return;
-      }
-
-      setChatMessages((data || []) as ChatMessage[]);
-    } catch (error) {
-      console.error('Error loading chat messages:', error);
-    }
-  };
+  }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage) return;
 
-    try {
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .insert([
-          {
-            session_id: ticketId,
-            sender_id: user?.id,
-            message: newMessage,
-            message_type: 'text',
-          },
-        ])
-        .select('*')
-        .single();
+    const messageId = uuidv4();
 
-      if (error) {
-        console.error('Error sending message:', error);
-        toast({
-          title: "Gagal mengirim pesan.",
-          description: "Silakan coba lagi nanti.",
-          variant: "destructive",
-        })
-        return;
-      }
+    const { error } = await supabase.from("chat_messages").insert({
+      id: messageId,
+      session_id: props.ticketId,
+      sender: "admin",
+      content: newMessage,
+    });
 
-      setChatMessages(prevMessages => [...prevMessages, data as ChatMessage]);
-      setNewMessage('');
-      scrollToBottom();
-    } catch (error) {
-      console.error('Error sending message:', error);
+    if (error) {
       toast({
-        title: "Gagal mengirim pesan.",
-        description: "Silakan coba lagi nanti.",
-        variant: "destructive",
-      })
+        title: "Error sending message",
+        description: error.message,
+      });
+      return;
     }
+
+    setNewMessage("");
   };
 
-  const handleEndChat = async () => {
-    try {
-      const { error } = await supabase
-        .from('chat_sessions')
-        .update({ status: 'ended' })
-        .eq('id', ticketId);
-
-      if (error) {
-        console.error('Error ending chat:', error);
-        toast({
-          title: "Gagal mengakhiri chat.",
-          description: "Silakan coba lagi nanti.",
-          variant: "destructive",
-        })
-        return;
-      }
-
-      setIsSessionActive(false);
-      toast({
-        title: "Chat diakhiri.",
-        description: "Sesi chat telah diakhiri.",
-      })
-    } catch (error) {
-      console.error('Error ending chat:', error);
-      toast({
-        title: "Gagal mengakhiri chat.",
-        description: "Silakan coba lagi nanti.",
-        variant: "destructive",
-      })
-    }
-  };
+  if (!session) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <Card className="w-full h-full flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-base font-semibold">
-          <MessageSquare className="mr-2 h-4 w-4" />
-          Chat #{ticketNumber} - {ticketTitle}
+    <Card className="w-[80%]">
+      <CardHeader>
+        <CardTitle>
+          {props.ticketTitle} - {props.ticketNumber}
         </CardTitle>
-        <Button variant="outline" size="sm" onClick={onClose}>
-          Tutup
-        </Button>
+        <CardDescription>Chat with {props.userName}</CardDescription>
       </CardHeader>
-      <CardContent className="grow flex flex-col p-4">
-        <ScrollArea className="flex-1 mb-2">
-          <div className="flex flex-col gap-2">
-            {chatMessages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex flex-col ${message.sender_id === user?.id ? 'items-end' : 'items-start'
-                  }`}
-              >
+      <CardContent className="h-[500px] flex flex-col">
+        <div className="flex-grow overflow-hidden">
+          <ScrollArea className="h-full">
+            <div ref={scrollRef} className="space-y-4 p-4">
+              {messages.map((message) => (
                 <div
-                  className={`rounded-lg px-3 py-2 text-sm shadow-sm w-fit max-w-[75%] ${message.sender_id === user?.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary text-secondary-foreground'
-                    }`}
+                  key={message.id}
+                  className={`flex flex-col ${
+                    message.sender === "admin" ? "items-end" : "items-start"
+                  }`}
                 >
-                  <p className="text-sm">{message.message}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{new Date(message.created_at).toLocaleTimeString()}</p>
+                  <div
+                    className={`rounded-lg px-3 py-2 text-sm ${
+                      message.sender === "admin"
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200 text-gray-800"
+                    }`}
+                  >
+                    {message.content}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {new Date(message.created_at).toLocaleTimeString()}
+                  </div>
                 </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
-        <Separator />
-        <div className="mt-2">
-          <Textarea
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+      </CardContent>
+      <Separator />
+      <CardFooter className="p-4">
+        <div className="flex w-full items-center space-x-2">
+          <Avatar className="w-8 h-8">
+            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+          <Input
+            type="text"
+            placeholder="Type your message here..."
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Ketik pesan disini..."
-            className="resize-none"
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
+              if (e.key === "Enter") {
                 handleSendMessage();
               }
             }}
           />
-          <div className="flex justify-between items-center mt-2">
-            <p className="text-sm text-muted-foreground">
-              Tekan <kbd className="pointer-events-none relative inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-60">Enter</kbd> untuk mengirim, <kbd className="pointer-events-none relative inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-60">Shift + Enter</kbd> untuk baris baru
-            </p>
-            <Button onClick={handleSendMessage} size="sm">
-              Kirim <Send className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
+          <Button onClick={handleSendMessage}>Send</Button>
         </div>
-      </CardContent>
-      <CardFooter className="flex justify-end items-center p-4">
-        {isSessionActive ? (
-          <Button variant="destructive" size="sm" onClick={handleEndChat}>
-            Akhiri Chat
-          </Button>
-        ) : (
-          <Badge variant="outline">Chat Selesai</Badge>
-        )}
       </CardFooter>
     </Card>
   );
