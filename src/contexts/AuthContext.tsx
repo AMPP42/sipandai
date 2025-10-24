@@ -39,12 +39,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               // Fetch profile data
               const { data: profile, error: profileError } = await supabase
                 .from('profiles')
-                .select('id, name, unit, created_at, updated_at')
+                .select('id, name, unit, status, created_at, updated_at')
                 .eq('id', session.user.id)
-                .single();
+                .maybeSingle();
 
               if (profileError) {
                 console.error('Error fetching user profile:', profileError);
+                if (isMounted) setUser(null);
+                return;
+              }
+
+              // If profile doesn't exist or not approved, don't set user
+              if (!profile || profile.status !== 'active') {
+                console.log('User profile pending approval or not found');
                 if (isMounted) setUser(null);
                 return;
               }
@@ -54,20 +61,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 .from('user_roles')
                 .select('role')
                 .eq('user_id', session.user.id)
-                .single();
+                .maybeSingle();
 
               if (roleError) {
                 console.error('Error fetching user role:', roleError);
-                if (isMounted) setUser(null);
-                return;
               }
 
-              if (isMounted && profile && roleData) {
+              if (isMounted && profile) {
                 setUser({
                   id: profile.id,
                   email: session.user.email!,
                   name: profile.name,
-                  role: roleData.role as 'admin_pusat' | 'admin_unit',
+                  role: (roleData?.role || 'viewer') as 'admin_pusat' | 'admin_unit',
                   unit: profile.unit,
                   created_at: profile.created_at,
                   updated_at: profile.updated_at,
@@ -116,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, name: string, role: string, unit?: string) => {
     try {
-      const redirectUrl = `${window.location.origin}/auth`;
+      const redirectUrl = `${window.location.origin}/`;
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -125,7 +130,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           emailRedirectTo: redirectUrl,
           data: {
             name,
-            role,
             unit
           }
         }

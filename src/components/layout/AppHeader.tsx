@@ -55,24 +55,8 @@ export function AppHeader() {
 
   const loadUnreadCount = async () => {
     if (!user) return;
-
-    try {
-      const { count, error } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('recipient_id', user.id)
-        .is('read_at', null);
-
-      if (error) throw error;
-      setUnreadCount(count || 0);
-    } catch (error: any) {
-      // Silently fail for network errors - don't spam console
-      if (error?.message?.includes('Failed to fetch')) {
-        // Network error - just keep current count
-        return;
-      }
-      console.error('Error loading unread count:', error);
-    }
+    // Temporary stub - notifications table doesn't exist yet
+    setUnreadCount(0);
   };
 
   return (
