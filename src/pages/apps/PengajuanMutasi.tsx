@@ -1,14 +1,10 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-
 export default function PengajuanMutasi() {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Immediately redirect to the integrated system
-    navigate('/apps/pengajuan-mutasi-terpadu', { replace: true });
-  }, [navigate]);
-
-  // Return null since we're redirecting immediately
-  return null;
+  return (
+    <div className="container mx-auto p-8">
+      <h1 className="text-2xl font-bold">Pengajuan Mutasi</h1>
+      <p className="text-muted-foreground mt-4">
+        Fitur akan diimplementasi dengan struktur database baru
+      </p>
+    </div>
+  );
 }

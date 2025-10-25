@@ -13,34 +13,8 @@ export default function Index() {
   });
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        // Call the public statistics function
-        const {
-          data,
-          error
-        } = await supabase.rpc('get_public_statistics');
-        if (error) {
-          console.error('Error fetching stats:', error);
-        } else if (data) {
-          const statsData = data as {
-            totalEmployees: number;
-            totalApplications: number;
-            activeConsultations: number;
-          };
-          setStats({
-            totalEmployees: statsData.totalEmployees || 0,
-            totalApplications: statsData.totalApplications || 0,
-            activeConsultations: statsData.activeConsultations || 0
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
+    // Stub: Will implement with new database structure
+    setLoading(false);
   }, []);
   const features = [{
     icon: Shield,

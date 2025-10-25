@@ -50,6 +50,13 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     PERMISSIONS.VIEW_DATABASE_PEGAWAI,
     PERMISSIONS.VIEW_VERIFIKASI,
     PERMISSIONS.MANAGE_UNIT_DATA,
+    PERMISSIONS.VIEW_USER_MANAGEMENT, // Can manage users in their unit
+    PERMISSIONS.ACCESS_MUTASI_APP,
+    PERMISSIONS.ACCESS_PANGKAT_APP,
+    PERMISSIONS.ACCESS_PENSIUN_APP,
+    PERMISSIONS.ACCESS_KONSULTASI_APP,
+  ],
+  user_unit: [
     PERMISSIONS.ACCESS_MUTASI_APP,
     PERMISSIONS.ACCESS_PANGKAT_APP,
     PERMISSIONS.ACCESS_PENSIUN_APP,
@@ -76,7 +83,7 @@ export const APPLICATIONS: AppDefinition[] = [
     description: 'Sistem pengajuan mutasi pegawai dengan tracking timeline dan notifikasi real-time',
     route: '/apps/pengajuan-mutasi-terpadu',
     requiredPermission: PERMISSIONS.ACCESS_MUTASI_APP,
-    availableForRoles: ['admin_pusat', 'admin_unit'],
+    availableForRoles: ['admin_pusat', 'admin_unit', 'user_unit'],
     showStatsForRoles: ['admin_pusat', 'admin_unit'],
     unitScoped: true,
   },
@@ -86,7 +93,7 @@ export const APPLICATIONS: AppDefinition[] = [
     description: 'Validasi syarat otomatis dan checklist dokumen persyaratan kenaikan pangkat',
     route: '/apps/kenaikan-pangkat',
     requiredPermission: PERMISSIONS.ACCESS_PANGKAT_APP,
-    availableForRoles: ['admin_pusat', 'admin_unit'],
+    availableForRoles: ['admin_pusat', 'admin_unit', 'user_unit'],
     showStatsForRoles: ['admin_pusat', 'admin_unit'],
     unitScoped: true,
   },
@@ -96,7 +103,7 @@ export const APPLICATIONS: AppDefinition[] = [
     description: 'Auto-reminder dan dashboard countdown persiapan pensiun pegawai',
     route: '/apps/reminder-pensiun',
     requiredPermission: PERMISSIONS.ACCESS_PENSIUN_APP,
-    availableForRoles: ['admin_pusat', 'admin_unit'],
+    availableForRoles: ['admin_pusat', 'admin_unit', 'user_unit'],
     showStatsForRoles: ['admin_pusat', 'admin_unit'],
     unitScoped: true,
   },
@@ -106,7 +113,7 @@ export const APPLICATIONS: AppDefinition[] = [
     description: 'Ticketing system, layanan konsultasi, panduan, dan FAQ',
     route: '/apps/konsultasi-sdm',
     requiredPermission: PERMISSIONS.ACCESS_KONSULTASI_APP,
-    availableForRoles: ['admin_pusat', 'admin_unit'],
+    availableForRoles: ['admin_pusat', 'admin_unit', 'user_unit'],
     showStatsForRoles: ['admin_pusat'],
     unitScoped: false,
   },
@@ -114,9 +121,13 @@ export const APPLICATIONS: AppDefinition[] = [
 
 // Utility functions for permission checks
 export const hasPermission = (user: User | null, permission: Permission): boolean => {
-  if (!user) return false;
-  const userPermissions = ROLE_PERMISSIONS[user.role] || [];
-  return userPermissions.includes(permission);
+  if (!user || !user.roles || user.roles.length === 0) return false;
+  
+  // Check if any of user's roles has the permission
+  return user.roles.some(role => {
+    const rolePermissions = ROLE_PERMISSIONS[role] || [];
+    return rolePermissions.includes(permission);
+  });
 };
 
 export const hasAnyPermission = (user: User | null, permissions: Permission[]): boolean => {
@@ -130,29 +141,33 @@ export const hasAllPermissions = (user: User | null, permissions: Permission[]):
 };
 
 export const canAccessApplication = (user: User | null, appId: string): boolean => {
-  if (!user) return false;
+  if (!user || !user.roles || user.roles.length === 0) return false;
   const app = APPLICATIONS.find(a => a.id === appId);
   if (!app) return false;
   
-  return app.availableForRoles.includes(user.role) && 
-         hasPermission(user, app.requiredPermission);
+  // Check if user has any role that can access the app
+  const hasRoleAccess = user.roles.some(role => app.availableForRoles.includes(role));
+  
+  return hasRoleAccess && hasPermission(user, app.requiredPermission);
 };
 
 export const getAccessibleApplications = (user: User | null): AppDefinition[] => {
-  if (!user) return [];
+  if (!user || !user.roles || user.roles.length === 0) return [];
   
-  return APPLICATIONS.filter(app => 
-    app.availableForRoles.includes(user.role) && 
-    hasPermission(user, app.requiredPermission)
-  );
+  return APPLICATIONS.filter(app => {
+    // Check if user has any role that can access the app
+    const hasRoleAccess = user.roles.some(role => app.availableForRoles.includes(role));
+    return hasRoleAccess && hasPermission(user, app.requiredPermission);
+  });
 };
 
 export const canViewStats = (user: User | null, appId: string): boolean => {
-  if (!user) return false;
+  if (!user || !user.roles || user.roles.length === 0) return false;
   const app = APPLICATIONS.find(a => a.id === appId);
   if (!app) return false;
   
-  return app.showStatsForRoles?.includes(user.role) || false;
+  // Check if user has any role that can view stats
+  return user.roles.some(role => app.showStatsForRoles?.includes(role) || false);
 };
 
 export const isDataScopedToUnit = (appId: string): boolean => {
@@ -199,7 +214,7 @@ export const ADMIN_TABS: AdminTabDefinition[] = [
     id: 'user-management',
     title: 'User Management',
     requiredPermission: PERMISSIONS.VIEW_USER_MANAGEMENT,
-    availableForRoles: ['admin_pusat'],
+    availableForRoles: ['admin_pusat', 'admin_unit'], // Admin unit can manage their unit's users
   },
   {
     id: 'statistik-laporan',
@@ -234,19 +249,21 @@ export const ADMIN_TABS: AdminTabDefinition[] = [
 ];
 
 export const getAccessibleAdminTabs = (user: User | null): AdminTabDefinition[] => {
-  if (!user) return [];
+  if (!user || !user.roles || user.roles.length === 0) return [];
   
-  return ADMIN_TABS.filter(tab => 
-    tab.availableForRoles.includes(user.role) && 
-    hasPermission(user, tab.requiredPermission)
-  );
+  return ADMIN_TABS.filter(tab => {
+    // Check if user has any role that can access the tab
+    const hasRoleAccess = user.roles.some(role => tab.availableForRoles.includes(role));
+    return hasRoleAccess && hasPermission(user, tab.requiredPermission);
+  });
 };
 
 export const canAccessAdminTab = (user: User | null, tabId: string): boolean => {
-  if (!user) return false;
+  if (!user || !user.roles || user.roles.length === 0) return false;
   const tab = ADMIN_TABS.find(t => t.id === tabId);
   if (!tab) return false;
   
-  return tab.availableForRoles.includes(user.role) && 
-         hasPermission(user, tab.requiredPermission);
+  // Check if user has any role that can access the tab
+  const hasRoleAccess = user.roles.some(role => tab.availableForRoles.includes(role));
+  return hasRoleAccess && hasPermission(user, tab.requiredPermission);
 };
