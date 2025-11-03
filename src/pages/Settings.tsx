@@ -58,17 +58,29 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Role:</span>
-                    <Badge className={user.role === 'admin_pusat' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}>
-                      {user.role === 'admin_pusat' ? 'Admin Pusat' : 'Admin Unit'}
-                    </Badge>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-sm text-gray-600">Roles:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {user.roles.map(role => (
+                        <Badge 
+                          key={role}
+                          className={
+                            role === 'admin_pusat' ? 'bg-purple-100 text-purple-700' : 
+                            role === 'admin_unit' ? 'bg-blue-100 text-blue-700' : 
+                            'bg-gray-100 text-gray-700'
+                          }
+                        >
+                          {role === 'admin_pusat' ? 'Admin Pusat' : 
+                           role === 'admin_unit' ? 'Admin Unit' : 'User Unit'}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                   
-                  {user.unit && (
+                  {user.work_unit_id && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Unit:</span>
-                      <span className="text-sm font-medium text-gray-900">{user.unit}</span>
+                      <span className="text-sm text-gray-600">Unit ID:</span>
+                      <span className="text-sm font-medium text-gray-900">{user.work_unit_id}</span>
                     </div>
                   )}
 

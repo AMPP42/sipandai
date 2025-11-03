@@ -4,7 +4,7 @@ import { hasPermission, hasAnyPermission, Permission } from '@/lib/permissions';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'admin_pusat' | 'admin_unit' | ('admin_pusat' | 'admin_unit')[];
+  requiredRole?: 'admin_pusat' | 'admin_unit' | 'user_unit' | ('admin_pusat' | 'admin_unit' | 'user_unit')[];
   requiredPermission?: Permission;
   requireAnyPermission?: Permission[];
   fallbackPath?: string;
@@ -37,7 +37,8 @@ export default function ProtectedRoute({
   // Check role-based access
   if (requiredRole) {
     const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-    if (!allowedRoles.includes(user.role as any)) {
+    const hasRequiredRole = user.roles.some(role => allowedRoles.includes(role));
+    if (!hasRequiredRole) {
       return <Navigate to={fallbackPath} replace />;
     }
   }

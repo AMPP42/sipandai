@@ -81,8 +81,8 @@ export default function Auth() {
       return;
     }
 
-    // SECURITY: Role is no longer passed - defaults to 'viewer' on backend
-    const result = await signUp(email, password, name, 'viewer', selectedUnit);
+    // SECURITY: Role defaults to 'user_unit' on backend via trigger
+    const result = await signUp(email, password, name, selectedUnit);
     if (result.error) {
       setError(result.error);
     } else {

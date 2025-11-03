@@ -14,7 +14,7 @@ export default function ProfileSettings() {
   const [message, setMessage] = useState('');
   const [formData, setFormData] = useState({
     name: user?.name || '',
-    unit: user?.unit || '',
+    work_unit_id: user?.work_unit_id || '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,7 +70,10 @@ export default function ProfileSettings() {
               <Label htmlFor="role">Role</Label>
               <Input
                 id="role"
-                value={user.role === 'admin_pusat' ? 'Admin Pusat' : 'Admin Unit'}
+                value={user.roles.map(r => 
+                  r === 'admin_pusat' ? 'Admin Pusat' : 
+                  r === 'admin_unit' ? 'Admin Unit' : 'User Unit'
+                ).join(', ')}
                 disabled
                 className="bg-gray-50"
               />
@@ -89,13 +92,16 @@ export default function ProfileSettings() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="unit">Unit Kerja</Label>
+            <Label htmlFor="work_unit_id">Unit Kerja ID</Label>
             <Input
-              id="unit"
-              value={formData.unit}
-              onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
-              placeholder="Contoh: Badan Kepegawaian Daerah"
+              id="work_unit_id"
+              value={formData.work_unit_id}
+              onChange={(e) => setFormData(prev => ({ ...prev, work_unit_id: e.target.value }))}
+              placeholder="ID Unit Kerja"
+              disabled
+              className="bg-gray-50"
             />
+            <p className="text-xs text-gray-500">Unit kerja tidak dapat diubah</p>
           </div>
 
           <div className="flex justify-end pt-4">

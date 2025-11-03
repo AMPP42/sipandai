@@ -36,10 +36,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (!isMounted) return;
             
             try {
-              // Fetch profile data
+              // Fetch profile data (temporarily using old schema until migration approved)
               const { data: profile, error: profileError } = await supabase
                 .from('profiles')
-                .select('id, name, unit, status, created_at, updated_at')
+                .select('id, name, status, created_at, updated_at')
                 .eq('id', session.user.id)
                 .maybeSingle();
 
@@ -56,24 +56,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 return;
               }
 
-              // Fetch role from user_roles table
-              const { data: roleData, error: roleError } = await supabase
+              // Fetch roles from user_roles table
+              const { data: rolesData, error: rolesError } = await supabase
                 .from('user_roles')
                 .select('role')
-                .eq('user_id', session.user.id)
-                .maybeSingle();
+                .eq('user_id', session.user.id);
 
-              if (roleError) {
-                console.error('Error fetching user role:', roleError);
+              if (rolesError) {
+                console.error('Error fetching user roles:', rolesError);
               }
+
+              const userRoles = rolesData?.map(r => r.role as 'admin_pusat' | 'admin_unit' | 'user_unit') || ['user_unit'];
 
               if (isMounted && profile) {
                 setUser({
                   id: profile.id,
                   email: session.user.email!,
                   name: profile.name,
-                  role: (roleData?.role || 'viewer') as 'admin_pusat' | 'admin_unit',
-                  unit: profile.unit,
+                  roles: userRoles,
+                  work_unit_id: undefined, // Will be populated after migration
                   created_at: profile.created_at,
                   updated_at: profile.updated_at,
                 });
@@ -119,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, name: string, role: string, unit?: string) => {
+  const signUp = async (email: string, password: string, name: string, work_unit_id?: string) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
@@ -130,7 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           emailRedirectTo: redirectUrl,
           data: {
             name,
-            unit
+            work_unit_id
           }
         }
       });
@@ -148,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateProfile = async (updates: Partial<Pick<User, 'name' | 'unit'>>) => {
+  const updateProfile = async (updates: Partial<Pick<User, 'name' | 'work_unit_id'>>) => {
     if (!user) return { error: 'No user logged in' };
 
     try {
@@ -170,6 +171,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const hasRole = (role: 'admin_pusat' | 'admin_unit' | 'user_unit'): boolean => {
+    return user?.roles?.includes(role) || false;
+  };
+
+  const isAdminPusat = hasRole('admin_pusat');
+  const isAdminUnit = hasRole('admin_unit');
+  const isUserUnit = hasRole('user_unit');
+
   const value = {
     user,
     session,
@@ -178,6 +187,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     updateProfile,
     loading,
+    hasRole,
+    isAdminPusat,
+    isAdminUnit,
+    isUserUnit,
   };
 
   return (

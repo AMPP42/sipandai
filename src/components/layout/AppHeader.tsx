@@ -105,7 +105,10 @@ export function AppHeader() {
                 <div className="hidden md:block text-left">
                   <p className="text-sm font-medium">{user?.name}</p>
                   <p className="text-xs text-gray-600">
-                    {user?.role === 'admin_pusat' ? 'Admin Pusat' : 'Admin Unit'}
+                    {user?.roles.map(r => 
+                      r === 'admin_pusat' ? 'Admin Pusat' : 
+                      r === 'admin_unit' ? 'Admin Unit' : 'User Unit'
+                    ).join(', ')}
                   </p>
                 </div>
               </Button>

@@ -57,9 +57,12 @@ export function AppSidebar() {
     ];
 
     // Add Panel Admin for both admin roles
-    if (user.role === 'admin_pusat' || user.role === 'admin_unit') {
+    const isAdminPusat = user.roles.includes('admin_pusat');
+    const isAdminUnit = user.roles.includes('admin_unit');
+    
+    if (isAdminPusat || isAdminUnit) {
       items.push({ 
-        title: user.role === 'admin_pusat' ? 'Panel Admin' : 'Panel Admin Unit', 
+        title: isAdminPusat ? 'Panel Admin' : 'Panel Admin Unit', 
         url: "/panel-admin", 
         icon: Shield,
       });
@@ -142,11 +145,14 @@ export function AppSidebar() {
                     {user.name}
                   </p>
                   <p className="text-xs text-sidebar-foreground/70 truncate">
-                    {user.role === 'admin_pusat' ? 'Admin Pusat' : 'Admin Unit'}
+                    {user.roles.map(r => 
+                      r === 'admin_pusat' ? 'Admin Pusat' : 
+                      r === 'admin_unit' ? 'Admin Unit' : 'User Unit'
+                    ).join(', ')}
                   </p>
-                  {user.unit && (
+                  {user.work_unit_id && (
                     <p className="text-xs text-sidebar-foreground/50 truncate">
-                      {user.unit}
+                      Unit: {user.work_unit_id}
                     </p>
                   )}
                 </div>
