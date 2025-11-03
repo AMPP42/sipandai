@@ -14,6 +14,168 @@ export type Database = {
   }
   public: {
     Tables: {
+      application_documents: {
+        Row: {
+          application_id: string
+          document_name: string
+          document_type: string
+          document_url: string
+          file_size: number | null
+          id: string
+          is_verified: boolean | null
+          uploaded_at: string
+          uploaded_by: string
+          verification_notes: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          application_id: string
+          document_name: string
+          document_type: string
+          document_url: string
+          file_size?: number | null
+          id?: string
+          is_verified?: boolean | null
+          uploaded_at?: string
+          uploaded_by: string
+          verification_notes?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          application_id?: string
+          document_name?: string
+          document_type?: string
+          document_url?: string
+          file_size?: number | null
+          id?: string
+          is_verified?: boolean | null
+          uploaded_at?: string
+          uploaded_by?: string
+          verification_notes?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_documents_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      application_history: {
+        Row: {
+          action: string
+          application_id: string
+          id: string
+          new_status: Database["public"]["Enums"]["application_status"] | null
+          notes: string | null
+          old_status: Database["public"]["Enums"]["application_status"] | null
+          performed_at: string
+          performed_by: string
+        }
+        Insert: {
+          action: string
+          application_id: string
+          id?: string
+          new_status?: Database["public"]["Enums"]["application_status"] | null
+          notes?: string | null
+          old_status?: Database["public"]["Enums"]["application_status"] | null
+          performed_at?: string
+          performed_by: string
+        }
+        Update: {
+          action?: string
+          application_id?: string
+          id?: string
+          new_status?: Database["public"]["Enums"]["application_status"] | null
+          notes?: string | null
+          old_status?: Database["public"]["Enums"]["application_status"] | null
+          performed_at?: string
+          performed_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_history_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      applications: {
+        Row: {
+          admin_pusat_notes: string | null
+          admin_pusat_reviewed_at: string | null
+          admin_pusat_reviewed_by: string | null
+          admin_unit_notes: string | null
+          admin_unit_reviewed_at: string | null
+          admin_unit_reviewed_by: string | null
+          application_type: Database["public"]["Enums"]["application_type"]
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          id: string
+          status: Database["public"]["Enums"]["application_status"]
+          submitted_at: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          work_unit_id: string | null
+        }
+        Insert: {
+          admin_pusat_notes?: string | null
+          admin_pusat_reviewed_at?: string | null
+          admin_pusat_reviewed_by?: string | null
+          admin_unit_notes?: string | null
+          admin_unit_reviewed_at?: string | null
+          admin_unit_reviewed_by?: string | null
+          application_type: Database["public"]["Enums"]["application_type"]
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["application_status"]
+          submitted_at?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          work_unit_id?: string | null
+        }
+        Update: {
+          admin_pusat_notes?: string | null
+          admin_pusat_reviewed_at?: string | null
+          admin_pusat_reviewed_by?: string | null
+          admin_unit_notes?: string | null
+          admin_unit_reviewed_at?: string | null
+          admin_unit_reviewed_by?: string | null
+          application_type?: Database["public"]["Enums"]["application_type"]
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["application_status"]
+          submitted_at?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          work_unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_work_unit_id_fkey"
+            columns: ["work_unit_id"]
+            isOneToOne: false
+            referencedRelation: "work_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           approved_at: string | null
@@ -127,6 +289,17 @@ export type Database = {
     }
     Enums: {
       app_role: "admin_pusat" | "admin_unit" | "viewer"
+      application_status:
+        | "draft"
+        | "submitted"
+        | "admin_unit_review"
+        | "admin_unit_rejected"
+        | "admin_unit_approved"
+        | "admin_pusat_review"
+        | "admin_pusat_rejected"
+        | "approved"
+        | "completed"
+      application_type: "mutasi" | "kenaikan_pangkat" | "pensiun"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -255,6 +428,18 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin_pusat", "admin_unit", "viewer"],
+      application_status: [
+        "draft",
+        "submitted",
+        "admin_unit_review",
+        "admin_unit_rejected",
+        "admin_unit_approved",
+        "admin_pusat_review",
+        "admin_pusat_rejected",
+        "approved",
+        "completed",
+      ],
+      application_type: ["mutasi", "kenaikan_pangkat", "pensiun"],
     },
   },
 } as const
