@@ -203,13 +203,22 @@ export default function Auth() {
                         <SelectValue placeholder="Pilih Unit Kerja" />
                       </SelectTrigger>
                       <SelectContent>
-                        {workUnits.map((unit) => (
-                          <SelectItem key={unit.id} value={unit.name}>
-                            {unit.name}
+                        {workUnits.length === 0 ? (
+                          <SelectItem value="no-units" disabled>
+                            Belum ada unit kerja tersedia
                           </SelectItem>
-                        ))}
+                        ) : (
+                          workUnits.map((unit) => (
+                            <SelectItem key={unit.id} value={unit.id}>
+                              {unit.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Pilih unit kerja tempat Anda bekerja
+                    </p>
                   </div>
                   <Button 
                     type="submit" 
