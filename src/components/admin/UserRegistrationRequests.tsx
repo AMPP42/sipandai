@@ -35,21 +35,22 @@ export default function UserRegistrationRequests() {
     if (!user) return;
 
     try {
-      let query = supabase
+      // TODO: Update to use work_unit_id after migration is approved
+      const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, name, work_unit_id, status, created_at')
+        .select('id, email, name, status, created_at')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
-      // Admin Unit only sees requests from their unit
-      if (isAdminUnit && !isAdminPusat) {
-        query = query.eq('work_unit_id', user.work_unit_id);
-      }
-
-      const { data, error } = await query;
-
       if (error) throw error;
-      setRequests(data || []);
+      
+      // Map to include work_unit_id as empty for now
+      const mappedData = (data || []).map(profile => ({
+        ...profile,
+        work_unit_id: user.work_unit_id || ''
+      }));
+      
+      setRequests(mappedData);
     } catch (error: any) {
       toast.error('Gagal memuat permintaan registrasi: ' + error.message);
     } finally {

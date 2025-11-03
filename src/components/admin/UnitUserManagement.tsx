@@ -30,14 +30,12 @@ export default function UnitUserManagement() {
   }, [user]);
 
   const loadUnitUsers = async () => {
-    if (!user?.work_unit_id) return;
-
+    // TODO: Update to use work_unit_id after migration is approved
     try {
-      // Get all users from the same work unit
+      // Get all active users for now (will filter by work_unit after migration)
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('id, email, name, status, created_at')
-        .eq('work_unit_id', user.work_unit_id)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
@@ -70,23 +68,11 @@ export default function UnitUserManagement() {
     if (!selectedUser || !actionType || !isAdminPusat) return;
 
     try {
-      if (actionType === 'promote') {
-        const { error } = await supabase.rpc('promote_to_admin_unit', {
-          target_user_id: selectedUser.id
-        });
-        if (error) throw error;
-        toast.success('User berhasil dipromosikan menjadi Admin Unit');
-      } else {
-        const { error } = await supabase.rpc('demote_from_admin_unit', {
-          target_user_id: selectedUser.id
-        });
-        if (error) throw error;
-        toast.success('User berhasil diturunkan dari Admin Unit');
-      }
-
+      // TODO: Implement after migration is approved with promote_to_admin_unit and demote_from_admin_unit functions
+      toast.error('Fitur ini akan aktif setelah migrasi database disetujui');
+      
       setSelectedUser(null);
       setActionType(null);
-      loadUnitUsers();
     } catch (error: any) {
       toast.error('Gagal memproses: ' + error.message);
     }
